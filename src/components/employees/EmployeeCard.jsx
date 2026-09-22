@@ -1,13 +1,5 @@
+import { getInitials } from '../../utils/employeeHelpers.js'
 import './EmployeeCard.css'
-
-// Turns "Amara Okafor" into "AO" for the photo placeholder.
-function getInitials(name) {
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-}
 
 function EmployeeCard({ employee, isSelected, onSelect }) {
   // A <button> is focusable and responds to Enter and Space out of the box,
