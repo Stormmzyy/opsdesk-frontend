@@ -2,7 +2,7 @@ import {
   TICKET_STATUSES,
   TICKET_PRIORITY_LABELS,
   getNextStatus,
-} from '../data/ticketStatuses.js'
+} from '../../data/ticketStatuses.js'
 import './TicketCard.css'
 
 function TicketCard({ ticket, onMoveTicket }) {

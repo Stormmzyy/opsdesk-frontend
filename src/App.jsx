@@ -1,5 +1,5 @@
 import EmployeeDirectory from './components/employees/EmployeeDirectory.jsx'
-import TicketBoard from './components/TicketBoard.jsx'
+import TicketBoard from './components/tickets/TicketBoard.jsx'
 import UserDirectory from './components/UserDirectory.jsx'
 
 function App() {
