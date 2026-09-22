@@ -1,22 +1,10 @@
-import { useState } from 'react'
-import { tickets as initialTickets } from '../../data/tickets.js'
 import { TICKET_STATUSES } from '../../utils/ticketStatus.js'
 import TicketColumn from './TicketColumn.jsx'
 import './TicketBoard.css'
 
-function TicketBoard() {
-  const [tickets, setTickets] = useState(initialTickets)
-
-  // Builds a NEW array where only the matching ticket is replaced by a copy
-  // with the new status. We never change the old ticket object directly.
-  function moveTicket(ticketId, newStatus) {
-    setTickets((currentTickets) =>
-      currentTickets.map((ticket) =>
-        ticket.id === ticketId ? { ...ticket, status: newStatus } : ticket,
-      ),
-    )
-  }
-
+// The tickets state lives in App.jsx. The board just displays it and passes
+// onMoveTicket down to each card.
+function TicketBoard({ tickets, onMoveTicket }) {
   return (
     <section className="ticket-board">
       <h2>Ticket Board</h2>
@@ -27,7 +15,7 @@ function TicketBoard() {
             key={status.value}
             status={status}
             tickets={tickets.filter((ticket) => ticket.status === status.value)}
-            onMoveTicket={moveTicket}
+            onMoveTicket={onMoveTicket}
           />
         ))}
       </div>
