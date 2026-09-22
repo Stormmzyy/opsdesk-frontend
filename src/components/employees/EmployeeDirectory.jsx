@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { employees } from '../data/employees.js'
+import { employees } from '../../data/employees.js'
+import { filterEmployees, getDepartments } from '../../utils/employeeHelpers.js'
 import SearchBox from './SearchBox.jsx'
 import DepartmentFilter from './DepartmentFilter.jsx'
 import EmployeeList from './EmployeeList.jsx'
 import EmployeeDetails from './EmployeeDetails.jsx'
 import './EmployeeDirectory.css'
 
-// Each unique department in the data, in the order it first appears.
-// A Set drops duplicates; spreading it back into [] gives a normal array.
-const departments = [...new Set(employees.map((employee) => employee.department))]
+// The data never changes, so this only needs working out once.
+const departments = getDepartments(employees)
 
 function EmployeeDirectory() {
   const [searchText, setSearchText] = useState('')
@@ -16,13 +16,7 @@ function EmployeeDirectory() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null)
 
   // Derived on every render from state, so it can never get out of sync.
-  const normalizedSearch = searchText.trim().toLowerCase()
-  const filteredEmployees = employees.filter((employee) => {
-    const matchesName = employee.name.toLowerCase().includes(normalizedSearch)
-    const matchesDepartment =
-      selectedDepartment === '' || employee.department === selectedDepartment
-    return matchesName && matchesDepartment
-  })
+  const filteredEmployees = filterEmployees(employees, searchText, selectedDepartment)
 
   // Look in the filtered list, so a selected employee who gets filtered out
   // is no longer shown in the details panel.

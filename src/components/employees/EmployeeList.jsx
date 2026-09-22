@@ -1,9 +1,10 @@
+import StatusMessage from '../common/StatusMessage.jsx'
 import EmployeeCard from './EmployeeCard.jsx'
 import './EmployeeList.css'
 
 function EmployeeList({ employees, selectedEmployeeId, onSelectEmployee }) {
   if (employees.length === 0) {
-    return <p className="employee-list-empty">No employees match your search.</p>
+    return <StatusMessage type="empty">No employees match your search.</StatusMessage>
   }
 
   return (

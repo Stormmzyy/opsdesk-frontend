@@ -40,12 +40,3 @@
   padding: 0;
   list-style: none;
 }
-
-.ticket-column__empty {
-  margin: 0;
-  padding: 24px 12px;
-  border: 2px dashed var(--border);
-  border-radius: 10px;
-  font-size: 0.875rem;
-  text-align: center;
-}

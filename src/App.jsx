@@ -1,14 +1,14 @@
-import EmployeeDirectory from './components/EmployeeDirectory.jsx'
-import TicketBoard from './components/TicketBoard.jsx'
-import UserDirectory from './components/UserDirectory.jsx'
+import EmployeesPage from './pages/EmployeesPage.jsx'
+import TicketsPage from './pages/TicketsPage.jsx'
+import UsersPage from './pages/UsersPage.jsx'
 
 function App() {
   // Temporary stacked layout; a proper page layout comes later.
   return (
     <>
-      <EmployeeDirectory />
-      <TicketBoard />
-      <UserDirectory />
+      <EmployeesPage />
+      <TicketsPage />
+      <UsersPage />
     </>
   )
 }

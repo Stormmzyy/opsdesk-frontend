@@ -1,3 +1,4 @@
+import StatusMessage from '../common/StatusMessage.jsx'
 import TicketCard from './TicketCard.jsx'
 import './TicketColumn.css'
 
@@ -12,7 +13,9 @@ function TicketColumn({ status, tickets, onMoveTicket }) {
       </header>
 
       {tickets.length === 0 ? (
-        <p className="ticket-column__empty">No tickets here right now.</p>
+        <StatusMessage type="empty" compact>
+          No tickets here right now.
+        </StatusMessage>
       ) : (
         <ul className="ticket-column__list">
           {tickets.map((ticket) => (
