@@ -8,6 +8,8 @@ function UserDirectory() {
   const [users, setUsers] = useState([])
   // One value describes the request: 'loading' | 'success' | 'empty' | 'error'
   const [status, setStatus] = useState('loading')
+  // Bumping this number re-runs the effect below, which fetches again.
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     // Lets us cancel the request if the component unmounts before it finishes.
@@ -36,9 +38,14 @@ function UserDirectory() {
 
     loadUsers()
 
-    // Cleanup: runs when the component unmounts.
+    // Cleanup: runs when the component unmounts, or before a retry re-runs this.
     return () => controller.abort()
-  }, [])
+  }, [retryCount])
+
+  function handleRetry() {
+    setStatus('loading')
+    setRetryCount((count) => count + 1)
+  }
 
   return (
     <section className="user-directory">
@@ -53,6 +60,13 @@ function UserDirectory() {
       {status === 'error' && (
         <div className="user-directory__message" role="alert">
           <p>Sorry, we couldn't load users. Check your connection.</p>
+          <button
+            type="button"
+            className="user-directory__retry"
+            onClick={handleRetry}
+          >
+            Retry
+          </button>
         </div>
       )}
 

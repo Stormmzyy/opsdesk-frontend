@@ -32,3 +32,19 @@
 .user-directory__message p {
   margin: 0;
 }
+
+.user-directory__retry {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.user-directory__retry:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
