@@ -27,3 +27,17 @@ export function getNextStatus(currentStatus) {
   }
   return TICKET_STATUSES[currentIndex + 1] ?? null
 }
+
+// Statuses that mean the work is finished.
+const DONE_STATUSES = ['RESOLVED', 'CLOSED']
+
+// "Open" means the ticket still needs work: it's Open or In progress.
+export function isOpenTicket(ticket) {
+  return !DONE_STATUSES.includes(ticket.status)
+}
+
+// Turns a status value like 'IN_PROGRESS' into its label, 'In progress'.
+export function getStatusLabel(statusValue) {
+  const status = TICKET_STATUSES.find((item) => item.value === statusValue)
+  return status ? status.label : statusValue
+}
