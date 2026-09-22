@@ -24,7 +24,9 @@ function EmployeeDirectory() {
     return matchesName && matchesDepartment
   })
 
-  const selectedEmployee = employees.find(
+  // Look in the filtered list, so a selected employee who gets filtered out
+  // is no longer shown in the details panel.
+  const selectedEmployee = filteredEmployees.find(
     (employee) => employee.id === selectedEmployeeId,
   )
 
