@@ -1,4 +1,4 @@
-import EmployeeDirectory from './components/EmployeeDirectory.jsx'
+import EmployeeDirectory from './components/employees/EmployeeDirectory.jsx'
 import TicketBoard from './components/TicketBoard.jsx'
 import UserDirectory from './components/UserDirectory.jsx'
 
