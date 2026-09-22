@@ -1,4 +1,5 @@
 import { useFetch } from '../hooks/useFetch.js'
+import PageHeader from '../components/common/PageHeader.jsx'
 import StatusMessage from '../components/common/StatusMessage.jsx'
 import UserList from '../components/users/UserList.jsx'
 import './UsersPage.css'
@@ -10,7 +11,10 @@ function UsersPage() {
 
   return (
     <section className="users-page">
-      <h2>Users</h2>
+      <PageHeader
+        title="Users"
+        description="People loaded live from the JSONPlaceholder API."
+      />
 
       {status === 'loading' && (
         <StatusMessage type="loading">Loading users…</StatusMessage>

@@ -27,7 +27,7 @@ function EmployeeDirectory() {
   return (
     <div className="employee-directory">
       <header className="employee-directory__header">
-        <h1>Employee Directory</h1>
+        <h2>Employee Directory</h2>
       </header>
 
       <div className="employee-directory__filters">

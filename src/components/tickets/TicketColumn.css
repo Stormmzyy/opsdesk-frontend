@@ -15,7 +15,7 @@
   justify-content: space-between;
 }
 
-.ticket-column__header h3 {
+.ticket-column__header h2 {
   margin: 0;
   color: var(--text-heading);
   font-size: 1rem;

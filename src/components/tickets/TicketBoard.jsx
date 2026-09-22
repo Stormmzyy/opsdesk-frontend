@@ -6,9 +6,7 @@ import './TicketBoard.css'
 // onMoveTicket down to each card.
 function TicketBoard({ tickets, onMoveTicket }) {
   return (
-    <section className="ticket-board">
-      <h2>Ticket Board</h2>
-
+    <section className="ticket-board" aria-label="Ticket board">
       <div className="ticket-board__columns">
         {TICKET_STATUSES.map((status) => (
           <TicketColumn

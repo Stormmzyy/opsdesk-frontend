@@ -8,7 +8,7 @@ function TicketColumn({ status, tickets, onMoveTicket }) {
   return (
     <section className="ticket-column" aria-labelledby={headingId}>
       <header className="ticket-column__header">
-        <h3 id={headingId}>{status.label}</h3>
+        <h2 id={headingId}>{status.label}</h2>
         <span className="ticket-column__count">{tickets.length}</span>
       </header>
 

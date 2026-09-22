@@ -4,10 +4,6 @@
   padding: 32px 16px;
 }
 
-.ticket-board h2 {
-  margin: 0 0 24px;
-}
-
 /* Narrow screens: columns stack on top of each other. */
 .ticket-board__columns {
   display: grid;
