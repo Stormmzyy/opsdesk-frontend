@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { tickets as initialTickets } from '../../data/tickets.js'
-import { TICKET_STATUSES } from '../../data/ticketStatuses.js'
+import { TICKET_STATUSES } from '../../utils/ticketStatus.js'
 import TicketColumn from './TicketColumn.jsx'
 import './TicketBoard.css'
 
