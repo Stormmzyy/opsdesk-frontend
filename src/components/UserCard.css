@@ -1,0 +1,42 @@
+.user-card {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.user-card__name {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 1.05rem;
+}
+
+.user-card__username {
+  margin: 2px 0 12px;
+  color: var(--accent);
+  font-size: 0.875rem;
+}
+
+.user-card__details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.user-card__details dt {
+  font-weight: 600;
+}
+
+.user-card__details dd {
+  margin: 0;
+  color: var(--text-heading);
+  overflow-wrap: anywhere;
+}
+
+.user-card__details a {
+  color: var(--accent);
+}
