@@ -10,6 +10,16 @@
   --accent-border: rgba(109, 40, 217, 0.5);
   --on-accent: #ffffff;
 
+  /* Priority badge colours: a soft background with a strong text colour. */
+  --priority-low-bg: #e5e7eb;
+  --priority-low-text: #374151;
+  --priority-medium-bg: #dbeafe;
+  --priority-medium-text: #1e40af;
+  --priority-high-bg: #ffedd5;
+  --priority-high-text: #9a3412;
+  --priority-urgent-bg: #fee2e2;
+  --priority-urgent-text: #991b1b;
+
   color-scheme: light dark;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
@@ -28,6 +38,15 @@
     --accent-bg: rgba(167, 139, 250, 0.15);
     --accent-border: rgba(167, 139, 250, 0.5);
     --on-accent: #111217;
+
+    --priority-low-bg: #2e303a;
+    --priority-low-text: #d1d5db;
+    --priority-medium-bg: #1e3a5f;
+    --priority-medium-text: #bfdbfe;
+    --priority-high-bg: #4a2a12;
+    --priority-high-text: #fed7aa;
+    --priority-urgent-bg: #4c1d1d;
+    --priority-urgent-text: #fecaca;
   }
 }
 
