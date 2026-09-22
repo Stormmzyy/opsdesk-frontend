@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { tickets as initialTickets } from './data/tickets.js'
+import DashboardPage from './pages/DashboardPage.jsx'
 import EmployeesPage from './pages/EmployeesPage.jsx'
 import TicketsPage from './pages/TicketsPage.jsx'
 import UsersPage from './pages/UsersPage.jsx'
@@ -21,6 +22,7 @@ function App() {
   // Temporary stacked layout; a proper page layout comes later.
   return (
     <>
+      <DashboardPage tickets={tickets} />
       <EmployeesPage />
       <TicketsPage tickets={tickets} onMoveTicket={moveTicket} />
       <UsersPage />

@@ -1,0 +1,14 @@
+.dashboard-section {
+  margin-bottom: 32px;
+}
+
+.dashboard-section h2 {
+  margin: 0 0 12px;
+  font-size: 1.125rem;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
