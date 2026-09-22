@@ -50,8 +50,36 @@
   color: var(--priority-urgent-text);
 }
 
+.ticket-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ticket-card__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+}
+
+.ticket-card__status select {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-heading);
+  font: inherit;
+}
+
+.ticket-card__status select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .ticket-card__move {
-  align-self: flex-start;
   padding: 6px 12px;
   border: 1px solid var(--accent-border);
   border-radius: 8px;

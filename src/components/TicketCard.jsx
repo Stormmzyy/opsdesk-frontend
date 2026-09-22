@@ -1,4 +1,8 @@
-import { TICKET_PRIORITY_LABELS, getNextStatus } from '../data/ticketStatuses.js'
+import {
+  TICKET_STATUSES,
+  TICKET_PRIORITY_LABELS,
+  getNextStatus,
+} from '../data/ticketStatuses.js'
 import './TicketCard.css'
 
 function TicketCard({ ticket, onMoveTicket }) {
@@ -18,15 +22,32 @@ function TicketCard({ ticket, onMoveTicket }) {
         <span className="ticket-card__team">{ticket.team}</span>
       </div>
 
-      {nextStatus && (
-        <button
-          type="button"
-          className="ticket-card__move"
-          onClick={() => onMoveTicket(ticket.id, nextStatus.value)}
-        >
-          Move to {nextStatus.label}
-        </button>
-      )}
+      <div className="ticket-card__actions">
+        {nextStatus && (
+          <button
+            type="button"
+            className="ticket-card__move"
+            onClick={() => onMoveTicket(ticket.id, nextStatus.value)}
+          >
+            Move to {nextStatus.label}
+          </button>
+        )}
+
+        {/* Wrapping the select in its label links them without needing an id. */}
+        <label className="ticket-card__status">
+          Status
+          <select
+            value={ticket.status}
+            onChange={(event) => onMoveTicket(ticket.id, event.target.value)}
+          >
+            {TICKET_STATUSES.map((status) => (
+              <option key={status.value} value={status.value}>
+                {status.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
     </article>
   )
 }
