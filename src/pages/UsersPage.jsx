@@ -1,4 +1,5 @@
 import { useFetch } from '../hooks/useFetch.js'
+import StatusMessage from '../components/common/StatusMessage.jsx'
 import UserList from '../components/users/UserList.jsx'
 import './UsersPage.css'
 
@@ -12,23 +13,16 @@ function UsersPage() {
       <h2>Users</h2>
 
       {status === 'loading' && (
-        <p className="users-page__message" role="status">
-          Loading users…
-        </p>
+        <StatusMessage type="loading">Loading users…</StatusMessage>
       )}
 
       {status === 'error' && (
-        <div className="users-page__message" role="alert">
-          <p>Sorry, we couldn't load users. Check your connection.</p>
-          <button type="button" className="users-page__retry" onClick={retry}>
-            Retry
-          </button>
-        </div>
+        <StatusMessage type="error" onRetry={retry}>
+          Sorry, we couldn't load users. Check your connection.
+        </StatusMessage>
       )}
 
-      {status === 'empty' && (
-        <p className="users-page__message">No users found.</p>
-      )}
+      {status === 'empty' && <StatusMessage type="empty">No users found.</StatusMessage>}
 
       {status === 'success' && <UserList users={users} />}
     </section>

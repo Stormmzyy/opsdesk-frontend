@@ -7,35 +7,3 @@
 .users-page h2 {
   margin: 0 0 24px;
 }
-
-.users-page__message {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin: 0;
-  padding: 40px 16px;
-  border: 2px dashed var(--border);
-  border-radius: 12px;
-  text-align: center;
-}
-
-.users-page__message p {
-  margin: 0;
-}
-
-.users-page__retry {
-  padding: 8px 18px;
-  border: none;
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--on-accent);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.users-page__retry:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-}

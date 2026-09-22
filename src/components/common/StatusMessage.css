@@ -1,0 +1,36 @@
+.status-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 16px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.status-message p {
+  margin: 0;
+}
+
+.status-message--compact {
+  padding: 24px 12px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+}
+
+.status-message__retry {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.status-message__retry:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
