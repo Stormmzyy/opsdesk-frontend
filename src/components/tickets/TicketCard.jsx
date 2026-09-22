@@ -1,8 +1,5 @@
-import {
-  TICKET_STATUSES,
-  TICKET_PRIORITY_LABELS,
-  getNextStatus,
-} from '../../utils/ticketStatus.js'
+import { TICKET_STATUSES, getNextStatus } from '../../utils/ticketStatus.js'
+import PriorityBadge from './PriorityBadge.jsx'
 import './TicketCard.css'
 
 function TicketCard({ ticket, onMoveTicket }) {
@@ -14,11 +11,7 @@ function TicketCard({ ticket, onMoveTicket }) {
       <p className="ticket-card__title">{ticket.title}</p>
 
       <div className="ticket-card__meta">
-        <span
-          className={`priority-badge priority-badge--${ticket.priority.toLowerCase()}`}
-        >
-          {TICKET_PRIORITY_LABELS[ticket.priority]}
-        </span>
+        <PriorityBadge priority={ticket.priority} />
         <span className="ticket-card__team">{ticket.team}</span>
       </div>
 
