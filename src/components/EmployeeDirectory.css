@@ -1,0 +1,65 @@
+.employee-directory {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 16px;
+}
+
+.employee-directory__header h1 {
+  margin: 0 0 24px;
+}
+
+.employee-directory__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.filter-field {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-field label {
+  color: var(--text-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.filter-field input,
+.filter-field select {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-heading);
+  font: inherit;
+}
+
+.filter-field input:focus-visible,
+.filter-field select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Narrow screens: one column, so the details panel sits below the list. */
+.employee-directory__content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Wide screens: the details panel sits beside the list. */
+@media (min-width: 900px) {
+  .employee-directory__content {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .employee-details {
+    position: sticky;
+    top: 24px;
+  }
+}
