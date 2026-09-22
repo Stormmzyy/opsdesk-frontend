@@ -8,6 +8,7 @@
 }
 
 .employee-list-empty {
+  margin: 0;
   padding: 40px 16px;
   border: 2px dashed var(--border);
   border-radius: 12px;
