@@ -1,7 +1,7 @@
 import { useFetch } from '../hooks/useFetch.js'
+import PageHeader from '../components/common/PageHeader.jsx'
 import StatusMessage from '../components/common/StatusMessage.jsx'
 import UserList from '../components/users/UserList.jsx'
-import './UsersPage.css'
 
 const USERS_API_URL = 'https://jsonplaceholder.typicode.com/users'
 
@@ -9,8 +9,11 @@ function UsersPage() {
   const { data: users, status, retry } = useFetch(USERS_API_URL)
 
   return (
-    <section className="users-page">
-      <h2>Users</h2>
+    <>
+      <PageHeader
+        title="Users"
+        description="People loaded live from the JSONPlaceholder API."
+      />
 
       {status === 'loading' && (
         <StatusMessage type="loading">Loading users…</StatusMessage>
@@ -25,7 +28,7 @@ function UsersPage() {
       {status === 'empty' && <StatusMessage type="empty">No users found.</StatusMessage>}
 
       {status === 'success' && <UserList users={users} />}
-    </section>
+    </>
   )
 }
 

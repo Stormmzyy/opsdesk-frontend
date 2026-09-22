@@ -25,9 +25,9 @@ function EmployeeDirectory() {
   )
 
   return (
-    <div className="employee-directory">
+    <section aria-labelledby="employee-directory-heading">
       <header className="employee-directory__header">
-        <h1>Employee Directory</h1>
+        <h2 id="employee-directory-heading">Employee Directory</h2>
       </header>
 
       <div className="employee-directory__filters">
@@ -47,7 +47,7 @@ function EmployeeDirectory() {
         />
         <EmployeeDetails employee={selectedEmployee} />
       </div>
-    </div>
+    </section>
   )
 }
 
