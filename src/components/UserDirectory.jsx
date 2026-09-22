@@ -6,7 +6,7 @@ const USERS_API_URL = 'https://jsonplaceholder.typicode.com/users'
 
 function UserDirectory() {
   const [users, setUsers] = useState([])
-  // One value describes the request: 'loading' | 'success' | 'error'
+  // One value describes the request: 'loading' | 'success' | 'empty' | 'error'
   const [status, setStatus] = useState('loading')
 
   useEffect(() => {
@@ -24,7 +24,7 @@ function UserDirectory() {
 
         const data = await response.json()
         setUsers(data)
-        setStatus('success')
+        setStatus(data.length === 0 ? 'empty' : 'success')
       } catch (error) {
         // We cancelled on purpose, so the component is gone: do nothing.
         if (error.name === 'AbortError') {
@@ -54,6 +54,10 @@ function UserDirectory() {
         <div className="user-directory__message" role="alert">
           <p>Sorry, we couldn't load users. Check your connection.</p>
         </div>
+      )}
+
+      {status === 'empty' && (
+        <p className="user-directory__message">No users found.</p>
       )}
 
       {status === 'success' && (
