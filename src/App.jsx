@@ -1,6 +1,6 @@
 import EmployeesPage from './pages/EmployeesPage.jsx'
 import TicketsPage from './pages/TicketsPage.jsx'
-import UserDirectory from './components/users/UserDirectory.jsx'
+import UsersPage from './pages/UsersPage.jsx'
 
 function App() {
   // Temporary stacked layout; a proper page layout comes later.
@@ -8,7 +8,7 @@ function App() {
     <>
       <EmployeesPage />
       <TicketsPage />
-      <UserDirectory />
+      <UsersPage />
     </>
   )
 }
