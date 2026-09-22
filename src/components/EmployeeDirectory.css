@@ -8,6 +8,42 @@
   margin: 0 0 24px;
 }
 
+.employee-directory__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.filter-field {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-field label {
+  color: var(--text-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.filter-field input,
+.filter-field select {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-heading);
+  font: inherit;
+}
+
+.filter-field input:focus-visible,
+.filter-field select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
 /* Narrow screens: one column, so the details panel sits below the list. */
 .employee-directory__content {
   display: grid;
