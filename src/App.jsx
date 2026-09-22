@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { tickets as initialTickets } from './data/tickets.js'
 import DashboardPage from './pages/DashboardPage.jsx'
-import EmployeesPage from './pages/EmployeesPage.jsx'
+import TeamsPage from './pages/TeamsPage.jsx'
 import TicketsPage from './pages/TicketsPage.jsx'
 import UsersPage from './pages/UsersPage.jsx'
 
@@ -23,7 +23,7 @@ function App() {
   return (
     <>
       <DashboardPage tickets={tickets} />
-      <EmployeesPage />
+      <TeamsPage tickets={tickets} />
       <TicketsPage tickets={tickets} onMoveTicket={moveTicket} />
       <UsersPage />
     </>
