@@ -1,5 +1,5 @@
 import { projects, PROJECT_STATUS_LABELS } from '../data/projects.ts'
-import PageHeader from '../components/common/PageHeader.jsx'
+import PageHeader from '../components/common/PageHeader.tsx'
 import './ProjectsPage.css'
 
 function ProjectsPage() {

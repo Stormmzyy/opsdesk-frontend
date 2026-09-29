@@ -1,5 +1,11 @@
 // Shared types used across the app.
 
+// One link in the main navigation.
+export interface NavPage {
+  path: string
+  label: string
+}
+
 // A union type: a TicketStatus can only be one of these exact strings,
 // so a typo like 'CLOSD' is caught before the app even runs.
 export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'

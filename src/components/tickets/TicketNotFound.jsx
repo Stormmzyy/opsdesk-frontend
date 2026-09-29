@@ -1,5 +1,5 @@
-import BackLink from '../common/BackLink.jsx'
-import PageHeader from '../common/PageHeader.jsx'
+import BackLink from '../common/BackLink.tsx'
+import PageHeader from '../common/PageHeader.tsx'
 
 // Shown instead of a ticket page when no ticket matches the id in the URL.
 function TicketNotFound({ id }) {

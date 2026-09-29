@@ -1,8 +1,15 @@
+import type { ReactNode } from 'react'
 import './PageHeader.css'
+
+interface PageHeaderProps {
+  title: string
+  description?: string
+  children?: ReactNode
+}
 
 // The title at the top of every page. Each page has exactly one <h1>.
 // children (optional): action buttons or links shown beside the title.
-function PageHeader({ title, description, children }) {
+function PageHeader({ title, description, children }: PageHeaderProps) {
   return (
     <header className="page-header">
       <div className="page-header__text">

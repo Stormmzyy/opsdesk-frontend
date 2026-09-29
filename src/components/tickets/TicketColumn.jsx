@@ -1,4 +1,4 @@
-import StatusMessage from '../common/StatusMessage.jsx'
+import StatusMessage from '../common/StatusMessage.tsx'
 import TicketCard from './TicketCard.jsx'
 import './TicketColumn.css'
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { tickets as initialTickets } from './data/tickets.ts'
-import Layout from './components/common/Layout.jsx'
+import Layout from './components/common/Layout.tsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import EditTicketPage from './pages/EditTicketPage.jsx'
 import NewTicketPage from './pages/NewTicketPage.jsx'

@@ -1,9 +1,9 @@
 import { employees } from '../data/employees.ts'
 import { getDepartments } from '../utils/employeeHelpers.ts'
 import { TICKET_STATUSES, getStatusLabel, isOpenTicket } from '../utils/ticketStatus.ts'
-import PageHeader from '../components/common/PageHeader.jsx'
-import StatCard from '../components/common/StatCard.jsx'
-import StatusMessage from '../components/common/StatusMessage.jsx'
+import PageHeader from '../components/common/PageHeader.tsx'
+import StatCard from '../components/common/StatCard.tsx'
+import StatusMessage from '../components/common/StatusMessage.tsx'
 import PriorityBadge from '../components/tickets/PriorityBadge.jsx'
 import './DashboardPage.css'
 

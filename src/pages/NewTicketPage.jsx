@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { employees } from '../data/employees.ts'
 import { getDepartments } from '../utils/employeeHelpers.ts'
-import PageHeader from '../components/common/PageHeader.jsx'
+import PageHeader from '../components/common/PageHeader.tsx'
 import TicketForm from '../components/tickets/TicketForm.jsx'
 
 // The starting values for a brand new ticket: empty text, medium priority,

@@ -1,4 +1,4 @@
-import StatusMessage from '../common/StatusMessage.jsx'
+import StatusMessage from '../common/StatusMessage.tsx'
 import EmployeeCard from './EmployeeCard.jsx'
 import './EmployeeList.css'
 
