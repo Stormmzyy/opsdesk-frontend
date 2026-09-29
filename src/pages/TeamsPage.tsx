@@ -1,10 +1,15 @@
+import type { Ticket } from '../types.ts'
 import { employees } from '../data/employees.ts'
 import { getTeamSummaries } from '../utils/teamHelpers.ts'
 import PageHeader from '../components/common/PageHeader.tsx'
 import EmployeeDirectory from '../components/employees/EmployeeDirectory.tsx'
 import './TeamsPage.css'
 
-function TeamsPage({ tickets }) {
+interface TeamsPageProps {
+  tickets: Ticket[]
+}
+
+function TeamsPage({ tickets }: TeamsPageProps) {
   // Derived from the data on every render, so moving a ticket updates the counts.
   const teamSummaries = getTeamSummaries(employees, tickets)
 

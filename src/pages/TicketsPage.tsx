@@ -1,8 +1,14 @@
 import { Link } from 'react-router-dom'
+import type { MoveTicketHandler, Ticket } from '../types.ts'
 import PageHeader from '../components/common/PageHeader.tsx'
 import TicketBoard from '../components/tickets/TicketBoard.tsx'
 
-function TicketsPage({ tickets, onMoveTicket }) {
+interface TicketsPageProps {
+  tickets: Ticket[]
+  onMoveTicket: MoveTicketHandler
+}
+
+function TicketsPage({ tickets, onMoveTicket }: TicketsPageProps) {
   return (
     <>
       <PageHeader

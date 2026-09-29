@@ -1,3 +1,4 @@
+import type { Priority, Ticket } from '../types.ts'
 import { employees } from '../data/employees.ts'
 import { getDepartments } from '../utils/employeeHelpers.ts'
 import { TICKET_STATUSES, getStatusLabel, isOpenTicket } from '../utils/ticketStatus.ts'
@@ -8,11 +9,15 @@ import PriorityBadge from '../components/tickets/PriorityBadge.tsx'
 import './DashboardPage.css'
 
 // The priorities that need attention first, most important first.
-const TOP_PRIORITIES = ['URGENT', 'HIGH']
+const TOP_PRIORITIES: Priority[] = ['URGENT', 'HIGH']
 
 // Every number here is worked out from the data on each render,
 // so it updates straight away when a ticket moves.
-function DashboardPage({ tickets }) {
+interface DashboardPageProps {
+  tickets: Ticket[]
+}
+
+function DashboardPage({ tickets }: DashboardPageProps) {
   const teamCount = getDepartments(employees).length
 
   // Open tickets that are urgent or high, with urgent ones listed first.

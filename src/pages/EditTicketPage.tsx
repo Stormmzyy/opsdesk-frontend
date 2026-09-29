@@ -1,25 +1,36 @@
 import { useNavigate, useParams } from 'react-router-dom'
+import type { Ticket, TicketFormValues } from '../types.ts'
+import { findTicketByParam } from '../utils/ticketHelpers.ts'
 import BackLink from '../components/common/BackLink.tsx'
 import PageHeader from '../components/common/PageHeader.tsx'
 import TicketForm from '../components/tickets/TicketForm.tsx'
 import TicketNotFound from '../components/tickets/TicketNotFound.tsx'
 
 // Edits the ticket chosen by the :id part of the URL, e.g. /tickets/3/edit.
-function EditTicketPage({ tickets, onUpdateTicket }) {
+interface EditTicketPageProps {
+  tickets: Ticket[]
+  onUpdateTicket: (ticketId: number, values: TicketFormValues) => void
+}
+
+function EditTicketPage({ tickets, onUpdateTicket }: EditTicketPageProps) {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  // URL params are strings and ticket ids are numbers, so convert first.
-  const ticket = tickets.find((item) => item.id === Number(id))
+  // undefined when no ticket matches, e.g. /tickets/999/edit.
+  const ticket = findTicketByParam(tickets, id)
 
   if (!ticket) {
     return <TicketNotFound id={id} />
   }
 
-  const detailPath = `/tickets/${ticket.id}`
+  // Past the check above, TypeScript knows ticket is defined here, but not
+  // inside functions declared below (they could in theory run later).
+  // Copying the id into a constant keeps it simple and safe.
+  const ticketId = ticket.id
+  const detailPath = `/tickets/${ticketId}`
 
-  function handleSave(values) {
-    onUpdateTicket(ticket.id, values)
+  function handleSave(values: TicketFormValues) {
+    onUpdateTicket(ticketId, values)
     navigate(detailPath)
   }
 

@@ -1,4 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
+import type { Ticket } from '../types.ts'
+import { findTicketByParam } from '../utils/ticketHelpers.ts'
 import { getStatusLabel } from '../utils/ticketStatus.ts'
 import BackLink from '../components/common/BackLink.tsx'
 import PageHeader from '../components/common/PageHeader.tsx'
@@ -7,13 +9,16 @@ import TicketNotFound from '../components/tickets/TicketNotFound.tsx'
 import './TicketDetailPage.css'
 
 // Shows one ticket, chosen by the :id part of the URL, e.g. /tickets/3.
-function TicketDetailPage({ tickets }) {
+interface TicketDetailPageProps {
+  tickets: Ticket[]
+}
+
+function TicketDetailPage({ tickets }: TicketDetailPageProps) {
   // useParams reads the named parts of the URL. For /tickets/3, id is "3".
   const { id } = useParams()
 
-  // URL params are always strings, but ticket ids are numbers, so convert first.
-  // find() returns undefined when nothing matches, e.g. /tickets/999.
-  const ticket = tickets.find((item) => item.id === Number(id))
+  // undefined when no ticket matches, e.g. /tickets/999.
+  const ticket = findTicketByParam(tickets, id)
 
   if (!ticket) {
     return <TicketNotFound id={id} />
