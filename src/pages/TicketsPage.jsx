@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import PageHeader from '../components/common/PageHeader.jsx'
 import TicketBoard from '../components/tickets/TicketBoard.jsx'
 
@@ -7,7 +8,12 @@ function TicketsPage({ tickets, onMoveTicket }) {
       <PageHeader
         title="Tickets"
         description="Move tickets through their statuses as work progresses."
-      />
+      >
+        {/* A link, not a button, because it takes you to another page. */}
+        <Link to="/tickets/new" className="button button--primary">
+          New ticket
+        </Link>
+      </PageHeader>
       <TicketBoard tickets={tickets} onMoveTicket={onMoveTicket} />
     </>
   )
