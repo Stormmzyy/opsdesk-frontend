@@ -8,7 +8,7 @@ interface TicketBoardProps {
   onMoveTicket: MoveTicketHandler
 }
 
-// The tickets state lives in App.jsx. The board just displays it and passes
+// The tickets state lives in the useTickets hook. The board just displays it and passes
 // onMoveTicket down to each card.
 function TicketBoard({ tickets, onMoveTicket }: TicketBoardProps) {
   return (
