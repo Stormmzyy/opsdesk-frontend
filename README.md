@@ -13,6 +13,8 @@ OpsDesk is a small internal operations dashboard built during an internship proj
 | **Search, filter and pagination** | The Tickets page has a list view with a search box (title and description, case-insensitive), a status filter, and pages of 10 tickets. |
 | **Saved tickets** | Tickets are saved in the browser's localStorage, so changes survive a page refresh. Use **Reset to sample data** on the Tickets page to go back to the original tickets. |
 
+The reasoning behind the less obvious design choices is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ## Routes
 
 | URL | Page |
