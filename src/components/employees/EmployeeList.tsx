@@ -1,4 +1,4 @@
-import StatusMessage from '../common/StatusMessage.tsx'
+import StatusMessage from '../StatusMessage.tsx'
 import EmployeeCard from './EmployeeCard.tsx'
 import type { Employee } from '../../types.ts'
 import './EmployeeList.css'

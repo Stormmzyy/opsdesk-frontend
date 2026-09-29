@@ -1,7 +1,7 @@
 import type { User } from '../types.ts'
 import { useFetch } from '../hooks/useFetch.ts'
-import PageHeader from '../components/common/PageHeader.tsx'
-import StatusMessage from '../components/common/StatusMessage.tsx'
+import PageHeader from '../components/PageHeader.tsx'
+import StatusMessage from '../components/StatusMessage.tsx'
 import UserList from '../components/users/UserList.tsx'
 
 const USERS_API_URL = 'https://jsonplaceholder.typicode.com/users'

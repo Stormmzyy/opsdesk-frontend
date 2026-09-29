@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import PageHeader from '../components/common/PageHeader.tsx'
+import PageHeader from '../components/PageHeader.tsx'
 
 // Shown by the catch-all "*" route when no other route matches the URL.
 function NotFoundPage() {
