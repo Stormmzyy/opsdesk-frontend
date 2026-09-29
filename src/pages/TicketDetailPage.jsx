@@ -2,8 +2,8 @@ import { Link, useParams } from 'react-router-dom'
 import { getStatusLabel } from '../utils/ticketStatus.ts'
 import BackLink from '../components/common/BackLink.tsx'
 import PageHeader from '../components/common/PageHeader.tsx'
-import PriorityBadge from '../components/tickets/PriorityBadge.jsx'
-import TicketNotFound from '../components/tickets/TicketNotFound.jsx'
+import PriorityBadge from '../components/tickets/PriorityBadge.tsx'
+import TicketNotFound from '../components/tickets/TicketNotFound.tsx'
 import './TicketDetailPage.css'
 
 // Shows one ticket, chosen by the :id part of the URL, e.g. /tickets/3.

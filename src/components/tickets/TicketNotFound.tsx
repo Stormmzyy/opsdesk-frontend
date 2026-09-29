@@ -1,8 +1,13 @@
 import BackLink from '../common/BackLink.tsx'
 import PageHeader from '../common/PageHeader.tsx'
 
+interface TicketNotFoundProps {
+  // The id from the URL. useParams types it as string | undefined.
+  id: string | undefined
+}
+
 // Shown instead of a ticket page when no ticket matches the id in the URL.
-function TicketNotFound({ id }) {
+function TicketNotFound({ id }: TicketNotFoundProps) {
   return (
     <>
       <BackLink to="/tickets">Back to tickets</BackLink>

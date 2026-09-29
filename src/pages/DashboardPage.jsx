@@ -4,7 +4,7 @@ import { TICKET_STATUSES, getStatusLabel, isOpenTicket } from '../utils/ticketSt
 import PageHeader from '../components/common/PageHeader.tsx'
 import StatCard from '../components/common/StatCard.tsx'
 import StatusMessage from '../components/common/StatusMessage.tsx'
-import PriorityBadge from '../components/tickets/PriorityBadge.jsx'
+import PriorityBadge from '../components/tickets/PriorityBadge.tsx'
 import './DashboardPage.css'
 
 // The priorities that need attention first, most important first.

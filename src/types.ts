@@ -23,6 +23,9 @@ export interface Ticket {
   team: string
 }
 
+// The function a ticket card calls to change a ticket's status.
+export type MoveTicketHandler = (ticketId: number, newStatus: TicketStatus) => void
+
 // The fields the ticket form edits. status is optional ("?") because the
 // create form doesn't show it: new tickets always start as OPEN.
 export interface TicketFormValues {

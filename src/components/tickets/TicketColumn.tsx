@@ -1,8 +1,15 @@
 import StatusMessage from '../common/StatusMessage.tsx'
-import TicketCard from './TicketCard.jsx'
+import TicketCard from './TicketCard.tsx'
+import type { MoveTicketHandler, Ticket, TicketStatusOption } from '../../types.ts'
 import './TicketColumn.css'
 
-function TicketColumn({ status, tickets, onMoveTicket }) {
+interface TicketColumnProps {
+  status: TicketStatusOption
+  tickets: Ticket[]
+  onMoveTicket: MoveTicketHandler
+}
+
+function TicketColumn({ status, tickets, onMoveTicket }: TicketColumnProps) {
   const headingId = `ticket-column-${status.value}`
 
   return (

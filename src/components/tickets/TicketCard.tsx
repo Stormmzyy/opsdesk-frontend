@@ -1,11 +1,27 @@
+import type { ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { TICKET_STATUSES, getNextStatus } from '../../utils/ticketStatus.ts'
-import PriorityBadge from './PriorityBadge.jsx'
+import type { MoveTicketHandler, Ticket } from '../../types.ts'
+import { TICKET_STATUSES, getNextStatus, parseStatus } from '../../utils/ticketStatus.ts'
+import PriorityBadge from './PriorityBadge.tsx'
 import './TicketCard.css'
 
-function TicketCard({ ticket, onMoveTicket }) {
+interface TicketCardProps {
+  ticket: Ticket
+  onMoveTicket: MoveTicketHandler
+}
+
+function TicketCard({ ticket, onMoveTicket }: TicketCardProps) {
   // null when the ticket is CLOSED, which hides the move button below.
   const nextStatus = getNextStatus(ticket.status)
+
+  // The dropdown gives us a plain string, so turn it back into a TicketStatus
+  // first. It is always one of our options, but TypeScript can't know that.
+  function handleStatusChange(event: ChangeEvent<HTMLSelectElement>) {
+    const newStatus = parseStatus(event.target.value)
+    if (newStatus) {
+      onMoveTicket(ticket.id, newStatus)
+    }
+  }
 
   return (
     <article className="ticket-card">
@@ -36,7 +52,7 @@ function TicketCard({ ticket, onMoveTicket }) {
           Status
           <select
             value={ticket.status}
-            onChange={(event) => onMoveTicket(ticket.id, event.target.value)}
+            onChange={handleStatusChange}
           >
             {TICKET_STATUSES.map((status) => (
               <option key={status.value} value={status.value}>
