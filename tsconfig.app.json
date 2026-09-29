@@ -14,9 +14,6 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Lets .ts files import .js files that haven't been converted yet. */
-    "allowJs": true,
-
     /* Type checking */
     "strict": true,
     "noUnusedLocals": true,
