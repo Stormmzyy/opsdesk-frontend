@@ -1,5 +1,5 @@
 import { employees } from '../data/employees.ts'
-import { getTeamSummaries } from '../utils/teamHelpers.js'
+import { getTeamSummaries } from '../utils/teamHelpers.ts'
 import PageHeader from '../components/common/PageHeader.jsx'
 import EmployeeDirectory from '../components/employees/EmployeeDirectory.jsx'
 import './TeamsPage.css'

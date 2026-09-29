@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { employees } from '../../data/employees.ts'
-import { filterEmployees, getDepartments } from '../../utils/employeeHelpers.js'
+import { filterEmployees, getDepartments } from '../../utils/employeeHelpers.ts'
 import SearchBox from './SearchBox.jsx'
 import DepartmentFilter from './DepartmentFilter.jsx'
 import EmployeeList from './EmployeeList.jsx'

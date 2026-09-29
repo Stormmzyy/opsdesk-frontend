@@ -1,4 +1,4 @@
-import { getInitials } from '../../utils/employeeHelpers.js'
+import { getInitials } from '../../utils/employeeHelpers.ts'
 import './EmployeeCard.css'
 
 function EmployeeCard({ employee, isSelected, onSelect }) {
