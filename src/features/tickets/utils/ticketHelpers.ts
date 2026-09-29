@@ -1,4 +1,4 @@
-import type { Ticket } from '../types.ts'
+import type { Ticket } from '../../../types.ts'
 
 // Finds the ticket for the :id part of the URL, e.g. "3" in /tickets/3.
 // - useParams types the id as string | undefined, so we handle undefined.

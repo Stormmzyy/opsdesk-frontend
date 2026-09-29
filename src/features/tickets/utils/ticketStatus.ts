@@ -1,4 +1,4 @@
-import type { Priority, Ticket, TicketStatus, TicketStatusOption } from '../types.ts'
+import type { Priority, Ticket, TicketStatus, TicketStatusOption } from '../../../types.ts'
 
 // The single source of truth for ticket statuses.
 // The array order is the order of the columns on the board,

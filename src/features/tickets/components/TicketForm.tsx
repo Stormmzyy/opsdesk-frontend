@@ -9,9 +9,9 @@ import {
   TICKET_STATUSES,
   parsePriority,
   parseStatus,
-} from '../../../utils/ticketStatus.ts'
-import { hasErrors, validateTicket } from '../../../utils/ticketValidation.ts'
-import type { TicketFormErrors } from '../../../utils/ticketValidation.ts'
+} from '../utils/ticketStatus.ts'
+import { hasErrors, validateTicket } from '../utils/ticketValidation.ts'
+import type { TicketFormErrors } from '../utils/ticketValidation.ts'
 import './TicketForm.css'
 
 const TEAMS = getDepartments(employees)

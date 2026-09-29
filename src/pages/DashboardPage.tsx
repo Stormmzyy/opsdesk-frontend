@@ -1,7 +1,7 @@
 import type { Priority, Ticket } from '../types.ts'
 import { employees } from '../data/employees.ts'
 import { getDepartments } from '../utils/employeeHelpers.ts'
-import { TICKET_STATUSES, getStatusLabel, isOpenTicket } from '../utils/ticketStatus.ts'
+import { TICKET_STATUSES, getStatusLabel, isOpenTicket } from '../features/tickets/utils/ticketStatus.ts'
 import PageHeader from '../components/PageHeader.tsx'
 import StatCard from '../components/StatCard.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'

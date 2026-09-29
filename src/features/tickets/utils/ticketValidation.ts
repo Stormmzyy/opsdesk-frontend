@@ -1,4 +1,4 @@
-import type { TicketFormValues } from '../types.ts'
+import type { TicketFormValues } from '../../../types.ts'
 
 export const TITLE_MIN_LENGTH = 3
 
