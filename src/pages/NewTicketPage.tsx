@@ -3,7 +3,7 @@ import type { TicketFormValues } from '../types.ts'
 import { employees } from '../data/employees.ts'
 import { getDepartments } from '../utils/employeeHelpers.ts'
 import PageHeader from '../components/PageHeader.tsx'
-import TicketForm from '../components/tickets/TicketForm.tsx'
+import TicketForm from '../features/tickets/components/TicketForm.tsx'
 
 // The starting values for a brand new ticket: empty text, medium priority,
 // and the first team in the list.

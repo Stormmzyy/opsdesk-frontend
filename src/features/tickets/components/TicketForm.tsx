@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { employees } from '../../data/employees.ts'
-import type { TicketFormValues } from '../../types.ts'
-import { getDepartments } from '../../utils/employeeHelpers.ts'
+import { employees } from '../../../data/employees.ts'
+import type { TicketFormValues } from '../../../types.ts'
+import { getDepartments } from '../../../utils/employeeHelpers.ts'
 import {
   TICKET_PRIORITIES,
   TICKET_PRIORITY_LABELS,
   TICKET_STATUSES,
   parsePriority,
   parseStatus,
-} from '../../utils/ticketStatus.ts'
-import { hasErrors, validateTicket } from '../../utils/ticketValidation.ts'
-import type { TicketFormErrors } from '../../utils/ticketValidation.ts'
+} from '../../../utils/ticketStatus.ts'
+import { hasErrors, validateTicket } from '../../../utils/ticketValidation.ts'
+import type { TicketFormErrors } from '../../../utils/ticketValidation.ts'
 import './TicketForm.css'
 
 const TEAMS = getDepartments(employees)

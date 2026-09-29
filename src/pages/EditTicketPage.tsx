@@ -3,8 +3,8 @@ import type { Ticket, TicketFormValues } from '../types.ts'
 import { findTicketByParam } from '../utils/ticketHelpers.ts'
 import BackLink from '../components/BackLink.tsx'
 import PageHeader from '../components/PageHeader.tsx'
-import TicketForm from '../components/tickets/TicketForm.tsx'
-import TicketNotFound from '../components/tickets/TicketNotFound.tsx'
+import TicketForm from '../features/tickets/components/TicketForm.tsx'
+import TicketNotFound from '../features/tickets/components/TicketNotFound.tsx'
 
 // Edits the ticket chosen by the :id part of the URL, e.g. /tickets/3/edit.
 interface EditTicketPageProps {

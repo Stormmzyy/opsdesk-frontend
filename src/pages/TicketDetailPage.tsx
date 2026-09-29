@@ -4,8 +4,8 @@ import { findTicketByParam } from '../utils/ticketHelpers.ts'
 import { getStatusLabel } from '../utils/ticketStatus.ts'
 import BackLink from '../components/BackLink.tsx'
 import PageHeader from '../components/PageHeader.tsx'
-import PriorityBadge from '../components/tickets/PriorityBadge.tsx'
-import TicketNotFound from '../components/tickets/TicketNotFound.tsx'
+import PriorityBadge from '../features/tickets/components/PriorityBadge.tsx'
+import TicketNotFound from '../features/tickets/components/TicketNotFound.tsx'
 import './TicketDetailPage.css'
 
 // Shows one ticket, chosen by the :id part of the URL, e.g. /tickets/3.

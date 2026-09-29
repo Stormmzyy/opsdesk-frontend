@@ -1,7 +1,7 @@
 import type { ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
-import type { MoveTicketHandler, Ticket } from '../../types.ts'
-import { TICKET_STATUSES, getNextStatus, parseStatus } from '../../utils/ticketStatus.ts'
+import type { MoveTicketHandler, Ticket } from '../../../types.ts'
+import { TICKET_STATUSES, getNextStatus, parseStatus } from '../../../utils/ticketStatus.ts'
 import PriorityBadge from './PriorityBadge.tsx'
 import './TicketCard.css'
 

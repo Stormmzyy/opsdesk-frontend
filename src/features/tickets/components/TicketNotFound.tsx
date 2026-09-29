@@ -1,5 +1,5 @@
-import BackLink from '../BackLink.tsx'
-import PageHeader from '../PageHeader.tsx'
+import BackLink from '../../../components/BackLink.tsx'
+import PageHeader from '../../../components/PageHeader.tsx'
 
 interface TicketNotFoundProps {
   // The id from the URL. useParams types it as string | undefined.

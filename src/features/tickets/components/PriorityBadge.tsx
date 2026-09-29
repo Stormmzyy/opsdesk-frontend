@@ -1,5 +1,5 @@
-import { TICKET_PRIORITY_LABELS } from '../../utils/ticketStatus.ts'
-import type { Priority } from '../../types.ts'
+import { TICKET_PRIORITY_LABELS } from '../../../utils/ticketStatus.ts'
+import type { Priority } from '../../../types.ts'
 import './PriorityBadge.css'
 
 interface PriorityBadgeProps {
