@@ -12,6 +12,8 @@ export interface UseTicketsResult {
   // Returns the new ticket's id, so the page can go to it next.
   createTicket: (values: TicketFormValues) => number
   updateTicket: (ticketId: number, values: TicketFormValues) => void
+  // Throws away every change and goes back to the sample tickets.
+  resetTickets: () => void
 }
 
 // The list of tickets and every way to change it, kept together.
@@ -57,5 +59,10 @@ export function useTickets(): UseTicketsResult {
     )
   }
 
-  return { tickets, moveTicket, createTicket, updateTicket }
+  // Replacing the state also saves it, so the sample tickets are stored too.
+  function resetTickets() {
+    setTickets(sampleTickets)
+  }
+
+  return { tickets, moveTicket, createTicket, updateTicket, resetTickets }
 }
