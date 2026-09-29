@@ -1,8 +1,6 @@
-import { useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import type { NavPage } from './routes/navPages.ts'
-import type { Ticket, TicketFormValues, TicketStatus } from './features/tickets/types.ts'
-import { tickets as initialTickets } from './data/tickets.ts'
+import { useTickets } from './features/tickets/hooks/useTickets.ts'
 import Layout from './layouts/Layout.tsx'
 import DashboardPage from './pages/DashboardPage.tsx'
 import EditTicketPage from './pages/EditTicketPage.tsx'
@@ -24,41 +22,9 @@ const NAV_PAGES: NavPage[] = [
 ]
 
 function App() {
-  // Tickets live here, at the top, so every page sees the same up-to-date list
-  // and moves aren't lost when you switch pages.
-  const [tickets, setTickets] = useState<Ticket[]>(initialTickets)
-
-  // Builds a NEW array where only the matching ticket is replaced by a copy
-  // with the new status. We never change the old ticket object directly.
-  function moveTicket(ticketId: number, newStatus: TicketStatus) {
-    setTickets((currentTickets) =>
-      currentTickets.map((ticket) =>
-        ticket.id === ticketId ? { ...ticket, status: newStatus } : ticket,
-      ),
-    )
-  }
-
-  // Adds a new ticket and returns its id, so the page can go to it next.
-  // Every new ticket starts as OPEN.
-  function createTicket(values: TicketFormValues): number {
-    // One more than the biggest id so far, so the new id is always unique.
-    const newId = Math.max(0, ...tickets.map((ticket) => ticket.id)) + 1
-    setTickets((currentTickets) => [
-      ...currentTickets,
-      { ...values, id: newId, status: 'OPEN' },
-    ])
-    return newId
-  }
-
-  // Replaces a ticket's fields with the edited values. Like moveTicket,
-  // it builds a new array instead of changing the old ticket.
-  function updateTicket(ticketId: number, values: TicketFormValues) {
-    setTickets((currentTickets) =>
-      currentTickets.map((ticket) =>
-        ticket.id === ticketId ? { ...ticket, ...values } : ticket,
-      ),
-    )
-  }
+  // The tickets live here, at the top, so every page sees the same
+  // up-to-date list and changes aren't lost when you switch pages.
+  const { tickets, moveTicket, createTicket, updateTicket } = useTickets()
 
   // Every route in the app, in one place.
   // The Layout route has no path of its own: it wraps all the pages inside it
