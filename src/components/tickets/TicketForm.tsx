@@ -1,30 +1,61 @@
 import { useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { employees } from '../../data/employees.ts'
+import type { TicketFormValues } from '../../types.ts'
 import { getDepartments } from '../../utils/employeeHelpers.ts'
-import { TICKET_PRIORITY_LABELS, TICKET_STATUSES } from '../../utils/ticketStatus.ts'
+import {
+  TICKET_PRIORITIES,
+  TICKET_PRIORITY_LABELS,
+  TICKET_STATUSES,
+  parsePriority,
+  parseStatus,
+} from '../../utils/ticketStatus.ts'
 import { hasErrors, validateTicket } from '../../utils/ticketValidation.ts'
+import type { TicketFormErrors } from '../../utils/ticketValidation.ts'
 import './TicketForm.css'
 
-// [['LOW', 'Low'], ['MEDIUM', 'Medium'], ...], ready to map into <option>s.
-const PRIORITY_OPTIONS = Object.entries(TICKET_PRIORITY_LABELS)
 const TEAMS = getDepartments(employees)
 
-// One form for both creating and editing a ticket.
-// - initialValues: the starting value of every field
-// - onSubmit(values): called with the cleaned-up values, only when they're valid
-// - submitLabel: the text on the submit button, e.g. "Create ticket"
-// - onCancel: called when the user presses Cancel
-// - showStatus (optional): shows the Status dropdown, used when editing
-function TicketForm({ initialValues, onSubmit, submitLabel, onCancel, showStatus = false }) {
-  const [values, setValues] = useState(initialValues)
-  // Starts empty, so no errors show until the user first tries to submit.
-  const [errors, setErrors] = useState({})
+interface TicketFormProps {
+  // The starting value of every field.
+  initialValues: TicketFormValues
+  // Called with the cleaned-up values, only when they're valid.
+  onSubmit: (values: TicketFormValues) => void
+  // The text on the submit button, e.g. "Create ticket".
+  submitLabel: string
+  // Called when the user presses Cancel.
+  onCancel: () => void
+  // Shows the Status dropdown, used when editing.
+  showStatus?: boolean
+}
 
-  // One change handler for every field: each field's name matches a key in values.
-  function handleChange(event) {
-    const { name, value } = event.target
+// One form for both creating and editing a ticket.
+function TicketForm({
+  initialValues,
+  onSubmit,
+  submitLabel,
+  onCancel,
+  showStatus = false,
+}: TicketFormProps) {
+  const [values, setValues] = useState<TicketFormValues>(initialValues)
+  // Starts empty, so no errors show until the user first tries to submit.
+  const [errors, setErrors] = useState<TicketFormErrors>({})
+
+  // Saves a new value for one field and returns the updated values.
+  // K is "one of the form's field names", and TicketFormValues[K] is that
+  // field's type, so setField('priority', 'banana') would be a type error.
+  function setField<K extends keyof TicketFormValues>(
+    name: K,
+    value: TicketFormValues[K],
+  ): TicketFormValues {
     const nextValues = { ...values, [name]: value }
     setValues(nextValues)
+    return nextValues
+  }
+
+  // Title and description are the fields that can have errors.
+  function handleTextChange(name: 'title' | 'description', value: string) {
+    const nextValues = setField(name, value)
 
     // If this field is already showing an error, check it again, so the
     // message disappears as soon as the user fixes the problem.
@@ -33,7 +64,24 @@ function TicketForm({ initialValues, onSubmit, submitLabel, onCancel, showStatus
     }
   }
 
-  function handleSubmit(event) {
+  // A <select> gives us a plain string, so turn it back into a Priority or
+  // TicketStatus first. It is always one of our options, but TypeScript
+  // can't know that, so we check rather than guess.
+  function handlePriorityChange(event: ChangeEvent<HTMLSelectElement>) {
+    const priority = parsePriority(event.target.value)
+    if (priority) {
+      setField('priority', priority)
+    }
+  }
+
+  function handleStatusChange(event: ChangeEvent<HTMLSelectElement>) {
+    const status = parseStatus(event.target.value)
+    if (status) {
+      setField('status', status)
+    }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     // Stop the browser from reloading the page, which forms do by default.
     event.preventDefault()
 
@@ -42,8 +90,13 @@ function TicketForm({ initialValues, onSubmit, submitLabel, onCancel, showStatus
 
     if (hasErrors(nextErrors)) {
       // Move keyboard focus to the first field with a problem.
+      // namedItem() finds the form field with that name attribute. It could
+      // in theory return null, so we check it is a real element first.
       const firstInvalidField = Object.keys(nextErrors)[0]
-      event.target.elements[firstInvalidField].focus()
+      const field = event.currentTarget.elements.namedItem(firstInvalidField)
+      if (field instanceof HTMLElement) {
+        field.focus()
+      }
       return
     }
 
@@ -64,7 +117,7 @@ function TicketForm({ initialValues, onSubmit, submitLabel, onCancel, showStatus
           name="title"
           type="text"
           value={values.title}
-          onChange={handleChange}
+          onChange={(event) => handleTextChange('title', event.target.value)}
           required
           // aria-invalid tells screen readers the field has a problem, and
           // aria-describedby makes them read the error message with the field.
@@ -85,7 +138,7 @@ function TicketForm({ initialValues, onSubmit, submitLabel, onCancel, showStatus
           name="description"
           rows={5}
           value={values.description}
-          onChange={handleChange}
+          onChange={(event) => handleTextChange('description', event.target.value)}
           required
           aria-invalid={Boolean(errors.description)}
           aria-describedby={errors.description ? 'ticket-description-error' : undefined}
@@ -103,11 +156,11 @@ function TicketForm({ initialValues, onSubmit, submitLabel, onCancel, showStatus
           id="ticket-priority"
           name="priority"
           value={values.priority}
-          onChange={handleChange}
+          onChange={handlePriorityChange}
         >
-          {PRIORITY_OPTIONS.map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
+          {TICKET_PRIORITIES.map((priority) => (
+            <option key={priority} value={priority}>
+              {TICKET_PRIORITY_LABELS[priority]}
             </option>
           ))}
         </select>
@@ -115,7 +168,12 @@ function TicketForm({ initialValues, onSubmit, submitLabel, onCancel, showStatus
 
       <div className="ticket-form__field">
         <label htmlFor="ticket-team">Team</label>
-        <select id="ticket-team" name="team" value={values.team} onChange={handleChange}>
+        <select
+          id="ticket-team"
+          name="team"
+          value={values.team}
+          onChange={(event) => setField('team', event.target.value)}
+        >
           {TEAMS.map((team) => (
             <option key={team} value={team}>
               {team}
@@ -131,7 +189,7 @@ function TicketForm({ initialValues, onSubmit, submitLabel, onCancel, showStatus
             id="ticket-status"
             name="status"
             value={values.status}
-            onChange={handleChange}
+            onChange={handleStatusChange}
           >
             {TICKET_STATUSES.map((status) => (
               <option key={status.value} value={status.value}>

@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import BackLink from '../components/common/BackLink.tsx'
 import PageHeader from '../components/common/PageHeader.tsx'
-import TicketForm from '../components/tickets/TicketForm.jsx'
+import TicketForm from '../components/tickets/TicketForm.tsx'
 import TicketNotFound from '../components/tickets/TicketNotFound.tsx'
 
 // Edits the ticket chosen by the :id part of the URL, e.g. /tickets/3/edit.
