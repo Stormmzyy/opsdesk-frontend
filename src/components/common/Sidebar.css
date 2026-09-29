@@ -1,4 +1,4 @@
-/* Narrow screens: a bar across the top with the buttons in a row. */
+/* Narrow screens: a bar across the top with the links in a row. */
 .sidebar {
   display: flex;
   flex-wrap: wrap;
@@ -26,13 +26,11 @@
 }
 
 .sidebar__link {
+  display: block;
   padding: 8px 12px;
-  border: none;
   border-radius: 8px;
-  background: transparent;
   color: var(--text);
-  font: inherit;
-  cursor: pointer;
+  text-decoration: none;
 }
 
 .sidebar__link:hover {
@@ -73,10 +71,5 @@
 
   .sidebar__list {
     flex-direction: column;
-  }
-
-  .sidebar__link {
-    width: 100%;
-    text-align: left;
   }
 }

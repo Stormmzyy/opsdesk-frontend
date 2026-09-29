@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { tickets as initialTickets } from './data/tickets.js'
 import Layout from './components/common/Layout.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
@@ -6,18 +7,15 @@ import TeamsPage from './pages/TeamsPage.jsx'
 import TicketsPage from './pages/TicketsPage.jsx'
 import UsersPage from './pages/UsersPage.jsx'
 
-// The pages in the navigation, in order.
-// Next week each id can become a route path, e.g. 'tickets' -> '/tickets'.
-const PAGES = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'tickets', label: 'Tickets' },
-  { id: 'teams', label: 'Teams' },
-  { id: 'users', label: 'Users' },
+// The pages in the navigation, in order. The sidebar maps over this list.
+const NAV_PAGES = [
+  { path: '/dashboard', label: 'Dashboard' },
+  { path: '/tickets', label: 'Tickets' },
+  { path: '/teams', label: 'Teams' },
+  { path: '/users', label: 'Users' },
 ]
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('dashboard')
-
   // Tickets live here, at the top, so every page sees the same up-to-date list
   // and moves aren't lost when you switch pages.
   const [tickets, setTickets] = useState(initialTickets)
@@ -32,31 +30,23 @@ function App() {
     )
   }
 
-  function navigate(pageId) {
-    setCurrentPage(pageId)
-    // Start each new page at the top, like a normal website would.
-    window.scrollTo(0, 0)
-  }
-
-  // The one place that decides which page to show.
-  // React Router will replace this function next week.
-  function renderCurrentPage() {
-    switch (currentPage) {
-      case 'tickets':
-        return <TicketsPage tickets={tickets} onMoveTicket={moveTicket} />
-      case 'teams':
-        return <TeamsPage tickets={tickets} />
-      case 'users':
-        return <UsersPage />
-      default:
-        return <DashboardPage tickets={tickets} />
-    }
-  }
-
+  // Every route in the app, in one place.
+  // The Layout route has no path of its own: it wraps all the pages inside it
+  // and shows the matching one through its <Outlet />.
   return (
-    <Layout pages={PAGES} currentPage={currentPage} onNavigate={navigate}>
-      {renderCurrentPage()}
-    </Layout>
+    <Routes>
+      <Route element={<Layout pages={NAV_PAGES} />}>
+        {/* "replace" swaps / for /dashboard in the history, so Back still works. */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<DashboardPage tickets={tickets} />} />
+        <Route
+          path="/tickets"
+          element={<TicketsPage tickets={tickets} onMoveTicket={moveTicket} />}
+        />
+        <Route path="/teams" element={<TeamsPage tickets={tickets} />} />
+        <Route path="/users" element={<UsersPage />} />
+      </Route>
+    </Routes>
   )
 }
 
