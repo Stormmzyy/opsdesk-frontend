@@ -1,18 +1,10 @@
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { getStatusLabel } from '../utils/ticketStatus.js'
+import BackLink from '../components/common/BackLink.jsx'
 import PageHeader from '../components/common/PageHeader.jsx'
 import PriorityBadge from '../components/tickets/PriorityBadge.jsx'
+import TicketNotFound from '../components/tickets/TicketNotFound.jsx'
 import './TicketDetailPage.css'
-
-function BackToTicketsLink() {
-  return (
-    <p className="ticket-detail__back">
-      <Link to="/tickets">
-        <span aria-hidden="true">←</span> Back to tickets
-      </Link>
-    </p>
-  )
-}
 
 // Shows one ticket, chosen by the :id part of the URL, e.g. /tickets/3.
 function TicketDetailPage({ tickets }) {
@@ -24,20 +16,12 @@ function TicketDetailPage({ tickets }) {
   const ticket = tickets.find((item) => item.id === Number(id))
 
   if (!ticket) {
-    return (
-      <>
-        <BackToTicketsLink />
-        <PageHeader
-          title="Ticket not found"
-          description={`There is no ticket with the id "${id}". It may have been removed, or the link may be wrong.`}
-        />
-      </>
-    )
+    return <TicketNotFound id={id} />
   }
 
   return (
     <>
-      <BackToTicketsLink />
+      <BackLink to="/tickets">Back to tickets</BackLink>
       <PageHeader title={ticket.title} description={`Ticket #${ticket.id}`} />
 
       <div className="ticket-detail">
