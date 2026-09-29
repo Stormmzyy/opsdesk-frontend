@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import type { NavPage } from '../../types.ts'
+import type { NavPage } from '../types.ts'
 import './Sidebar.css'
 
 interface SidebarProps {

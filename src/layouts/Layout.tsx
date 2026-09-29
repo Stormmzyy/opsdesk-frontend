@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar.tsx'
-import type { NavPage } from '../../types.ts'
+import type { NavPage } from '../types.ts'
 import './Layout.css'
 
 interface LayoutProps {
