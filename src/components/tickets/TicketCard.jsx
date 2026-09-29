@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { TICKET_STATUSES, getNextStatus } from '../../utils/ticketStatus.js'
+import { TICKET_STATUSES, getNextStatus } from '../../utils/ticketStatus.ts'
 import PriorityBadge from './PriorityBadge.jsx'
 import './TicketCard.css'
 

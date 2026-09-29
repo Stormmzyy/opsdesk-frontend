@@ -1,4 +1,4 @@
-import { TICKET_STATUSES } from '../../utils/ticketStatus.js'
+import { TICKET_STATUSES } from '../../utils/ticketStatus.ts'
 import TicketColumn from './TicketColumn.jsx'
 import './TicketBoard.css'
 

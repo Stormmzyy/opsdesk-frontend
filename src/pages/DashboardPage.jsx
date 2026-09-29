@@ -1,6 +1,6 @@
 import { employees } from '../data/employees.ts'
 import { getDepartments } from '../utils/employeeHelpers.js'
-import { TICKET_STATUSES, getStatusLabel, isOpenTicket } from '../utils/ticketStatus.js'
+import { TICKET_STATUSES, getStatusLabel, isOpenTicket } from '../utils/ticketStatus.ts'
 import PageHeader from '../components/common/PageHeader.jsx'
 import StatCard from '../components/common/StatCard.jsx'
 import StatusMessage from '../components/common/StatusMessage.jsx'

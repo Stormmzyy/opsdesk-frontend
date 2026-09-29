@@ -1,4 +1,4 @@
-import { TICKET_PRIORITY_LABELS } from '../../utils/ticketStatus.js'
+import { TICKET_PRIORITY_LABELS } from '../../utils/ticketStatus.ts'
 import './PriorityBadge.css'
 
 // A coloured pill showing a ticket's priority, e.g. "Urgent" in red.

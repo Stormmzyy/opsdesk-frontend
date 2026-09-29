@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { getStatusLabel } from '../utils/ticketStatus.js'
+import { getStatusLabel } from '../utils/ticketStatus.ts'
 import BackLink from '../components/common/BackLink.jsx'
 import PageHeader from '../components/common/PageHeader.jsx'
 import PriorityBadge from '../components/tickets/PriorityBadge.jsx'

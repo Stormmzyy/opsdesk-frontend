@@ -1,5 +1,5 @@
 import { getDepartments } from './employeeHelpers.js'
-import { isOpenTicket } from './ticketStatus.js'
+import { isOpenTicket } from './ticketStatus.ts'
 
 // Builds one summary per team (department), for example:
 // { name: 'Engineering', memberCount: 3, openTicketCount: 2 }
