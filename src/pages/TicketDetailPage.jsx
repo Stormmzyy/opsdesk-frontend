@@ -40,8 +40,8 @@ function TicketDetailPage({ tickets }) {
       <BackToTicketsLink />
       <PageHeader title={ticket.title} description={`Ticket #${ticket.id}`} />
 
-      <section className="ticket-detail" aria-labelledby="ticket-description-heading">
-        <h2 id="ticket-description-heading">Description</h2>
+      <div className="ticket-detail">
+        <h2>Description</h2>
         <p className="ticket-detail__description">{ticket.description}</p>
 
         <h2>Details</h2>
@@ -61,7 +61,7 @@ function TicketDetailPage({ tickets }) {
             <dd>{ticket.team}</dd>
           </div>
         </dl>
-      </section>
+      </div>
     </>
   )
 }
