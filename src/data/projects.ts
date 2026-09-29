@@ -1,4 +1,4 @@
-import type { Project, ProjectStatus } from '../types.ts'
+import type { Project, ProjectStatus } from '../features/projects/types.ts'
 
 // Mock projects. "team" uses the same department names as employees.js,
 // and "lead" is an employee from that team.

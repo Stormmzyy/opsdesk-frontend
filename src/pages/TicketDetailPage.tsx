@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import type { Ticket } from '../types.ts'
+import type { Ticket } from '../features/tickets/types.ts'
 import { findTicketByParam } from '../features/tickets/utils/ticketHelpers.ts'
 import { getStatusLabel } from '../features/tickets/utils/ticketStatus.ts'
 import BackLink from '../components/BackLink.tsx'

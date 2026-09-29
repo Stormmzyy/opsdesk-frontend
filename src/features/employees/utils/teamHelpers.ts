@@ -1,4 +1,5 @@
-import type { Employee, Ticket } from '../../../types.ts'
+import type { Employee } from '../types.ts'
+import type { Ticket } from '../../tickets/types.ts'
 import { getDepartments } from './employeeHelpers.ts'
 import { isOpenTicket } from '../../tickets/utils/ticketStatus.ts'
 

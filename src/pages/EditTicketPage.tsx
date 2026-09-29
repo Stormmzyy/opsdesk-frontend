@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom'
-import type { Ticket, TicketFormValues } from '../types.ts'
+import type { Ticket, TicketFormValues } from '../features/tickets/types.ts'
 import { findTicketByParam } from '../features/tickets/utils/ticketHelpers.ts'
 import BackLink from '../components/BackLink.tsx'
 import PageHeader from '../components/PageHeader.tsx'

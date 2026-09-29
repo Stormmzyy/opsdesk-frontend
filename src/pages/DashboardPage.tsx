@@ -1,4 +1,4 @@
-import type { Priority, Ticket } from '../types.ts'
+import type { Priority, Ticket } from '../features/tickets/types.ts'
 import { employees } from '../data/employees.ts'
 import { getDepartments } from '../features/employees/utils/employeeHelpers.ts'
 import { TICKET_STATUSES, getStatusLabel, isOpenTicket } from '../features/tickets/utils/ticketStatus.ts'

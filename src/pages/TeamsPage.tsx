@@ -1,4 +1,4 @@
-import type { Ticket } from '../types.ts'
+import type { Ticket } from '../features/tickets/types.ts'
 import { employees } from '../data/employees.ts'
 import { getTeamSummaries } from '../features/employees/utils/teamHelpers.ts'
 import PageHeader from '../components/PageHeader.tsx'

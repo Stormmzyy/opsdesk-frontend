@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { employees } from '../../../data/employees.ts'
-import type { TicketFormValues } from '../../../types.ts'
+import type { TicketFormValues } from '../types.ts'
 import { getDepartments } from '../../employees/utils/employeeHelpers.ts'
 import {
   TICKET_PRIORITIES,

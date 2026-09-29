@@ -1,6 +1,6 @@
 import StatusMessage from '../../../components/StatusMessage.tsx'
 import EmployeeCard from './EmployeeCard.tsx'
-import type { Employee } from '../../../types.ts'
+import type { Employee } from '../types.ts'
 import './EmployeeList.css'
 
 interface EmployeeListProps {

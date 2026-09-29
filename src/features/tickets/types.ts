@@ -1,10 +1,4 @@
-// Shared types used across the app.
-
-// One link in the main navigation.
-export interface NavPage {
-  path: string
-  label: string
-}
+// Types for the tickets feature.
 
 // A union type: a TicketStatus can only be one of these exact strings,
 // so a typo like 'CLOSD' is caught before the app even runs.
@@ -40,55 +34,4 @@ export interface TicketFormValues {
 export interface TicketStatusOption {
   value: TicketStatus
   label: string
-}
-
-export interface Employee {
-  id: number
-  name: string
-  department: string
-  role: string
-  email: string
-  location: string
-}
-
-export type ProjectStatus = 'PLANNING' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED'
-
-export interface Project {
-  id: number
-  name: string
-  description: string
-  status: ProjectStatus
-  team: string
-  // The name of the employee leading the project.
-  lead: string
-}
-
-// A user from the JSONPlaceholder API (https://jsonplaceholder.typicode.com/users).
-// The address and company come back as nested objects.
-export interface User {
-  id: number
-  name: string
-  username: string
-  email: string
-  phone: string
-  website: string
-  address: UserAddress
-  company: UserCompany
-}
-
-export interface UserAddress {
-  street: string
-  suite: string
-  city: string
-  zipcode: string
-  geo: {
-    lat: string
-    lng: string
-  }
-}
-
-export interface UserCompany {
-  name: string
-  catchPhrase: string
-  bs: string
 }

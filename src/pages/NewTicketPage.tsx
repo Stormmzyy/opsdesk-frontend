@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import type { TicketFormValues } from '../types.ts'
+import type { TicketFormValues } from '../features/tickets/types.ts'
 import { employees } from '../data/employees.ts'
 import { getDepartments } from '../features/employees/utils/employeeHelpers.ts'
 import PageHeader from '../components/PageHeader.tsx'

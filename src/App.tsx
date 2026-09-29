@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import type { NavPage, Ticket, TicketFormValues, TicketStatus } from './types.ts'
+import type { NavPage } from './routes/navPages.ts'
+import type { Ticket, TicketFormValues, TicketStatus } from './features/tickets/types.ts'
 import { tickets as initialTickets } from './data/tickets.ts'
 import Layout from './layouts/Layout.tsx'
 import DashboardPage from './pages/DashboardPage.tsx'

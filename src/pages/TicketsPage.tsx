@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import type { MoveTicketHandler, Ticket } from '../types.ts'
+import type { MoveTicketHandler, Ticket } from '../features/tickets/types.ts'
 import PageHeader from '../components/PageHeader.tsx'
 import TicketBoard from '../features/tickets/components/TicketBoard.tsx'
 

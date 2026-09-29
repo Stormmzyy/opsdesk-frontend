@@ -1,6 +1,6 @@
 import StatusMessage from '../../../components/StatusMessage.tsx'
 import TicketCard from './TicketCard.tsx'
-import type { MoveTicketHandler, Ticket, TicketStatusOption } from '../../../types.ts'
+import type { MoveTicketHandler, Ticket, TicketStatusOption } from '../types.ts'
 import './TicketColumn.css'
 
 interface TicketColumnProps {

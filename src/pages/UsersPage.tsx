@@ -1,4 +1,4 @@
-import type { User } from '../types.ts'
+import type { User } from '../features/users/types.ts'
 import { useFetch } from '../hooks/useFetch.ts'
 import PageHeader from '../components/PageHeader.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'

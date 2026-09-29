@@ -1,6 +1,6 @@
 import { TICKET_STATUSES } from '../utils/ticketStatus.ts'
 import TicketColumn from './TicketColumn.tsx'
-import type { MoveTicketHandler, Ticket } from '../../../types.ts'
+import type { MoveTicketHandler, Ticket } from '../types.ts'
 import './TicketBoard.css'
 
 interface TicketBoardProps {
