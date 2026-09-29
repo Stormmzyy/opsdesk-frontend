@@ -1,4 +1,5 @@
-import type { Ticket } from '../types.ts'
+import type { Priority, Ticket } from '../types.ts'
+import { isOpenTicket } from './ticketStatus.ts'
 
 // Finds the ticket for the :id part of the URL, e.g. "3" in /tickets/3.
 // - useParams types the id as string | undefined, so we handle undefined.
@@ -15,4 +16,17 @@ export function findTicketByParam(
   }
   const id = Number(idParam)
   return tickets.find((ticket) => ticket.id === id)
+}
+
+// The priorities that need attention first, most important first.
+const TOP_PRIORITIES: Priority[] = ['URGENT', 'HIGH']
+
+// Open tickets that are urgent or high, with urgent ones listed first.
+// filter() makes a new array, so sorting it doesn't touch the original.
+export function getPriorityTickets(tickets: Ticket[]): Ticket[] {
+  return tickets
+    .filter((ticket) => isOpenTicket(ticket) && TOP_PRIORITIES.includes(ticket.priority))
+    .sort(
+      (a, b) => TOP_PRIORITIES.indexOf(a.priority) - TOP_PRIORITIES.indexOf(b.priority),
+    )
 }
