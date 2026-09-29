@@ -5,6 +5,7 @@ import Layout from './components/common/Layout.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import TeamsPage from './pages/TeamsPage.jsx'
+import TicketDetailPage from './pages/TicketDetailPage.jsx'
 import TicketsPage from './pages/TicketsPage.jsx'
 import UsersPage from './pages/UsersPage.jsx'
 
@@ -44,6 +45,8 @@ function App() {
           path="/tickets"
           element={<TicketsPage tickets={tickets} onMoveTicket={moveTicket} />}
         />
+        {/* ":id" is a URL parameter: /tickets/3 gives the page an id of "3". */}
+        <Route path="/tickets/:id" element={<TicketDetailPage tickets={tickets} />} />
         <Route path="/teams" element={<TeamsPage tickets={tickets} />} />
         <Route path="/users" element={<UsersPage />} />
         {/* "*" matches any URL that no route above matched. */}
