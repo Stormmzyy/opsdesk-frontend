@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { getStatusLabel } from '../utils/ticketStatus.js'
 import BackLink from '../components/common/BackLink.jsx'
 import PageHeader from '../components/common/PageHeader.jsx'
@@ -22,7 +22,11 @@ function TicketDetailPage({ tickets }) {
   return (
     <>
       <BackLink to="/tickets">Back to tickets</BackLink>
-      <PageHeader title={ticket.title} description={`Ticket #${ticket.id}`} />
+      <PageHeader title={ticket.title} description={`Ticket #${ticket.id}`}>
+        <Link to={`/tickets/${ticket.id}/edit`} className="button">
+          Edit
+        </Link>
+      </PageHeader>
 
       <div className="ticket-detail">
         <h2>Description</h2>

@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { tickets as initialTickets } from './data/tickets.js'
 import Layout from './components/common/Layout.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
+import EditTicketPage from './pages/EditTicketPage.jsx'
 import NewTicketPage from './pages/NewTicketPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import ProjectsPage from './pages/ProjectsPage.jsx'
@@ -47,6 +48,16 @@ function App() {
     return newId
   }
 
+  // Replaces a ticket's fields with the edited values. Like moveTicket,
+  // it builds a new array instead of changing the old ticket.
+  function updateTicket(ticketId, values) {
+    setTickets((currentTickets) =>
+      currentTickets.map((ticket) =>
+        ticket.id === ticketId ? { ...ticket, ...values } : ticket,
+      ),
+    )
+  }
+
   // Every route in the app, in one place.
   // The Layout route has no path of its own: it wraps all the pages inside it
   // and shows the matching one through its <Outlet />.
@@ -66,6 +77,10 @@ function App() {
         />
         {/* ":id" is a URL parameter: /tickets/3 gives the page an id of "3". */}
         <Route path="/tickets/:id" element={<TicketDetailPage tickets={tickets} />} />
+        <Route
+          path="/tickets/:id/edit"
+          element={<EditTicketPage tickets={tickets} onUpdateTicket={updateTicket} />}
+        />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/teams" element={<TeamsPage tickets={tickets} />} />
         <Route path="/users" element={<UsersPage />} />
