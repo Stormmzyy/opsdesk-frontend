@@ -1,8 +1,13 @@
+import type { User } from '../../types.ts'
 import './UserCard.css'
+
+interface UserCardProps {
+  user: User
+}
 
 // "user" comes straight from the JSONPlaceholder API, so the company name
 // and city are nested one level down.
-function UserCard({ user }) {
+function UserCard({ user }: UserCardProps) {
   return (
     <article className="user-card">
       <h3 className="user-card__name">{user.name}</h3>

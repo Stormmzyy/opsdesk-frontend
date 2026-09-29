@@ -1,7 +1,12 @@
-import UserCard from './UserCard.jsx'
+import type { User } from '../../types.ts'
+import UserCard from './UserCard.tsx'
 import './UserList.css'
 
-function UserList({ users }) {
+interface UserListProps {
+  users: User[]
+}
+
+function UserList({ users }: UserListProps) {
   return (
     <ul className="user-list">
       {users.map((user) => (
