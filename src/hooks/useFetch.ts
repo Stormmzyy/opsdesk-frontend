@@ -1,11 +1,23 @@
 import { useEffect, useState } from 'react'
 
-// Fetches JSON from `url` and tracks the request with a single status:
-// 'loading' | 'success' | 'empty' | 'error'
+// The four states a request can be in.
+export type FetchStatus = 'loading' | 'success' | 'empty' | 'error'
+
+export interface FetchResult<T> {
+  // null until the first successful response arrives.
+  data: T | null
+  status: FetchStatus
+  retry: () => void
+}
+
+// Fetches JSON from `url` and tracks the request with a single status.
 // Returns { data, status, retry }. Call retry() to fetch again.
-export function useFetch(url) {
-  const [data, setData] = useState(null)
-  const [status, setStatus] = useState('loading')
+//
+// <T> is a type parameter: the caller says what shape the JSON will be,
+// e.g. useFetch<User[]>(url), and then `data` is typed as User[] | null.
+export function useFetch<T>(url: string): FetchResult<T> {
+  const [data, setData] = useState<T | null>(null)
+  const [status, setStatus] = useState<FetchStatus>('loading')
   // Bumping this number re-runs the effect below, which fetches again.
   const [retryCount, setRetryCount] = useState(0)
 
@@ -22,13 +34,17 @@ export function useFetch(url) {
           throw new Error(`Request failed with status ${response.status}`)
         }
 
-        const json = await response.json()
+        // TypeScript can't check data that arrives over the network: it only
+        // exists once the app is running. So here we TRUST that the API sends
+        // the shape the caller asked for (T). If the API changed its format,
+        // TypeScript would not catch it.
+        const json: T = await response.json()
         setData(json)
         // An empty list is its own state, so the UI can say "nothing found".
         setStatus(Array.isArray(json) && json.length === 0 ? 'empty' : 'success')
-      } catch (error) {
+      } catch {
         // We cancelled on purpose, so the component is gone: do nothing.
-        if (error.name === 'AbortError') {
+        if (controller.signal.aborted) {
           return
         }
         setStatus('error')

@@ -1,4 +1,4 @@
-import { useFetch } from '../hooks/useFetch.js'
+import { useFetch } from '../hooks/useFetch.ts'
 import PageHeader from '../components/common/PageHeader.jsx'
 import StatusMessage from '../components/common/StatusMessage.jsx'
 import UserList from '../components/users/UserList.jsx'
