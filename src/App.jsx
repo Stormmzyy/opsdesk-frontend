@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { tickets as initialTickets } from './data/tickets.js'
 import Layout from './components/common/Layout.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
+import NotFoundPage from './pages/NotFoundPage.jsx'
 import TeamsPage from './pages/TeamsPage.jsx'
 import TicketsPage from './pages/TicketsPage.jsx'
 import UsersPage from './pages/UsersPage.jsx'
@@ -45,6 +46,8 @@ function App() {
         />
         <Route path="/teams" element={<TeamsPage tickets={tickets} />} />
         <Route path="/users" element={<UsersPage />} />
+        {/* "*" matches any URL that no route above matched. */}
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   )
