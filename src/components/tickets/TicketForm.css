@@ -1,0 +1,62 @@
+.ticket-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 640px;
+  padding: 20px 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.ticket-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticket-form__field label {
+  color: var(--text-heading);
+  font-weight: 600;
+}
+
+.ticket-form__field input,
+.ticket-form__field textarea,
+.ticket-form__field select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-heading);
+  font: inherit;
+}
+
+.ticket-form__field textarea {
+  resize: vertical;
+}
+
+.ticket-form__field input:focus-visible,
+.ticket-form__field textarea:focus-visible,
+.ticket-form__field select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* A red border on fields with an error, as well as the message below them. */
+.ticket-form__field [aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.ticket-form__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.875rem;
+}
+
+.ticket-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}

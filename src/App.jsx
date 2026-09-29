@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { tickets as initialTickets } from './data/tickets.js'
 import Layout from './components/common/Layout.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
+import EditTicketPage from './pages/EditTicketPage.jsx'
+import NewTicketPage from './pages/NewTicketPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import ProjectsPage from './pages/ProjectsPage.jsx'
 import TeamsPage from './pages/TeamsPage.jsx'
@@ -34,6 +36,28 @@ function App() {
     )
   }
 
+  // Adds a new ticket and returns its id, so the page can go to it next.
+  // Every new ticket starts as OPEN.
+  function createTicket(values) {
+    // One more than the biggest id so far, so the new id is always unique.
+    const newId = Math.max(0, ...tickets.map((ticket) => ticket.id)) + 1
+    setTickets((currentTickets) => [
+      ...currentTickets,
+      { ...values, id: newId, status: 'OPEN' },
+    ])
+    return newId
+  }
+
+  // Replaces a ticket's fields with the edited values. Like moveTicket,
+  // it builds a new array instead of changing the old ticket.
+  function updateTicket(ticketId, values) {
+    setTickets((currentTickets) =>
+      currentTickets.map((ticket) =>
+        ticket.id === ticketId ? { ...ticket, ...values } : ticket,
+      ),
+    )
+  }
+
   // Every route in the app, in one place.
   // The Layout route has no path of its own: it wraps all the pages inside it
   // and shows the matching one through its <Outlet />.
@@ -47,8 +71,16 @@ function App() {
           path="/tickets"
           element={<TicketsPage tickets={tickets} onMoveTicket={moveTicket} />}
         />
+        <Route
+          path="/tickets/new"
+          element={<NewTicketPage onCreateTicket={createTicket} />}
+        />
         {/* ":id" is a URL parameter: /tickets/3 gives the page an id of "3". */}
         <Route path="/tickets/:id" element={<TicketDetailPage tickets={tickets} />} />
+        <Route
+          path="/tickets/:id/edit"
+          element={<EditTicketPage tickets={tickets} onUpdateTicket={updateTicket} />}
+        />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/teams" element={<TeamsPage tickets={tickets} />} />
         <Route path="/users" element={<UsersPage />} />
