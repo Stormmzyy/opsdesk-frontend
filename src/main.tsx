@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
-import App from './App.jsx'
+import App from './App.tsx'
 
 // getElementById returns null if the element is missing, so check before using it.
 const rootElement = document.getElementById('root')
