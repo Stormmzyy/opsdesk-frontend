@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { MoveTicketHandler, Ticket } from '../features/tickets/types.ts'
 import PageHeader from '../components/PageHeader.tsx'
-import TicketBoard from '../features/tickets/components/TicketBoard.tsx'
+import TicketBrowser from '../features/tickets/components/TicketBrowser.tsx'
 
 interface TicketsPageProps {
   tickets: Ticket[]
@@ -13,14 +13,14 @@ function TicketsPage({ tickets, onMoveTicket }: TicketsPageProps) {
     <>
       <PageHeader
         title="Tickets"
-        description="Move tickets through their statuses as work progresses."
+        description="Search, filter and move tickets through their statuses."
       >
         {/* A link, not a button, because it takes you to another page. */}
         <Link to="/tickets/new" className="button button--primary">
           New ticket
         </Link>
       </PageHeader>
-      <TicketBoard tickets={tickets} onMoveTicket={onMoveTicket} />
+      <TicketBrowser tickets={tickets} onMoveTicket={onMoveTicket} />
     </>
   )
 }
