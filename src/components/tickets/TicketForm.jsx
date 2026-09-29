@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { employees } from '../../data/employees.ts'
 import { getDepartments } from '../../utils/employeeHelpers.ts'
 import { TICKET_PRIORITY_LABELS, TICKET_STATUSES } from '../../utils/ticketStatus.ts'
-import { hasErrors, validateTicket } from '../../utils/ticketValidation.js'
+import { hasErrors, validateTicket } from '../../utils/ticketValidation.ts'
 import './TicketForm.css'
 
 // [['LOW', 'Low'], ['MEDIUM', 'Medium'], ...], ready to map into <option>s.
