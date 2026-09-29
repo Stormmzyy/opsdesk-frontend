@@ -1,4 +1,4 @@
-import type { User } from '../../types.ts'
+import type { User } from '../../../types.ts'
 import './UserCard.css'
 
 interface UserCardProps {
