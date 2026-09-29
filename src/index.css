@@ -97,6 +97,12 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+/* A disabled button, e.g. "Previous" on the first page, looks faded. */
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .button--primary {
   border-color: var(--accent);
   background: var(--accent);
