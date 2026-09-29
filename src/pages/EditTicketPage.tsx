@@ -1,10 +1,10 @@
 import { useNavigate, useParams } from 'react-router-dom'
-import type { Ticket, TicketFormValues } from '../types.ts'
-import { findTicketByParam } from '../utils/ticketHelpers.ts'
-import BackLink from '../components/common/BackLink.tsx'
-import PageHeader from '../components/common/PageHeader.tsx'
-import TicketForm from '../components/tickets/TicketForm.tsx'
-import TicketNotFound from '../components/tickets/TicketNotFound.tsx'
+import type { Ticket, TicketFormValues } from '../features/tickets/types.ts'
+import { findTicketByParam } from '../features/tickets/utils/ticketHelpers.ts'
+import BackLink from '../components/BackLink.tsx'
+import PageHeader from '../components/PageHeader.tsx'
+import TicketForm from '../features/tickets/components/TicketForm.tsx'
+import TicketNotFound from '../features/tickets/components/TicketNotFound.tsx'
 
 // Edits the ticket chosen by the :id part of the URL, e.g. /tickets/3/edit.
 interface EditTicketPageProps {

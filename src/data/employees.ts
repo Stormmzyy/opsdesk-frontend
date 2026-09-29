@@ -1,4 +1,4 @@
-import type { Employee } from '../types.ts'
+import type { Employee } from '../features/employees/types.ts'
 
 // Mock employee data for the directory.
 // Later this will come from an API; for now it lives here.

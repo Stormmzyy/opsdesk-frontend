@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
-import type { MoveTicketHandler, Ticket } from '../types.ts'
-import PageHeader from '../components/common/PageHeader.tsx'
-import TicketBoard from '../components/tickets/TicketBoard.tsx'
+import type { MoveTicketHandler, Ticket } from '../features/tickets/types.ts'
+import PageHeader from '../components/PageHeader.tsx'
+import TicketBoard from '../features/tickets/components/TicketBoard.tsx'
 
 interface TicketsPageProps {
   tickets: Ticket[]

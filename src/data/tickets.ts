@@ -1,7 +1,7 @@
-import type { Ticket } from '../types.ts'
+import type { Ticket } from '../features/tickets/types.ts'
 
 // Mock support tickets for the board.
-// "team" uses the same department names as employees.js.
+// "team" uses the same department names as employees.ts.
 export const tickets: Ticket[] = [
   {
     id: 1,
