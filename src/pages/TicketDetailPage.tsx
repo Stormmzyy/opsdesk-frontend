@@ -1,18 +1,16 @@
 import { Link, useParams } from 'react-router-dom'
 import type { Ticket } from '../features/tickets/types.ts'
 import { findTicketByParam } from '../features/tickets/utils/ticketHelpers.ts'
-import { getStatusLabel } from '../features/tickets/utils/ticketStatus.ts'
 import BackLink from '../components/BackLink.tsx'
 import PageHeader from '../components/PageHeader.tsx'
-import PriorityBadge from '../features/tickets/components/PriorityBadge.tsx'
+import TicketDetails from '../features/tickets/components/TicketDetails.tsx'
 import TicketNotFound from '../features/tickets/components/TicketNotFound.tsx'
-import './TicketDetailPage.css'
 
-// Shows one ticket, chosen by the :id part of the URL, e.g. /tickets/3.
 interface TicketDetailPageProps {
   tickets: Ticket[]
 }
 
+// Shows one ticket, chosen by the :id part of the URL, e.g. /tickets/3.
 function TicketDetailPage({ tickets }: TicketDetailPageProps) {
   // useParams reads the named parts of the URL. For /tickets/3, id is "3".
   const { id } = useParams()
@@ -32,29 +30,7 @@ function TicketDetailPage({ tickets }: TicketDetailPageProps) {
           Edit
         </Link>
       </PageHeader>
-
-      <div className="ticket-detail">
-        <h2>Description</h2>
-        <p className="ticket-detail__description">{ticket.description}</p>
-
-        <h2>Details</h2>
-        <dl className="ticket-detail__facts">
-          <div>
-            <dt>Priority</dt>
-            <dd>
-              <PriorityBadge priority={ticket.priority} />
-            </dd>
-          </div>
-          <div>
-            <dt>Status</dt>
-            <dd>{getStatusLabel(ticket.status)}</dd>
-          </div>
-          <div>
-            <dt>Team</dt>
-            <dd>{ticket.team}</dd>
-          </div>
-        </dl>
-      </div>
+      <TicketDetails ticket={ticket} />
     </>
   )
 }
