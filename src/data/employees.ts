@@ -1,6 +1,8 @@
+import type { Employee } from '../types.ts'
+
 // Mock employee data for the directory.
 // Later this will come from an API; for now it lives here.
-export const employees = [
+export const employees: Employee[] = [
   {
     id: 1,
     name: 'Amara Okafor',

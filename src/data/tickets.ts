@@ -1,6 +1,8 @@
+import type { Ticket } from '../types.ts'
+
 // Mock support tickets for the board.
 // "team" uses the same department names as employees.js.
-export const tickets = [
+export const tickets: Ticket[] = [
   {
     id: 1,
     title: 'Login page times out on slow networks',

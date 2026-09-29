@@ -1,6 +1,8 @@
+import type { Project, ProjectStatus } from '../types.ts'
+
 // Mock projects. "team" uses the same department names as employees.js,
 // and "lead" is an employee from that team.
-export const projects = [
+export const projects: Project[] = [
   {
     id: 1,
     name: 'Customer portal redesign',
@@ -52,7 +54,9 @@ export const projects = [
 ]
 
 // Display labels for each project status.
-export const PROJECT_STATUS_LABELS = {
+// Record<ProjectStatus, string> means: one string for EVERY status, so
+// TypeScript complains if we ever add a status and forget its label.
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   PLANNING: 'Planning',
   ACTIVE: 'Active',
   ON_HOLD: 'On hold',

@@ -1,4 +1,4 @@
-import { employees } from '../data/employees.js'
+import { employees } from '../data/employees.ts'
 import { getDepartments } from '../utils/employeeHelpers.js'
 import { TICKET_STATUSES, getStatusLabel, isOpenTicket } from '../utils/ticketStatus.js'
 import PageHeader from '../components/common/PageHeader.jsx'

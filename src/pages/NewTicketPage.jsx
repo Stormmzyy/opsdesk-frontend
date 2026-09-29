@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { employees } from '../data/employees.js'
+import { employees } from '../data/employees.ts'
 import { getDepartments } from '../utils/employeeHelpers.js'
 import PageHeader from '../components/common/PageHeader.jsx'
 import TicketForm from '../components/tickets/TicketForm.jsx'

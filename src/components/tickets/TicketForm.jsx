@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { employees } from '../../data/employees.js'
+import { employees } from '../../data/employees.ts'
 import { getDepartments } from '../../utils/employeeHelpers.js'
 import { TICKET_PRIORITY_LABELS, TICKET_STATUSES } from '../../utils/ticketStatus.js'
 import { hasErrors, validateTicket } from '../../utils/ticketValidation.js'
