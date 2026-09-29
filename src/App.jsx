@@ -4,6 +4,7 @@ import { tickets as initialTickets } from './data/tickets.js'
 import Layout from './components/common/Layout.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
+import ProjectsPage from './pages/ProjectsPage.jsx'
 import TeamsPage from './pages/TeamsPage.jsx'
 import TicketDetailPage from './pages/TicketDetailPage.jsx'
 import TicketsPage from './pages/TicketsPage.jsx'
@@ -13,6 +14,7 @@ import UsersPage from './pages/UsersPage.jsx'
 const NAV_PAGES = [
   { path: '/dashboard', label: 'Dashboard' },
   { path: '/tickets', label: 'Tickets' },
+  { path: '/projects', label: 'Projects' },
   { path: '/teams', label: 'Teams' },
   { path: '/users', label: 'Users' },
 ]
@@ -47,6 +49,7 @@ function App() {
         />
         {/* ":id" is a URL parameter: /tickets/3 gives the page an id of "3". */}
         <Route path="/tickets/:id" element={<TicketDetailPage tickets={tickets} />} />
+        <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/teams" element={<TeamsPage tickets={tickets} />} />
         <Route path="/users" element={<UsersPage />} />
         {/* "*" matches any URL that no route above matched. */}
