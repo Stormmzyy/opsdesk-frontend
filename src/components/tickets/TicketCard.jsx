@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { TICKET_STATUSES, getNextStatus } from '../../utils/ticketStatus.js'
 import PriorityBadge from './PriorityBadge.jsx'
 import './TicketCard.css'
@@ -8,7 +9,11 @@ function TicketCard({ ticket, onMoveTicket }) {
 
   return (
     <article className="ticket-card">
-      <p className="ticket-card__title">{ticket.title}</p>
+      {/* Only the title is a link. The move button and status dropdown sit
+          outside it, so using them changes the status without navigating. */}
+      <p className="ticket-card__title">
+        <Link to={`/tickets/${ticket.id}`}>{ticket.title}</Link>
+      </p>
 
       <div className="ticket-card__meta">
         <PriorityBadge priority={ticket.priority} />
