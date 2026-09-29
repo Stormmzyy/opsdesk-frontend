@@ -1,7 +1,7 @@
 import { employees } from '../data/employees.ts'
 import { getTeamSummaries } from '../utils/teamHelpers.ts'
 import PageHeader from '../components/common/PageHeader.tsx'
-import EmployeeDirectory from '../components/employees/EmployeeDirectory.jsx'
+import EmployeeDirectory from '../components/employees/EmployeeDirectory.tsx'
 import './TeamsPage.css'
 
 function TeamsPage({ tickets }) {

@@ -1,6 +1,12 @@
+import type { Employee } from '../../types.ts'
 import './EmployeeDetails.css'
 
-function EmployeeDetails({ employee }) {
+interface EmployeeDetailsProps {
+  // undefined when nobody is selected (find() found no match).
+  employee: Employee | undefined
+}
+
+function EmployeeDetails({ employee }: EmployeeDetailsProps) {
   if (!employee) {
     return (
       <section className="employee-details employee-details--empty">

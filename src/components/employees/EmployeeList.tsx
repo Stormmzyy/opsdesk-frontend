@@ -1,8 +1,16 @@
 import StatusMessage from '../common/StatusMessage.tsx'
-import EmployeeCard from './EmployeeCard.jsx'
+import EmployeeCard from './EmployeeCard.tsx'
+import type { Employee } from '../../types.ts'
 import './EmployeeList.css'
 
-function EmployeeList({ employees, selectedEmployeeId, onSelectEmployee }) {
+interface EmployeeListProps {
+  employees: Employee[]
+  // null when no employee is selected.
+  selectedEmployeeId: number | null
+  onSelectEmployee: (employeeId: number) => void
+}
+
+function EmployeeList({ employees, selectedEmployeeId, onSelectEmployee }: EmployeeListProps) {
   if (employees.length === 0) {
     return <StatusMessage type="empty">No employees match your search.</StatusMessage>
   }

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { employees } from '../../data/employees.ts'
 import { filterEmployees, getDepartments } from '../../utils/employeeHelpers.ts'
-import SearchBox from './SearchBox.jsx'
-import DepartmentFilter from './DepartmentFilter.jsx'
-import EmployeeList from './EmployeeList.jsx'
-import EmployeeDetails from './EmployeeDetails.jsx'
+import SearchBox from './SearchBox.tsx'
+import DepartmentFilter from './DepartmentFilter.tsx'
+import EmployeeList from './EmployeeList.tsx'
+import EmployeeDetails from './EmployeeDetails.tsx'
 import './EmployeeDirectory.css'
 
 // The data never changes, so this only needs working out once.
@@ -13,7 +13,8 @@ const departments = getDepartments(employees)
 function EmployeeDirectory() {
   const [searchText, setSearchText] = useState('')
   const [selectedDepartment, setSelectedDepartment] = useState('')
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null)
+  // <number | null>: an employee id, or null while nobody is selected.
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null)
 
   // Derived on every render from state, so it can never get out of sync.
   const filteredEmployees = filterEmployees(employees, searchText, selectedDepartment)

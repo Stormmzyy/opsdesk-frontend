@@ -1,4 +1,9 @@
-function SearchBox({ value, onChange }) {
+interface SearchBoxProps {
+  value: string
+  onChange: (searchText: string) => void
+}
+
+function SearchBox({ value, onChange }: SearchBoxProps) {
   return (
     <div className="filter-field">
       <label htmlFor="employee-search">Search by name</label>

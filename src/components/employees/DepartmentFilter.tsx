@@ -1,4 +1,11 @@
-function DepartmentFilter({ departments, value, onChange }) {
+interface DepartmentFilterProps {
+  departments: string[]
+  // An empty string means "All departments".
+  value: string
+  onChange: (department: string) => void
+}
+
+function DepartmentFilter({ departments, value, onChange }: DepartmentFilterProps) {
   return (
     <div className="filter-field">
       <label htmlFor="department-filter">Department</label>
