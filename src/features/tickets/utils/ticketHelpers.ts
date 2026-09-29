@@ -1,4 +1,4 @@
-import type { Priority, Ticket } from '../types.ts'
+import type { Priority, StatusFilter, Ticket } from '../types.ts'
 import { isOpenTicket } from './ticketStatus.ts'
 
 // Finds the ticket for the :id part of the URL, e.g. "3" in /tickets/3.
@@ -29,4 +29,23 @@ export function getPriorityTickets(tickets: Ticket[]): Ticket[] {
     .sort(
       (a, b) => TOP_PRIORITIES.indexOf(a.priority) - TOP_PRIORITIES.indexOf(b.priority),
     )
+}
+
+// Keeps tickets whose title or description contains searchText (ignoring
+// upper and lower case) and whose status matches the filter.
+// An empty search matches everything, and 'ALL' matches every status.
+export function filterTickets(
+  tickets: Ticket[],
+  searchText: string,
+  statusFilter: StatusFilter,
+): Ticket[] {
+  const search = searchText.trim().toLowerCase()
+
+  return tickets.filter((ticket) => {
+    const matchesSearch =
+      ticket.title.toLowerCase().includes(search) ||
+      ticket.description.toLowerCase().includes(search)
+    const matchesStatus = statusFilter === 'ALL' || ticket.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
 }
