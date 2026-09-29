@@ -4,6 +4,9 @@
 // so a typo like 'CLOSD' is caught before the app even runs.
 export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
 
+// What the status filter can be set to: one status, or 'ALL' for every status.
+export type StatusFilter = TicketStatus | 'ALL'
+
 // URGENT is the highest priority. The Dashboard lists urgent and high tickets.
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
 

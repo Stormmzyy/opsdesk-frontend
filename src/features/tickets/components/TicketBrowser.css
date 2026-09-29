@@ -1,0 +1,24 @@
+.ticket-browser__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ticket-browser__views {
+  display: flex;
+  gap: 8px;
+}
+
+/* The view button that is switched on. */
+.ticket-browser__views [aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.ticket-browser__summary {
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+}

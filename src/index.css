@@ -97,8 +97,44 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+/* A disabled button, e.g. "Previous" on the first page, looks faded. */
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .button--primary {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--on-accent);
+}
+
+/* A labelled search box or dropdown, used by the employee and ticket filters. */
+.filter-field {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-field label {
+  color: var(--text-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.filter-field input,
+.filter-field select {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-heading);
+  font: inherit;
+}
+
+.filter-field input:focus-visible,
+.filter-field select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
 }

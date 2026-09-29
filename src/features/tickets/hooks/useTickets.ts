@@ -1,6 +1,10 @@
-import { useState } from 'react'
 import { tickets as sampleTickets } from '../../../data/tickets.ts'
+import { useLocalStorage } from '../../../hooks/useLocalStorage.ts'
 import type { Ticket, TicketFormValues, TicketStatus } from '../types.ts'
+import { isTicketList } from '../utils/ticketHelpers.ts'
+
+// The name the tickets are saved under in the browser's localStorage.
+const TICKETS_STORAGE_KEY = 'opsdesk.tickets'
 
 export interface UseTicketsResult {
   tickets: Ticket[]
@@ -8,12 +12,21 @@ export interface UseTicketsResult {
   // Returns the new ticket's id, so the page can go to it next.
   createTicket: (values: TicketFormValues) => number
   updateTicket: (ticketId: number, values: TicketFormValues) => void
+  // Throws away every change and goes back to the sample tickets.
+  resetTickets: () => void
 }
 
 // The list of tickets and every way to change it, kept together.
 // App calls this once, so every page sees the same up-to-date list.
+// The tickets are saved in localStorage, so they survive a page refresh.
 export function useTickets(): UseTicketsResult {
-  const [tickets, setTickets] = useState<Ticket[]>(sampleTickets)
+  // Starts from the saved tickets, or the sample tickets if nothing valid is
+  // saved. After that, every change is saved automatically.
+  const [tickets, setTickets] = useLocalStorage<Ticket[]>(
+    TICKETS_STORAGE_KEY,
+    sampleTickets,
+    isTicketList,
+  )
 
   // Builds a NEW array where only the matching ticket is replaced by a copy
   // with the new status. We never change the old ticket object directly.
@@ -46,5 +59,10 @@ export function useTickets(): UseTicketsResult {
     )
   }
 
-  return { tickets, moveTicket, createTicket, updateTicket }
+  // Replacing the state also saves it, so the sample tickets are stored too.
+  function resetTickets() {
+    setTickets(sampleTickets)
+  }
+
+  return { tickets, moveTicket, createTicket, updateTicket, resetTickets }
 }

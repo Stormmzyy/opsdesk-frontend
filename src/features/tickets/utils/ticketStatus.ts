@@ -1,4 +1,10 @@
-import type { Priority, Ticket, TicketStatus, TicketStatusOption } from '../types.ts'
+import type {
+  Priority,
+  StatusFilter,
+  Ticket,
+  TicketStatus,
+  TicketStatusOption,
+} from '../types.ts'
 
 // The single source of truth for ticket statuses.
 // The array order is the order of the columns on the board,
@@ -58,4 +64,9 @@ export function parsePriority(value: string): Priority | undefined {
 
 export function parseStatus(value: string): TicketStatus | undefined {
   return TICKET_STATUSES.find((status) => status.value === value)?.value
+}
+
+// Same idea for the status filter dropdown, which also has 'ALL'.
+export function parseStatusFilter(value: string): StatusFilter | undefined {
+  return value === 'ALL' ? 'ALL' : parseStatus(value)
 }

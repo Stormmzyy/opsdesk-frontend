@@ -1,5 +1,5 @@
-import type { Priority, Ticket } from '../types.ts'
-import { isOpenTicket } from './ticketStatus.ts'
+import type { Priority, StatusFilter, Ticket } from '../types.ts'
+import { isOpenTicket, parsePriority, parseStatus } from './ticketStatus.ts'
 
 // Finds the ticket for the :id part of the URL, e.g. "3" in /tickets/3.
 // - useParams types the id as string | undefined, so we handle undefined.
@@ -29,4 +29,53 @@ export function getPriorityTickets(tickets: Ticket[]): Ticket[] {
     .sort(
       (a, b) => TOP_PRIORITIES.indexOf(a.priority) - TOP_PRIORITIES.indexOf(b.priority),
     )
+}
+
+// Keeps tickets whose title or description contains searchText (ignoring
+// upper and lower case) and whose status matches the filter.
+// An empty search matches everything, and 'ALL' matches every status.
+export function filterTickets(
+  tickets: Ticket[],
+  searchText: string,
+  statusFilter: StatusFilter,
+): Ticket[] {
+  const search = searchText.trim().toLowerCase()
+
+  return tickets.filter((ticket) => {
+    const matchesSearch =
+      ticket.title.toLowerCase().includes(search) ||
+      ticket.description.toLowerCase().includes(search)
+    const matchesStatus = statusFilter === 'ALL' || ticket.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+}
+
+// True when value is an object we can read properties from.
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+// Checks that one saved item has every field a ticket needs, with the right
+// type, and a priority and status we actually know about.
+function isTicket(value: unknown): value is Ticket {
+  if (!isRecord(value)) {
+    return false
+  }
+  return (
+    typeof value.id === 'number' &&
+    typeof value.title === 'string' &&
+    typeof value.description === 'string' &&
+    typeof value.team === 'string' &&
+    typeof value.priority === 'string' &&
+    parsePriority(value.priority) !== undefined &&
+    typeof value.status === 'string' &&
+    parseStatus(value.status) !== undefined
+  )
+}
+
+// Used when loading tickets from localStorage: anything saved there could have
+// been changed by hand or by an older version of the app, so we check it
+// before trusting it.
+export function isTicketList(value: unknown): value is Ticket[] {
+  return Array.isArray(value) && value.every(isTicket)
 }
