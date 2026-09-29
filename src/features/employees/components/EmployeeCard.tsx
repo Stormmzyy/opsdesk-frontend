@@ -1,5 +1,5 @@
-import type { Employee } from '../../types.ts'
-import { getInitials } from '../../utils/employeeHelpers.ts'
+import type { Employee } from '../../../types.ts'
+import { getInitials } from '../utils/employeeHelpers.ts'
 import './EmployeeCard.css'
 
 interface EmployeeCardProps {

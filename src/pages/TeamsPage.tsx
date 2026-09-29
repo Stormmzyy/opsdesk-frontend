@@ -1,8 +1,8 @@
 import type { Ticket } from '../types.ts'
 import { employees } from '../data/employees.ts'
-import { getTeamSummaries } from '../utils/teamHelpers.ts'
+import { getTeamSummaries } from '../features/employees/utils/teamHelpers.ts'
 import PageHeader from '../components/PageHeader.tsx'
-import EmployeeDirectory from '../components/employees/EmployeeDirectory.tsx'
+import EmployeeDirectory from '../features/employees/components/EmployeeDirectory.tsx'
 import './TeamsPage.css'
 
 interface TeamsPageProps {

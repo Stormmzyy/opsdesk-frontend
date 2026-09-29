@@ -1,4 +1,4 @@
-import type { Employee } from '../../types.ts'
+import type { Employee } from '../../../types.ts'
 import './EmployeeDetails.css'
 
 interface EmployeeDetailsProps {

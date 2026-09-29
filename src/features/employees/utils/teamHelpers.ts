@@ -1,6 +1,6 @@
-import type { Employee, Ticket } from '../types.ts'
+import type { Employee, Ticket } from '../../../types.ts'
 import { getDepartments } from './employeeHelpers.ts'
-import { isOpenTicket } from '../features/tickets/utils/ticketStatus.ts'
+import { isOpenTicket } from '../../tickets/utils/ticketStatus.ts'
 
 export interface TeamSummary {
   name: string

@@ -1,4 +1,4 @@
-import type { Employee } from '../types.ts'
+import type { Employee } from '../../../types.ts'
 
 // Turns "Amara Okafor" into "AO" for the photo placeholder.
 export function getInitials(name: string): string {
