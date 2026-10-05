@@ -1,6 +1,8 @@
+import { useRef } from 'react'
 import { useAppDispatch, useAppSelector } from '../store/hooks.ts'
 import { dismissNotification, selectNotifications } from '../store/uiSlice.ts'
 import type { Notification, NotificationType } from '../store/uiSlice.ts'
+import { focusMainHeading } from '../utils/focus.ts'
 import './Notifications.css'
 
 // The visible word in front of each message, so the type isn't shown by
@@ -13,7 +15,9 @@ const TYPE_LABELS: Record<NotificationType, string> = {
 
 interface NotificationListProps {
   notifications: Notification[]
-  onDismiss: (id: string) => void
+  // Also passes the Dismiss button that was pressed, so focus can be moved
+  // somewhere sensible before that button disappears.
+  onDismiss: (id: string, button: HTMLButtonElement) => void
 }
 
 function NotificationList({ notifications, onDismiss }: NotificationListProps) {
@@ -39,7 +43,7 @@ function NotificationList({ notifications, onDismiss }: NotificationListProps) {
               type="button"
               className="notification__dismiss"
               aria-describedby={messageId}
-              onClick={() => onDismiss(notification.id)}
+              onClick={(event) => onDismiss(notification.id, event.currentTarget)}
             >
               Dismiss
             </button>
@@ -56,8 +60,27 @@ function NotificationList({ notifications, onDismiss }: NotificationListProps) {
 function Notifications() {
   const notifications = useAppSelector(selectNotifications)
   const dispatch = useAppDispatch()
+  // The wrapper around both lists, used to find the other Dismiss buttons.
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  function handleDismiss(id: string) {
+  // Removing a notification removes the focused Dismiss button with it, and
+  // the browser would then drop keyboard focus back to the top of the page.
+  // So first move focus to the next notification's Dismiss button (or the
+  // previous one, if this was the last), or to the page heading when there
+  // are no notifications left.
+  function handleDismiss(id: string, button: HTMLButtonElement) {
+    // The instanceof check (rather than telling TypeScript "trust me, these
+    // are buttons") proves to TypeScript that each one really is a button.
+    const buttons = Array.from(
+      containerRef.current?.querySelectorAll('.notification__dismiss') ?? [],
+    ).filter((element) => element instanceof HTMLButtonElement)
+    const index = buttons.indexOf(button)
+    const nextButton = buttons[index + 1] ?? buttons[index - 1]
+    if (nextButton) {
+      nextButton.focus()
+    } else {
+      focusMainHeading()
+    }
     dispatch(dismissNotification(id))
   }
 
@@ -75,7 +98,7 @@ function Notifications() {
   // changes. aria-atomic={false} makes screen readers read only the new
   // notification, not every older one again.
   return (
-    <div className="notifications">
+    <div className="notifications" ref={containerRef}>
       <div role="status" aria-atomic={false}>
         <NotificationList notifications={messages} onDismiss={handleDismiss} />
       </div>
