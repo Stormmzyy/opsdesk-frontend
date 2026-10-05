@@ -9,6 +9,16 @@
   background: var(--surface);
 }
 
+/* The title and the "Main menu" button, side by side. On narrow screens this row
+   takes the full width, so the links wrap onto their own row below it. */
+.sidebar__top {
+  display: flex;
+  flex: 1 1 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .sidebar__title {
   margin: 0;
   color: var(--accent);
@@ -43,6 +53,30 @@
   outline-offset: 1px;
 }
 
+/* Styled like the nav links, so it reads as part of the navigation. */
+.sidebar__toggle {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-heading);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  /* Keep "« Main menu" on one line. */
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sidebar__toggle:hover {
+  border-color: var(--accent);
+}
+
+.sidebar__toggle:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .sidebar__link--active {
   background: var(--accent-bg);
   color: var(--text-heading);
@@ -65,11 +99,23 @@
     border-bottom: none;
   }
 
-  .sidebar__title {
-    padding: 0 12px 16px;
+  /* The title sits above the "Main menu" button. Stacking them means the
+     column can shrink to the width of the button when collapsed
+     (Layout.css does that), and nothing moves when you toggle it. */
+  .sidebar__top {
+    flex: none;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0 0 16px 12px;
   }
 
   .sidebar__list {
     flex-direction: column;
+  }
+
+  /* Collapsed: the links are hidden, so the strip doesn't need the gap
+     that separates them from the button. */
+  .sidebar--collapsed .sidebar__top {
+    padding-bottom: 0;
   }
 }
