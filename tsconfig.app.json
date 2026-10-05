@@ -13,6 +13,9 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
+    /* Lets TypeScript know about Vitest's global describe, it and expect
+       (we turned on "globals" in vite.config.ts). */
+    "types": ["vitest/globals"],
 
     /* Type checking */
     "strict": true,
