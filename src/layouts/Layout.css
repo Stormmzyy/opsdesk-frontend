@@ -27,3 +27,28 @@
     padding: 40px 32px 56px;
   }
 }
+
+/* "Skip to main content": moved off-screen until it receives keyboard focus,
+   then slides into the top-left corner above everything else. */
+.skip-link {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/* <main> only receives focus from the skip link or from code, never by
+   tabbing, so it doesn't need a focus ring around the whole page. */
+.layout__main:focus {
+  outline: none;
+}

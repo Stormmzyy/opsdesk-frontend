@@ -27,8 +27,18 @@ function Layout({ pages }: LayoutProps) {
 
   return (
     <div className={sidebarCollapsed ? 'layout layout--sidebar-collapsed' : 'layout'}>
+      {/* The first thing a keyboard user reaches. Without it, they would
+          have to Tab past the Main menu button and every navigation link on
+          every page before reaching the content. It's hidden until focused
+          (see Layout.css). A plain <a>, not a router <Link>, because it jumps
+          within the page rather than going to another URL. */}
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
       <Sidebar pages={pages} />
-      <main className="layout__main">
+      {/* tabIndex={-1} lets the skip link (and our code) move focus here,
+          without adding <main> to the normal Tab order. */}
+      <main id="main-content" className="layout__main" tabIndex={-1}>
         {/* Inside Layout, so notifications show on every page and stay put
             when you move between pages (e.g. after creating a ticket). */}
         <Notifications />
