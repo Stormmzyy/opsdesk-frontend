@@ -5,6 +5,8 @@ import BackLink from '../components/BackLink.tsx'
 import PageHeader from '../components/PageHeader.tsx'
 import TicketForm from '../features/tickets/components/TicketForm.tsx'
 import TicketNotFound from '../features/tickets/components/TicketNotFound.tsx'
+import { useAppDispatch } from '../store/hooks.ts'
+import { addNotification } from '../store/uiSlice.ts'
 
 // Edits the ticket chosen by the :id part of the URL, e.g. /tickets/3/edit.
 interface EditTicketPageProps {
@@ -15,6 +17,8 @@ interface EditTicketPageProps {
 function EditTicketPage({ tickets, onUpdateTicket }: EditTicketPageProps) {
   const { id } = useParams()
   const navigate = useNavigate()
+  // Hooks must run on every render, so this goes above the early return below.
+  const dispatch = useAppDispatch()
 
   // undefined when no ticket matches, e.g. /tickets/999/edit.
   const ticket = findTicketByParam(tickets, id)
@@ -31,6 +35,9 @@ function EditTicketPage({ tickets, onUpdateTicket }: EditTicketPageProps) {
 
   function handleSave(values: TicketFormValues) {
     onUpdateTicket(ticketId, values)
+    dispatch(
+      addNotification({ message: `Changes to ticket #${ticketId} were saved.`, type: 'success' }),
+    )
     navigate(detailPath)
   }
 
