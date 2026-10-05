@@ -17,6 +17,12 @@
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
+  /* The sidebar is collapsed: its column shrinks to fit what's left in it
+     (the title and the "Main menu" button), giving the page more room. */
+  .layout--sidebar-collapsed {
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+
   .layout__main {
     padding: 40px 32px 56px;
   }

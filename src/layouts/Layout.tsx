@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar.tsx'
 import type { NavPage } from '../routes/navPages.ts'
+import { useAppSelector } from '../store/hooks.ts'
+import { selectSidebarCollapsed } from '../store/uiSlice.ts'
 import './Layout.css'
 
 interface LayoutProps {
@@ -12,6 +14,9 @@ interface LayoutProps {
 // <Outlet /> is where React Router draws the page that matches the URL.
 function Layout({ pages }: LayoutProps) {
   const { pathname } = useLocation()
+  // The same value the Sidebar reads. Layout needs it too, to make the
+  // sidebar's grid column narrower, which is why it lives in Redux.
+  const sidebarCollapsed = useAppSelector(selectSidebarCollapsed)
 
   // Start each new page at the top, like a normal website would.
   useEffect(() => {
@@ -19,7 +24,7 @@ function Layout({ pages }: LayoutProps) {
   }, [pathname])
 
   return (
-    <div className="layout">
+    <div className={sidebarCollapsed ? 'layout layout--sidebar-collapsed' : 'layout'}>
       <Sidebar pages={pages} />
       <main className="layout__main">
         <Outlet />
