@@ -72,3 +72,18 @@ Each item gets one of three labels:
 - The **URL** state, which React Router already manages well.
 
 **Why most state should stay local:** state in a component is easy to find, is reset when you leave the page, and can't be changed by code somewhere else. Moving it into a global store would make every change go through actions and selectors for no benefit, and would keep things like a half-typed form alive after you've left the page. Global stores are only worth it when state is truly shared, so only `sidebarCollapsed` and `notifications` go into Redux.
+
+## Update: Redux is in (Part 2)
+
+**Moved into Redux** (`src/store/uiSlice.ts`, under `state.ui`):
+
+| State | Read by | Changed by | Why Redux |
+| --- | --- | --- | --- |
+| `sidebarCollapsed` | `Sidebar` (button label direction, `aria-expanded`, hiding the links) and `Layout` (narrows the grid column) | `toggleSidebar` from the Main menu button | Two separate components need the same value. Without Redux it would have to live in `Layout` and be passed down as props. |
+| `notifications` | `Notifications`, rendered by `Layout` on every page | `addNotification` from `NewTicketPage`, `EditTicketPage` and `TicketsPage`; `dismissNotification` from each Dismiss button | Created deep inside pages, shown in the layout, and kept when you move to another page (creating a ticket takes you to its detail page, and the message is still there). |
+
+**Stayed local**, unchanged: TicketBrowser's `view`, `searchText`, `statusFilter` and `page`; TicketForm's `values` and `errors`; EmployeeDirectory's `searchText`, `selectedDepartment` and `selectedEmployeeId`.
+
+**Not in Redux on purpose:** the tickets (server state, moving to RTK Query in Part 3), the users from `useFetch` (server state from a real API), and the URL (React Router owns it).
+
+Redux state lives in memory, so a page refresh expands the sidebar again and clears the notifications. That's fine for both: neither needs to survive a refresh.
