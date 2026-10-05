@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Pagination from '../../../components/Pagination.tsx'
 import StatusMessage from '../../../components/StatusMessage.tsx'
 import { paginate } from '../../../utils/pagination.ts'
@@ -34,9 +34,24 @@ function TicketBrowser({ tickets, onMoveTicket }: TicketBrowserProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [page, setPage] = useState(1)
 
-  // ...everything else is worked out from it on every render, so it can never
+  // ...everything else is worked out from it during render, so it can never
   // get out of sync with the tickets.
-  const matchingTickets = filterTickets(tickets, searchText, statusFilter)
+  //
+  // filterTickets is the one calculation here worth remembering (memoising):
+  // - It does the most work: it lower-cases and searches the title AND
+  //   description of EVERY ticket, so its cost grows with the whole list.
+  //   paginate() below only slices out 10 items, which is cheap.
+  // - It often re-runs for nothing: changing page, or switching between
+  //   list and board, re-renders this component without changing the
+  //   search, the filter or the tickets.
+  // useMemo keeps the last result and only calls filterTickets again when
+  // one of the values in the [...] list changes. `tickets` comes from RTK
+  // Query, which keeps the SAME array between renders until the data really
+  // changes, so the memo isn't thrown away on every render.
+  const matchingTickets = useMemo(
+    () => filterTickets(tickets, searchText, statusFilter),
+    [tickets, searchText, statusFilter],
+  )
   const ticketPage = paginate(matchingTickets, page, PAGE_SIZE)
 
   // A new search or filter can change how many pages there are,
