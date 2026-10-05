@@ -1,89 +1,71 @@
-# Week 3 notes: state audit
+# Week 3 notes: where state lives
 
-Every piece of state in the app at the start of Week 3, found by searching the code for `useState`, `useLocalStorage`, `useFetch` and the React Router hooks.
+Every piece of state in the app at the end of Week 3, found by searching the code for `useState`, `useRef`, `useAppSelector`, the RTK Query hooks, `useFetch`, the React Router hooks and `localStorage`.
 
-Each item gets one of three labels:
+Each item has one of three labels:
 
 - **Local**: only one component (and its children) cares about it. It belongs in `useState` inside that component.
 - **Shared-UI**: about how the app *looks or behaves*, and needed by components far apart in the tree. It is not data from a server.
 - **Server**: a copy of data that really belongs to a backend. The server is the source of truth, and the app has to load it, keep it fresh, and send changes back.
 
-## The audit
+## Shared-UI state: Redux (`src/store/uiSlice.ts`)
 
-### Tickets
-
-| State | Where | Label | Why |
+| State | Read by | Changed by | Why it's here |
 | --- | --- | --- | --- |
-| `tickets` (the whole ticket list) | `useTickets` in `App.tsx`, stored through `useLocalStorage` | **Server** | Tickets are business data that a backend will own. localStorage is only standing in for that backend until it exists. |
-| `value` inside `useLocalStorage` | `src/hooks/useLocalStorage.ts` | **Server** (as used today) | It's the in-memory copy of the saved tickets, so it follows the label of what it stores. Its only user is `useTickets`. |
-| `view` (list or board) | `TicketBrowser` | **Local** | Only the Tickets page shows the list or board, so nothing else needs to know. |
-| `searchText` | `TicketBrowser` | **Local** | Only filters what this one page shows. |
-| `statusFilter` | `TicketBrowser` | **Local** | Same as the search: it only affects this page. |
-| `page` | `TicketBrowser` | **Local** | Pagination for this one list. Resetting it when you leave the page is fine. |
-| `values` (the form fields) | `TicketForm` | **Local** | A draft being typed. It only becomes shared once it's submitted. |
-| `errors` (validation messages) | `TicketForm` | **Local** | Only the form shows them, and they're worked out from `values`. |
+| `sidebarCollapsed` | `Sidebar` (button, `aria-expanded`, hiding the links) and `Layout` (width of the sidebar column) | `toggleSidebar`, from the Main menu button | Two separate components need the same value. |
+| `notifications` | `Notifications`, rendered by `Layout` on every page | `addNotification` from `NewTicketPage`, `EditTicketPage` and `TicketsPage` (success and error); `dismissNotification` from each Dismiss button | Created inside pages, shown in the layout, and kept when you move to another page. |
 
-### Employees and teams
+## Server state: RTK Query (`src/store/ticketsApi.ts`)
 
-| State | Where | Label | Why |
-| --- | --- | --- | --- |
-| `searchText` | `EmployeeDirectory` | **Local** | Only filters the directory on the Teams page. |
-| `selectedDepartment` | `EmployeeDirectory` | **Local** | Same: a filter for this one component. |
-| `selectedEmployeeId` | `EmployeeDirectory` | **Local** | Decides which employee the details panel shows, right next to the list. Nothing else uses it. |
-
-### Users
-
-| State | Where | Label | Why |
-| --- | --- | --- | --- |
-| `data` (the users) | `useFetch`, called through `useUsers` | **Server** | Loaded from the JSONPlaceholder API, which owns the data. |
-| `status` (loading, success, empty, error) | `useFetch` | **Server** | It describes the request, so it goes wherever the server data goes. |
-| `retryCount` | `useFetch` | **Server** | Internal plumbing that makes `retry()` fetch again. It's part of how the server data is loaded. |
-
-### The URL
-
-| State | Where | Label | Why |
-| --- | --- | --- | --- |
-| `pathname` (current page) | React Router, read with `useLocation` in `Layout` | **Shared-UI** | The whole app reacts to it (the sidebar highlights the current link, `<Outlet />` picks the page), but React Router already owns it. It stays there. |
-| `:id` URL param | React Router, read with `useParams` in `TicketDetailPage` and `EditTicketPage` | **Shared-UI** | Which ticket to show. The URL is the right home because it survives a refresh and can be shared as a link. |
-
-### Things that look like state but aren't
-
-- **Derived values**: `matchingTickets` and `ticketPage` (TicketBrowser), `filteredEmployees` and `selectedEmployee` (EmployeeDirectory), the priority list, the status counts and the team summaries. They're all worked out from real state on every render, so they never need storing and can never go stale.
-- **Employees and projects** (`src/data/employees.ts`, `src/data/projects.ts`): fixed arrays that never change while the app runs, so they're constants, not state. When a backend arrives they'll become **server** state.
-- **Light and dark mode**: handled entirely in CSS with `prefers-color-scheme`. No JavaScript state is involved.
-
-### Missing today, needed this week
-
-| State | Label | Why |
+| State | Used by | Why it's here |
 | --- | --- | --- |
-| `sidebarCollapsed` | **Shared-UI** | The toggle lives in the sidebar, but the layout around it also needs to know, so it can give the page more room. |
-| `notifications` | **Shared-UI** | Created by forms and buttons on many different pages, but shown in one place in the layout. |
+| The ticket list (`getTickets`) | `TicketsPage`, `DashboardPage`, `TeamsPage` | Business data owned by the (mock) API. RTK Query loads it, shares one cached copy between the three pages, and refetches it when a change invalidates its tags. |
+| One ticket (`getTicket(id)`) | `TicketDetailPage`, `EditTicketPage` | The same data, one ticket at a time. Refetched when that ticket changes. |
+| Request status: `isLoading`, `isError`, the mutations' `isLoading` | The same pages | Describes the requests, so it comes with the server data instead of being written by hand. |
 
-## What moves this week, and what stays
+The cache lives in the Redux store (under `state.ticketsApi`), but no hand-written reducer touches it.
 
-**Moving to Redux (shared-UI only):** `sidebarCollapsed` and `notifications`. Both are needed by components far apart in the tree, and neither is server data.
+## Server state: useFetch (Users page)
 
-**Moving to RTK Query (server state):** the ticket list. `useTickets` and its localStorage copy are replaced by API calls to a mock server (MSW). RTK Query will own the loading, error and caching of that data.
+| State | Where | Why it's here |
+| --- | --- | --- |
+| `data`, `status`, `retryCount` | `useFetch`, called through `useUsers` | Users come from the real JSONPlaceholder API. The hand-written hook stays on purpose, as a comparison with RTK Query (see docs/ARCHITECTURE.md). |
 
-**Staying exactly where it is:**
+## Local state: `useState` in the component that owns it
 
-- Every **local** item above: TicketBrowser's view, search, filter and page; TicketForm's values and errors; EmployeeDirectory's search, department and selection.
-- The **users** in `useFetch`. They come from a real external API, and `useFetch` stays as a hand-written comparison to RTK Query.
-- The **URL** state, which React Router already manages well.
+| State | Where | Why it's local |
+| --- | --- | --- |
+| `view`, `searchText`, `statusFilter`, `page` | `TicketBrowser` | Only the Tickets page shows them. Resetting when you leave the page is fine. |
+| `values`, `errors` | `TicketForm` | A draft being typed. It only becomes shared when it's submitted. |
+| `searchText`, `selectedDepartment`, `selectedEmployeeId` | `EmployeeDirectory` | Only the directory on the Teams page uses them. |
 
-**Why most state should stay local:** state in a component is easy to find, is reset when you leave the page, and can't be changed by code somewhere else. Moving it into a global store would make every change go through actions and selectors for no benefit, and would keep things like a half-typed form alive after you've left the page. Global stores are only worth it when state is truly shared, so only `sidebarCollapsed` and `notifications` go into Redux.
+## Not React state, but worth knowing about
 
-## Update: Redux is in (Part 2)
+| What | Where | Why |
+| --- | --- | --- |
+| The URL (`pathname`, the `:id` param) | React Router (`useLocation` in `Layout`, `useParams` in the ticket pages) | Shared-UI state that React Router already owns. It survives a refresh and can be shared as a link. |
+| `previousPathname` | `useRef` in `Layout` | Remembers the last page, so focus only moves to the heading on a real page change. A ref, not state, because changing it shouldn't re-render anything. |
+| `containerRef` | `useRef` in `Notifications` | A handle on the DOM, used to find the next Dismiss button to focus. Not data. |
+| The mock database | `src/mocks/ticketDb.ts` (memory + localStorage `opsdesk.tickets`) | This is the *server's* storage, not the app's. The app never touches localStorage; only the mock API does. |
+| Derived values | `matchingTickets` (memoised) and `ticketPage` in `TicketBrowser`, `filteredEmployees`, the status counts, the priority list, the team summaries | Worked out from real state during render, so they can never go stale and never need storing. |
+| Employees and projects | `src/data/*.ts` | Constants that never change while the app runs. They'll become server state when a backend serves them. |
+| Light and dark mode | CSS `prefers-color-scheme` | No JavaScript state at all. |
 
-**Moved into Redux** (`src/store/uiSlice.ts`, under `state.ui`):
+## What changed during the week
 
-| State | Read by | Changed by | Why Redux |
-| --- | --- | --- | --- |
-| `sidebarCollapsed` | `Sidebar` (button label direction, `aria-expanded`, hiding the links) and `Layout` (narrows the grid column) | `toggleSidebar` from the Main menu button | Two separate components need the same value. Without Redux it would have to live in `Layout` and be passed down as props. |
-| `notifications` | `Notifications`, rendered by `Layout` on every page | `addNotification` from `NewTicketPage`, `EditTicketPage` and `TicketsPage`; `dismissNotification` from each Dismiss button | Created deep inside pages, shown in the layout, and kept when you move to another page (creating a ticket takes you to its detail page, and the message is still there). |
+At the start of Week 3:
+- **Tickets** were server data held in **`useTickets`**, a hook in `App` that saved them to localStorage through **`useLocalStorage`** and passed them to every page as props.
+- **Sidebar collapse and notifications** didn't exist.
 
-**Stayed local**, unchanged: TicketBrowser's `view`, `searchText`, `statusFilter` and `page`; TicketForm's `values` and `errors`; EmployeeDirectory's `searchText`, `selectedDepartment` and `selectedEmployeeId`.
+Over the week:
+1. **Part 2:** `sidebarCollapsed` and `notifications` were added to **Redux**, the only shared-UI state that needed it.
+2. **Part 3:**
+   - The tickets moved to **RTK Query**, backed by a mock API (MSW). The mock keeps its own copy in localStorage, so tickets still survive a refresh.
+   - `useTickets`, `useLocalStorage` and the ticket props on `App` and `AppRoutes` were deleted.
+3. **Part 4:** two `useRef`s were added for focus management, and the filtered ticket list was memoised.
 
-**Not in Redux on purpose:** the tickets (server state, moving to RTK Query in Part 3), the users from `useFetch` (server state from a real API), and the URL (React Router owns it).
+**Deliberately unchanged:** every local item above, the Users page's `useFetch`, and the URL.
 
-Redux state lives in memory, so a page refresh expands the sidebar again and clears the notifications. That's fine for both: neither needs to survive a refresh.
+## Why most state should stay local
+
+State in a component is easy to find, is reset when you leave the page, and can't be changed by code somewhere else. Moving it into a global store would mean every change goes through actions and selectors for no benefit. It would also keep things alive that should reset, like a half-typed form after you've left the page. A global store is only worth it when state is truly shared, which is why Redux holds just two things. Server data is different again: it needs loading, caching and refreshing, which is RTK Query's job rather than a hand-written slice's.
