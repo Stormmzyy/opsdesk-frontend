@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import StatusMessage from '../components/StatusMessage.tsx'
 import Notifications from './Notifications.tsx'
 import Sidebar from './Sidebar.tsx'
 import type { NavPage } from '../routes/navPages.ts'
@@ -31,7 +32,12 @@ function Layout({ pages }: LayoutProps) {
         {/* Inside Layout, so notifications show on every page and stay put
             when you move between pages (e.g. after creating a ticket). */}
         <Notifications />
-        <Outlet />
+        {/* Suspense catches a lazy page that is still downloading and shows
+            the fallback in its place. It sits INSIDE <main>, so the sidebar
+            and notifications stay on screen; only the page area waits. */}
+        <Suspense fallback={<StatusMessage type="loading">Loading page…</StatusMessage>}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   )
