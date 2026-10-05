@@ -1,6 +1,20 @@
 import type { Priority, StatusFilter, Ticket } from '../types.ts'
 import { isOpenTicket, parsePriority, parseStatus } from './ticketStatus.ts'
 
+// Turns the :id part of a URL (e.g. "3" in /tickets/3) into a ticket id.
+// URL params are always strings, but our ticket ids are numbers.
+// Returns undefined for anything that isn't a whole number made only of
+// digits, e.g. "abc", "3.5", "-1", "" or a missing param, because
+// Number() alone would happily turn "" into 0 and " 3 " into 3.
+// Used by the pages (to read the URL) and by the mock API (to read the
+// request URL), so both agree on what a valid id looks like.
+export function parseTicketId(idParam: string | undefined): number | undefined {
+  if (idParam === undefined || !/^\d+$/.test(idParam)) {
+    return undefined
+  }
+  return Number(idParam)
+}
+
 // Finds the ticket for the :id part of the URL, e.g. "3" in /tickets/3.
 // - useParams types the id as string | undefined, so we handle undefined.
 // - URL params are strings, but ticket ids are numbers, so we convert.
@@ -51,13 +65,13 @@ export function filterTickets(
 }
 
 // True when value is an object we can read properties from.
-function isRecord(value: unknown): value is Record<string, unknown> {
+export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
 // Checks that one saved item has every field a ticket needs, with the right
 // type, and a priority and status we actually know about.
-function isTicket(value: unknown): value is Ticket {
+export function isTicket(value: unknown): value is Ticket {
   if (!isRecord(value)) {
     return false
   }
