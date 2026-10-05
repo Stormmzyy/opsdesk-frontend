@@ -35,7 +35,7 @@ function AppRoutes({ ticketStore }: AppRoutesProps) {
           element={<NewTicketPage onCreateTicket={createTicket} />}
         />
         {/* ":id" is a URL parameter: /tickets/3 gives the page an id of "3". */}
-        <Route path="/tickets/:id" element={<TicketDetailPage tickets={tickets} />} />
+        <Route path="/tickets/:id" element={<TicketDetailPage />} />
         <Route
           path="/tickets/:id/edit"
           element={<EditTicketPage tickets={tickets} onUpdateTicket={updateTicket} />}
