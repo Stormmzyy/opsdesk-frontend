@@ -29,8 +29,12 @@ export const ticketsApi = createApi({
   // Where this api's cache lives in the store: state.ticketsApi.
   reducerPath: 'ticketsApi',
   // fetchBaseQuery is a small wrapper around fetch. Every endpoint's URL is
-  // added onto "/api", so '/tickets' becomes '/api/tickets'.
-  baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
+  // added onto the base URL, so '/tickets' becomes '<this site>/api/tickets'.
+  // The base is built from the page's own address (e.g.
+  // http://localhost:5173/api) instead of just "/api": browsers fill in the
+  // site for a relative URL, but the tests run in Node, whose fetch rejects
+  // relative URLs. In the browser both versions mean exactly the same URL.
+  baseQuery: fetchBaseQuery({ baseUrl: new URL('/api', window.location.origin).href }),
   // The kinds of tag this api uses. We only have one kind: tickets.
   tagTypes: ['Ticket'],
 
