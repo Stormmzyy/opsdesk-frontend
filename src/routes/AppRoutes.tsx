@@ -21,7 +21,7 @@ interface AppRoutesProps {
 // The Layout route has no path of its own: it wraps all the pages inside it
 // and shows the matching one through its <Outlet />.
 function AppRoutes({ ticketStore }: AppRoutesProps) {
-  const { tickets, createTicket, updateTicket } = ticketStore
+  const { tickets, createTicket } = ticketStore
 
   return (
     <Routes>
@@ -36,10 +36,7 @@ function AppRoutes({ ticketStore }: AppRoutesProps) {
         />
         {/* ":id" is a URL parameter: /tickets/3 gives the page an id of "3". */}
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
-        <Route
-          path="/tickets/:id/edit"
-          element={<EditTicketPage tickets={tickets} onUpdateTicket={updateTicket} />}
-        />
+        <Route path="/tickets/:id/edit" element={<EditTicketPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/teams" element={<TeamsPage tickets={tickets} />} />
         <Route path="/users" element={<UsersPage />} />
