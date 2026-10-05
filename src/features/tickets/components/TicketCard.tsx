@@ -13,6 +13,11 @@ interface TicketCardProps {
 function TicketCard({ ticket, onMoveTicket }: TicketCardProps) {
   // null when the ticket is CLOSED, which hides the move button below.
   const nextStatus = getNextStatus(ticket.status)
+  // Every card has a "Move to ..." button and a "Status" dropdown, so on
+  // their own they don't say WHICH ticket they belong to. aria-describedby
+  // points them at this card's title, so a screen reader reads, for example,
+  // "Move to Resolved, button, Customer cannot reset their password".
+  const titleId = `ticket-card-title-${ticket.id}`
 
   // The dropdown gives us a plain string, so turn it back into a TicketStatus
   // first. It is always one of our options, but TypeScript can't know that.
@@ -27,7 +32,7 @@ function TicketCard({ ticket, onMoveTicket }: TicketCardProps) {
     <article className="ticket-card">
       {/* Only the title is a link. The move button and status dropdown sit
           outside it, so using them changes the status without navigating. */}
-      <p className="ticket-card__title">
+      <p className="ticket-card__title" id={titleId}>
         <Link to={`/tickets/${ticket.id}`}>{ticket.title}</Link>
       </p>
 
@@ -41,6 +46,7 @@ function TicketCard({ ticket, onMoveTicket }: TicketCardProps) {
           <button
             type="button"
             className="ticket-card__move"
+            aria-describedby={titleId}
             onClick={() => onMoveTicket(ticket.id, nextStatus.value)}
           >
             Move to {nextStatus.label}
@@ -50,10 +56,7 @@ function TicketCard({ ticket, onMoveTicket }: TicketCardProps) {
         {/* Wrapping the select in its label links them without needing an id. */}
         <label className="ticket-card__status">
           Status
-          <select
-            value={ticket.status}
-            onChange={handleStatusChange}
-          >
+          <select value={ticket.status} onChange={handleStatusChange} aria-describedby={titleId}>
             {TICKET_STATUSES.map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
