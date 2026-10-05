@@ -1,21 +1,18 @@
 import type { Priority, StatusFilter, Ticket } from '../types.ts'
 import { isOpenTicket, parsePriority, parseStatus } from './ticketStatus.ts'
 
-// Finds the ticket for the :id part of the URL, e.g. "3" in /tickets/3.
-// - useParams types the id as string | undefined, so we handle undefined.
-// - URL params are strings, but ticket ids are numbers, so we convert.
-// - The URL could hold anything (e.g. /tickets/abc), and find() returns
-//   undefined when nothing matches, so the result can be undefined too.
-//   The page shows "Ticket not found" in that case.
-export function findTicketByParam(
-  tickets: Ticket[],
-  idParam: string | undefined,
-): Ticket | undefined {
-  if (idParam === undefined) {
+// Turns the :id part of a URL (e.g. "3" in /tickets/3) into a ticket id.
+// URL params are always strings, but our ticket ids are numbers.
+// Returns undefined for anything that isn't a whole number made only of
+// digits, e.g. "abc", "3.5", "-1", "" or a missing param, because
+// Number() alone would happily turn "" into 0 and " 3 " into 3.
+// Used by the pages (to read the URL) and by the mock API (to read the
+// request URL), so both agree on what a valid id looks like.
+export function parseTicketId(idParam: string | undefined): number | undefined {
+  if (idParam === undefined || !/^\d+$/.test(idParam)) {
     return undefined
   }
-  const id = Number(idParam)
-  return tickets.find((ticket) => ticket.id === id)
+  return Number(idParam)
 }
 
 // The priorities that need attention first, most important first.
@@ -51,13 +48,13 @@ export function filterTickets(
 }
 
 // True when value is an object we can read properties from.
-function isRecord(value: unknown): value is Record<string, unknown> {
+export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
 // Checks that one saved item has every field a ticket needs, with the right
 // type, and a priority and status we actually know about.
-function isTicket(value: unknown): value is Ticket {
+export function isTicket(value: unknown): value is Ticket {
   if (!isRecord(value)) {
     return false
   }
@@ -73,9 +70,9 @@ function isTicket(value: unknown): value is Ticket {
   )
 }
 
-// Used when loading tickets from localStorage: anything saved there could have
-// been changed by hand or by an older version of the app, so we check it
-// before trusting it.
+// Used by the mock API (src/mocks/ticketDb.ts) when loading tickets from
+// localStorage: anything saved there could have been changed by hand or by an
+// older version of the app, so we check it before trusting it.
 export function isTicketList(value: unknown): value is Ticket[] {
   return Array.isArray(value) && value.every(isTicket)
 }

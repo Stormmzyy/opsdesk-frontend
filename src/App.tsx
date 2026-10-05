@@ -1,12 +1,10 @@
-import { useTickets } from './features/tickets/hooks/useTickets.ts'
 import AppRoutes from './routes/AppRoutes.tsx'
 
+// The tickets used to live here in a useTickets hook and be passed down to
+// every page. Now each page asks RTK Query for them (see store/ticketsApi.ts),
+// and RTK Query's shared cache keeps every page in step.
 function App() {
-  // The tickets live here, at the top, so every page sees the same
-  // up-to-date list and changes aren't lost when you switch pages.
-  const ticketStore = useTickets()
-
-  return <AppRoutes ticketStore={ticketStore} />
+  return <AppRoutes />
 }
 
 export default App

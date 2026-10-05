@@ -27,6 +27,9 @@ interface TicketFormProps {
   onCancel: () => void
   // Shows the Status dropdown, used when editing.
   showStatus?: boolean
+  // True while the values are being sent to the server. Disables the submit
+  // button, so a double click can't create the same ticket twice.
+  isSubmitting?: boolean
 }
 
 // One form for both creating and editing a ticket.
@@ -36,6 +39,7 @@ function TicketForm({
   submitLabel,
   onCancel,
   showStatus = false,
+  isSubmitting = false,
 }: TicketFormProps) {
   const [values, setValues] = useState<TicketFormValues>(initialValues)
   // Starts empty, so no errors show until the user first tries to submit.
@@ -201,7 +205,7 @@ function TicketForm({
       )}
 
       <div className="ticket-form__actions">
-        <button type="submit" className="button button--primary">
+        <button type="submit" className="button button--primary" disabled={isSubmitting}>
           {submitLabel}
         </button>
         <button type="button" className="button" onClick={onCancel}>

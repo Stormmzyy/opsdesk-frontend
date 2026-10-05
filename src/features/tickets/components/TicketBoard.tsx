@@ -8,8 +8,8 @@ interface TicketBoardProps {
   onMoveTicket: MoveTicketHandler
 }
 
-// The tickets state lives in the useTickets hook. The board just displays it and passes
-// onMoveTicket down to each card.
+// The tickets come from RTK Query, loaded by the Tickets page. The board just
+// displays them and passes onMoveTicket down to each card.
 function TicketBoard({ tickets, onMoveTicket }: TicketBoardProps) {
   return (
     <section aria-label="Ticket board">
