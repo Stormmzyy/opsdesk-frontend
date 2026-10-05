@@ -61,7 +61,7 @@ export const handlers = [
   // GET /api/tickets: every ticket.
   http.get('/api/tickets', async () => {
     // delay() waits a realistic, random time (like a real network), so the
-    // loading states actually show up. In tests (Node) it doesn't wait.
+    // loading states actually show up. In tests (Node) it only waits 5ms.
     await delay()
     return HttpResponse.json<Ticket[]>(getAllTickets())
   }),
