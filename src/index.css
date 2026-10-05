@@ -13,6 +13,9 @@
   --danger: #b91c1c;
   /* Green for success notifications. */
   --success: #15803d;
+  /* Placeholder text in inputs: lighter than typed text, but still at least
+     4.5:1 contrast so it can be read. */
+  --placeholder: #6b7280;
 
   /* Priority badge colours: a soft background with a strong text colour. */
   --priority-low-bg: #e5e7eb;
@@ -44,6 +47,8 @@
     --on-accent: #111217;
     --danger: #fca5a5;
     --success: #86efac;
+    /* The browser's default placeholder grey was only 3.7:1 here. */
+    --placeholder: #8f96a3;
 
     --priority-low-bg: #2e303a;
     --priority-low-text: #d1d5db;
@@ -58,6 +63,14 @@
 
 body {
   margin: 0;
+}
+
+/* Every input's placeholder (e.g. "Search titles and descriptions").
+   opacity: 1 stops Firefox from fading it even further. */
+input::placeholder,
+textarea::placeholder {
+  color: var(--placeholder);
+  opacity: 1;
 }
 
 h1,
