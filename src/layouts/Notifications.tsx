@@ -70,12 +70,16 @@ function Notifications() {
   // Both regions are ALWAYS on the page, even when empty. Screen readers
   // only notice changes inside a live region that already existed, so adding
   // a brand new role="status" element along with its message can go unheard.
+  //
+  // Both roles normally re-read the WHOLE region whenever anything in it
+  // changes. aria-atomic={false} makes screen readers read only the new
+  // notification, not every older one again.
   return (
     <div className="notifications">
-      <div role="status">
+      <div role="status" aria-atomic={false}>
         <NotificationList notifications={messages} onDismiss={handleDismiss} />
       </div>
-      <div role="alert">
+      <div role="alert" aria-atomic={false}>
         <NotificationList notifications={errors} onDismiss={handleDismiss} />
       </div>
     </div>
