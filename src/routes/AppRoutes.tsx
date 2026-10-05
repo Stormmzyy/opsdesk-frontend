@@ -28,7 +28,7 @@ function AppRoutes({ ticketStore }: AppRoutesProps) {
       <Route element={<Layout pages={NAV_PAGES} />}>
         {/* "replace" swaps / for /dashboard in the history, so Back still works. */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<DashboardPage tickets={tickets} />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/tickets" element={<TicketsPage />} />
         <Route path="/tickets/new" element={<NewTicketPage />} />
         {/* ":id" is a URL parameter: /tickets/3 gives the page an id of "3". */}
