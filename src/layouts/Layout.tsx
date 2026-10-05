@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import Notifications from './Notifications.tsx'
 import Sidebar from './Sidebar.tsx'
 import type { NavPage } from '../routes/navPages.ts'
 import { useAppSelector } from '../store/hooks.ts'
@@ -27,6 +28,9 @@ function Layout({ pages }: LayoutProps) {
     <div className={sidebarCollapsed ? 'layout layout--sidebar-collapsed' : 'layout'}>
       <Sidebar pages={pages} />
       <main className="layout__main">
+        {/* Inside Layout, so notifications show on every page and stay put
+            when you move between pages (e.g. after creating a ticket). */}
+        <Notifications />
         <Outlet />
       </main>
     </div>

@@ -11,6 +11,8 @@
   --on-accent: #ffffff;
   /* Red for form errors. */
   --danger: #b91c1c;
+  /* Green for success notifications. */
+  --success: #15803d;
 
   /* Priority badge colours: a soft background with a strong text colour. */
   --priority-low-bg: #e5e7eb;
@@ -41,6 +43,7 @@
     --accent-border: rgba(167, 139, 250, 0.5);
     --on-accent: #111217;
     --danger: #fca5a5;
+    --success: #86efac;
 
     --priority-low-bg: #2e303a;
     --priority-low-text: #d1d5db;
