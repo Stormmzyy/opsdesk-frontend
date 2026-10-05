@@ -13,6 +13,12 @@
   line-height: 1.2;
 }
 
+/* The heading only receives focus from code, after a page change. It isn't
+   something you can click or type into, so it doesn't need a focus ring. */
+.page-header h1:focus {
+  outline: none;
+}
+
 .page-header p {
   margin: 6px 0 0;
 }

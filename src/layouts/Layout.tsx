@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import StatusMessage from '../components/StatusMessage.tsx'
 import Notifications from './Notifications.tsx'
@@ -6,6 +6,7 @@ import Sidebar from './Sidebar.tsx'
 import type { NavPage } from '../routes/navPages.ts'
 import { useAppSelector } from '../store/hooks.ts'
 import { selectSidebarCollapsed } from '../store/uiSlice.ts'
+import { focusMainHeading } from '../utils/focus.ts'
 import './Layout.css'
 
 interface LayoutProps {
@@ -20,9 +21,21 @@ function Layout({ pages }: LayoutProps) {
   // sidebar's grid column narrower, which is why it lives in Redux.
   const sidebarCollapsed = useAppSelector(selectSidebarCollapsed)
 
-  // Start each new page at the top, like a normal website would.
+  // The page we were on last time the effect below ran.
+  const previousPathname = useRef(pathname)
+
+  // When the page changes: start at the top, like a normal website would,
+  // and move focus to the new page's heading so screen readers announce it.
+  // Comparing with the previous path (instead of "is this the first render?")
+  // means focus never moves on the first load, even though React's
+  // StrictMode runs effects twice in development.
   useEffect(() => {
+    if (previousPathname.current === pathname) {
+      return
+    }
+    previousPathname.current = pathname
     window.scrollTo(0, 0)
+    focusMainHeading()
   }, [pathname])
 
   return (

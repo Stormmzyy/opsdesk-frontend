@@ -13,7 +13,9 @@ function PageHeader({ title, description, children }: PageHeaderProps) {
   return (
     <header className="page-header">
       <div className="page-header__text">
-        <h1>{title}</h1>
+        {/* tabIndex={-1}: code can move focus here after a page change (see
+            utils/focus.ts), but it isn't added to the normal Tab order. */}
+        <h1 tabIndex={-1}>{title}</h1>
         {description && <p>{description}</p>}
       </div>
       {children && <div className="page-header__actions">{children}</div>}
