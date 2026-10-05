@@ -17,7 +17,8 @@ function EmployeeDetails({ employee }: EmployeeDetailsProps) {
 
   return (
     <section className="employee-details">
-      <h2>{employee.name}</h2>
+      {/* <h3>: this panel sits inside the "Employee Directory" <h2> section. */}
+      <h3>{employee.name}</h3>
       <dl>
         <dt>Role</dt>
         <dd>{employee.role}</dd>

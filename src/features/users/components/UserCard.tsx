@@ -7,10 +7,12 @@ interface UserCardProps {
 
 // "user" comes straight from the JSONPlaceholder API, so the company name
 // and city are nested one level down.
+// The name is an <h2> because the cards sit directly under the page's <h1>.
+// Skipping to <h3> would make screen reader users think a level was missing.
 function UserCard({ user }: UserCardProps) {
   return (
     <article className="user-card">
-      <h3 className="user-card__name">{user.name}</h3>
+      <h2 className="user-card__name">{user.name}</h2>
       <p className="user-card__username">@{user.username}</p>
       <dl className="user-card__details">
         <dt>Email</dt>
