@@ -3,8 +3,10 @@ import { Link, useParams } from 'react-router-dom'
 import { parseTicketId } from '../features/tickets/utils/ticketHelpers.ts'
 import BackLink from '../components/BackLink.tsx'
 import PageHeader from '../components/PageHeader.tsx'
+import SkeletonGroup from '../components/SkeletonGroup.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'
 import TicketDetails from '../features/tickets/components/TicketDetails.tsx'
+import TicketDetailsSkeleton from '../features/tickets/components/TicketDetailsSkeleton.tsx'
 import TicketNotFound from '../features/tickets/components/TicketNotFound.tsx'
 import { isNotFoundError, useGetTicketQuery } from '../store/ticketsApi.ts'
 
@@ -37,7 +39,9 @@ function TicketDetailPage() {
       <>
         <BackLink to="/tickets">Back to tickets</BackLink>
         <PageHeader title={`Ticket #${ticketId}`} />
-        <StatusMessage type="loading">Loading the ticket…</StatusMessage>
+        <SkeletonGroup label="Loading the ticket">
+          <TicketDetailsSkeleton />
+        </SkeletonGroup>
       </>
     )
   }
