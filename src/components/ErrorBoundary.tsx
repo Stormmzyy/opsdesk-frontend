@@ -6,8 +6,9 @@ import './ErrorBoundary.css'
 interface ErrorBoundaryProps {
   children: ReactNode
   // When this value changes, a boundary that is showing its fallback goes back
-  // to showing its children. We pass the current URL path, so moving to
-  // another page clears the error instead of leaving the app stuck on it.
+  // to showing its children. We pass React Router's location key, which
+  // changes on every navigation, so moving to another page (or clicking the
+  // link to the same one) clears the error instead of leaving the app stuck.
   resetKey?: string
   // true for the outer boundary around the whole app. If it ever shows, the
   // Layout (and its <main>) is gone, so the fallback brings its own <main>.

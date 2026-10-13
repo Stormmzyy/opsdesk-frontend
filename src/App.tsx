@@ -6,7 +6,9 @@ import AppRoutes from './routes/AppRoutes.tsx'
 // every page. Now each page asks RTK Query for them (see store/ticketsApi.ts),
 // and RTK Query's shared cache keeps every page in step.
 function App() {
-  const { pathname } = useLocation()
+  // A unique id for every navigation, even to the same path again, so
+  // "Go to the dashboard" clears the error even when the dashboard crashed.
+  const { key: locationKey } = useLocation()
 
   // The outer error boundary: a safety net in case the Layout itself (the
   // sidebar, notifications, or the frame around pages) throws. The inner
@@ -15,7 +17,7 @@ function App() {
   // Most crashes are caught by the inner one first, so this rarely shows.
   // fullPage gives the fallback its own <main>, since the Layout is gone.
   return (
-    <ErrorBoundary resetKey={pathname} fullPage>
+    <ErrorBoundary resetKey={locationKey} fullPage>
       <AppRoutes />
     </ErrorBoundary>
   )
