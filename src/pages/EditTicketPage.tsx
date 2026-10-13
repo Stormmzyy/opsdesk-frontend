@@ -10,8 +10,8 @@ import TicketForm from '../features/tickets/components/TicketForm.tsx'
 import TicketFormSkeleton from '../features/tickets/components/TicketFormSkeleton.tsx'
 import TicketNotFound from '../features/tickets/components/TicketNotFound.tsx'
 import { useAppDispatch } from '../store/hooks.ts'
+import { isNotFoundError } from '../store/api.ts'
 import {
-  isNotFoundError,
   useGetTicketQuery,
   useUpdateTicketMutation,
 } from '../store/ticketsApi.ts'

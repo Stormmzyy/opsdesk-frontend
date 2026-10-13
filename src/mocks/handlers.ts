@@ -1,11 +1,14 @@
 import { delay, http, HttpResponse } from 'msw'
 import type { DefaultBodyType, PathParams } from 'msw'
+import type { Project } from '../features/projects/types.ts'
 import type { Ticket } from '../features/tickets/types.ts'
-import { isRecord, isTicket, parseTicketId } from '../features/tickets/utils/ticketHelpers.ts'
+import { isRecord, isTicket } from '../features/tickets/utils/ticketHelpers.ts'
 import { hasErrors, validateTicket } from '../features/tickets/utils/ticketValidation.ts'
+import { parseId } from '../utils/parseId.ts'
+import { getAllProjects } from './projectDb.ts'
 import { getAllTickets, resetToSampleTickets, saveAllTickets } from './ticketDb.ts'
 
-// Request handlers for the mock ticket API.
+// Request handlers for the mock API: tickets and projects.
 //
 // MSW (Mock Service Worker) catches the app's fetch requests before they
 // leave the browser. When a request matches one of these handlers, MSW calls
@@ -35,10 +38,10 @@ function errorResponse(status: number, error: ErrorCode, message: string) {
 }
 
 // URL params can, in theory, be a list (for patterns like /:path*), so only
-// accept a single string. Then turn it into a numeric ticket id, which is
-// undefined for anything that isn't a whole number, like "abc".
-function readTicketId(param: string | readonly string[] | undefined): number | undefined {
-  return typeof param === 'string' ? parseTicketId(param) : undefined
+// accept a single string. Then turn it into a numeric id (of a ticket or a
+// project), which is undefined for anything that isn't a whole number, like "abc".
+function readId(param: string | readonly string[] | undefined): number | undefined {
+  return typeof param === 'string' ? parseId(param) : undefined
 }
 
 // Reads the request body as JSON. Returns undefined if it isn't valid JSON.
@@ -83,7 +86,7 @@ export const handlers = [
     '/api/v1/tickets/:id',
     async ({ params }) => {
       await delay()
-      const id = readTicketId(params.id)
+      const id = readId(params.id)
       const ticket = getAllTickets().find((item) => item.id === id)
       if (!ticket) {
         // Covers both "abc" (not a number) and 999 (no such ticket).
@@ -144,7 +147,7 @@ export const handlers = [
     '/api/v1/tickets/:id',
     async ({ params, request }) => {
       await delay()
-      const id = readTicketId(params.id)
+      const id = readId(params.id)
       const tickets = getAllTickets()
       const existing = tickets.find((item) => item.id === id)
       if (!existing) {
@@ -187,7 +190,7 @@ export const handlers = [
     '/api/v1/tickets/:id',
     async ({ params }) => {
       await delay()
-      const id = readTicketId(params.id)
+      const id = readId(params.id)
       const tickets = getAllTickets()
       if (!tickets.some((ticket) => ticket.id === id)) {
         // Covers "abc" (not a number) and 999 (no such ticket), as GET does.
@@ -199,6 +202,28 @@ export const handlers = [
       // 204 No Content: "it worked, and there's nothing to send back".
       // The ticket is gone, so there's no ticket to return.
       return new HttpResponse(null, { status: 204 })
+    },
+  ),
+
+  // GET /api/v1/projects: every project. Read-only for now: there are no
+  // endpoints to create, change or delete projects.
+  http.get('/api/v1/projects', async () => {
+    await delay()
+    return HttpResponse.json<Project[]>(getAllProjects())
+  }),
+
+  // GET /api/v1/projects/:id: one project, or 404.
+  http.get<PathParams<'id'>, DefaultBodyType, Project | ErrorBody>(
+    '/api/v1/projects/:id',
+    async ({ params }) => {
+      await delay()
+      const id = readId(params.id)
+      const project = getAllProjects().find((item) => item.id === id)
+      if (!project) {
+        // Covers both "abc" (not a number) and 999 (no such project).
+        return errorResponse(404, 'NOT_FOUND', `No project with id "${String(params.id)}".`)
+      }
+      return HttpResponse.json<Project>(project)
     },
   ),
 ]
