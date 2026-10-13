@@ -18,13 +18,20 @@ import { getAllTickets, resetToSampleTickets, saveAllTickets } from './ticketDb.
 // breaks old clients, the new version can live at /api/v2 alongside it.
 // If you change VITE_API_URL to another path, change these paths to match.
 
-// What every error response looks like, e.g. { message: 'No ticket with id "99".' }.
+// What every error response looks like, e.g.
+// { error: 'NOT_FOUND', message: 'No ticket with id "99".' }
+// - error: a fixed code the app can check in code. It never changes wording.
+// - message: a sentence for people. It may be reworded at any time.
+// API_CONTRACT.md lists every code and when it is used.
+type ErrorCode = 'BAD_REQUEST' | 'VALIDATION_ERROR' | 'NOT_FOUND'
+
 interface ErrorBody {
+  error: ErrorCode
   message: string
 }
 
-function errorResponse(status: number, message: string) {
-  return HttpResponse.json<ErrorBody>({ message }, { status })
+function errorResponse(status: number, error: ErrorCode, message: string) {
+  return HttpResponse.json<ErrorBody>({ error, message }, { status })
 }
 
 // URL params can, in theory, be a list (for patterns like /:path*), so only
@@ -80,7 +87,7 @@ export const handlers = [
       const ticket = getAllTickets().find((item) => item.id === id)
       if (!ticket) {
         // Covers both "abc" (not a number) and 999 (no such ticket).
-        return errorResponse(404, `No ticket with id "${String(params.id)}".`)
+        return errorResponse(404, 'NOT_FOUND', `No ticket with id "${String(params.id)}".`)
       }
       return HttpResponse.json<Ticket>(ticket)
     },
@@ -92,7 +99,7 @@ export const handlers = [
     await delay()
     const body = await readJsonBody(request)
     if (!isRecord(body)) {
-      return errorResponse(400, 'The request body must be a JSON object.')
+      return errorResponse(400, 'BAD_REQUEST', 'The request body must be a JSON object.')
     }
 
     const tickets = getAllTickets()
@@ -111,11 +118,11 @@ export const handlers = [
     // isTicket checks every field's type. Once it passes, TypeScript treats
     // candidate as a Ticket, so it can be validated and saved.
     if (!isTicket(candidate)) {
-      return errorResponse(400, WRONG_SHAPE_MESSAGE)
+      return errorResponse(400, 'VALIDATION_ERROR', WRONG_SHAPE_MESSAGE)
     }
     const problem = findRuleProblem(candidate)
     if (problem) {
-      return errorResponse(400, problem)
+      return errorResponse(400, 'VALIDATION_ERROR', problem)
     }
 
     saveAllTickets([...tickets, candidate])
@@ -141,12 +148,12 @@ export const handlers = [
       const tickets = getAllTickets()
       const existing = tickets.find((item) => item.id === id)
       if (!existing) {
-        return errorResponse(404, `No ticket with id "${String(params.id)}".`)
+        return errorResponse(404, 'NOT_FOUND', `No ticket with id "${String(params.id)}".`)
       }
 
       const body = await readJsonBody(request)
       if (!isRecord(body)) {
-        return errorResponse(400, 'The request body must be a JSON object.')
+        return errorResponse(400, 'BAD_REQUEST', 'The request body must be a JSON object.')
       }
 
       // Start from the existing ticket and replace only the fields that were
@@ -161,11 +168,11 @@ export const handlers = [
       }
 
       if (!isTicket(candidate)) {
-        return errorResponse(400, WRONG_SHAPE_MESSAGE)
+        return errorResponse(400, 'VALIDATION_ERROR', WRONG_SHAPE_MESSAGE)
       }
       const problem = findRuleProblem(candidate)
       if (problem) {
-        return errorResponse(400, problem)
+        return errorResponse(400, 'VALIDATION_ERROR', problem)
       }
 
       saveAllTickets(tickets.map((ticket) => (ticket.id === existing.id ? candidate : ticket)))
