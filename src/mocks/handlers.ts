@@ -179,4 +179,26 @@ export const handlers = [
       return HttpResponse.json<Ticket>(candidate)
     },
   ),
+
+  // DELETE /api/v1/tickets/:id: remove a ticket for good, or 404.
+  // The response type is ErrorBody | null: null for the empty body of a
+  // successful delete, an ErrorBody when it fails.
+  http.delete<PathParams<'id'>, DefaultBodyType, ErrorBody | null>(
+    '/api/v1/tickets/:id',
+    async ({ params }) => {
+      await delay()
+      const id = readTicketId(params.id)
+      const tickets = getAllTickets()
+      if (!tickets.some((ticket) => ticket.id === id)) {
+        // Covers "abc" (not a number) and 999 (no such ticket), as GET does.
+        return errorResponse(404, 'NOT_FOUND', `No ticket with id "${String(params.id)}".`)
+      }
+
+      // Keep every ticket except this one.
+      saveAllTickets(tickets.filter((ticket) => ticket.id !== id))
+      // 204 No Content: "it worked, and there's nothing to send back".
+      // The ticket is gone, so there's no ticket to return.
+      return new HttpResponse(null, { status: 204 })
+    },
+  ),
 ]
