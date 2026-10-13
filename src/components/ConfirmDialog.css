@@ -1,0 +1,36 @@
+/* The browser centres a modal <dialog> and puts it above the page. These
+   rules only style the box itself. */
+.confirm-dialog {
+  box-sizing: border-box;
+  /* 440px wide, or the screen width minus a 16px gutter each side. */
+  width: min(440px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--toast-shadow);
+}
+
+/* ::backdrop is the layer the browser draws between the dialog and the
+   page. Dimming it shows the page can't be used until the dialog closes. */
+.confirm-dialog::backdrop {
+  background: rgba(17, 24, 39, 0.55);
+}
+
+.confirm-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+}
+
+.confirm-dialog p {
+  margin: 0 0 24px;
+}
+
+/* Cancel first, the destructive button last, on the right. */
+.confirm-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}

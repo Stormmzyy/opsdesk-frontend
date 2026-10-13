@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { TicketStatus } from '../features/tickets/types.ts'
+import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import PageHeader from '../components/PageHeader.tsx'
 import SkeletonGroup from '../components/SkeletonGroup.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'
@@ -25,6 +27,8 @@ function TicketsPage() {
   const dispatch = useAppDispatch()
   // Only read here to draw the right skeleton while the tickets load.
   const [view] = useTicketView()
+  // Whether the "Reset to sample data?" dialog is showing.
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
 
   // Called by the cards on the board. Sends only the new status (PATCH).
   // When it succeeds, invalidatesTags makes the list refetch by itself.
@@ -39,11 +43,11 @@ function TicketsPage() {
     }
   }
 
-  // Ask first, because this throws away every change.
-  async function handleReset() {
-    if (!window.confirm('Replace all tickets with the sample data? Your changes will be lost.')) {
-      return
-    }
+  // Runs only when the user confirms in the dialog, because a reset throws
+  // away every change. Closing the dialog first returns focus to the Reset
+  // button.
+  async function handleConfirmReset() {
+    setIsResetConfirmOpen(false)
     try {
       await resetTickets().unwrap()
       dispatch(
@@ -64,11 +68,31 @@ function TicketsPage() {
         <Link to="/tickets/new" className="button button--primary">
           New ticket
         </Link>
-        {/* Disabled while a reset is on its way, so it can't be sent twice. */}
-        <button type="button" className="button" onClick={handleReset} disabled={isResetting}>
+        {/* Ignores presses while a reset is on its way, so it can't be sent
+            twice. aria-disabled (not disabled) keeps it focusable, so the
+            dialog can return focus to it when it closes. */}
+        <button
+          type="button"
+          className="button"
+          aria-disabled={isResetting}
+          onClick={() => {
+            if (!isResetting) {
+              setIsResetConfirmOpen(true)
+            }
+          }}
+        >
           Reset to sample data
         </button>
       </PageHeader>
+
+      <ConfirmDialog
+        open={isResetConfirmOpen}
+        title="Reset to sample data?"
+        description="Every ticket will be replaced with the original sample tickets. Any tickets you created, edited or deleted will be lost."
+        confirmLabel="Reset tickets"
+        onConfirm={handleConfirmReset}
+        onClose={() => setIsResetConfirmOpen(false)}
+      />
 
       {/* A placeholder shaped like the list or board (whichever is
           selected) instead of plain text, so nothing jumps when the tickets

@@ -1,14 +1,23 @@
 import { skipToken } from '@reduxjs/toolkit/query/react'
-import { Link, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { parseTicketId } from '../features/tickets/utils/ticketHelpers.ts'
 import BackLink from '../components/BackLink.tsx'
+import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import PageHeader from '../components/PageHeader.tsx'
 import SkeletonGroup from '../components/SkeletonGroup.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'
 import TicketDetails from '../features/tickets/components/TicketDetails.tsx'
 import TicketDetailsSkeleton from '../features/tickets/components/TicketDetailsSkeleton.tsx'
 import TicketNotFound from '../features/tickets/components/TicketNotFound.tsx'
-import { isNotFoundError, useGetTicketQuery } from '../store/ticketsApi.ts'
+import { useAppDispatch } from '../store/hooks.ts'
+import {
+  isNotFoundError,
+  useDeleteTicketMutation,
+  useGetTicketQuery,
+} from '../store/ticketsApi.ts'
+import { addNotification } from '../store/uiSlice.ts'
+import './TicketDetailPage.css'
 
 // Shows one ticket, chosen by the :id part of the URL, e.g. /tickets/3.
 function TicketDetailPage() {
@@ -26,6 +35,12 @@ function TicketDetailPage() {
     error,
     refetch,
   } = useGetTicketQuery(ticketId ?? skipToken)
+  // Hooks must run on every render, so they all go above the early returns.
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const [deleteTicket, { isLoading: isDeleting }] = useDeleteTicketMutation()
+  // Whether the "Delete this ticket?" dialog is showing.
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
 
   // Not a number, or the server said 404: there's no such ticket.
   if (ticketId === undefined || isNotFoundError(error)) {
@@ -60,6 +75,34 @@ function TicketDetailPage() {
     )
   }
 
+  // Past the checks above, TypeScript knows ticket is defined, but not inside
+  // the function declaration below (it's "hoisted", so in theory it could
+  // run before the checks). Copying it into a constant keeps it simple.
+  const shownTicket = ticket
+
+  // Runs only when the user presses "Delete ticket" in the dialog.
+  async function handleConfirmDelete() {
+    // Close the dialog first. Focus goes back to the Delete button, which
+    // is where it should be if the delete fails and we stay on this page.
+    setIsConfirmOpen(false)
+    try {
+      await deleteTicket(shownTicket.id).unwrap()
+      // Layout shows the notification, so it's still there on the next page.
+      dispatch(
+        addNotification({ message: `Ticket #${shownTicket.id} was deleted.`, type: 'success' }),
+      )
+      // There's nothing left to show here, so go back to the list.
+      navigate('/tickets')
+    } catch {
+      dispatch(
+        addNotification({
+          message: `Ticket #${shownTicket.id} couldn't be deleted.`,
+          type: 'error',
+        }),
+      )
+    }
+  }
+
   return (
     <>
       <BackLink to="/tickets">Back to tickets</BackLink>
@@ -69,6 +112,40 @@ function TicketDetailPage() {
         </Link>
       </PageHeader>
       <TicketDetails ticket={ticket} />
+
+      {/* Deleting lives in its own section at the bottom of the page, far
+          from the Edit link at the top, with a red border and its own
+          heading, so it's hard to press by accident. And even then, it only
+          opens the confirmation dialog. */}
+      <section className="ticket-danger-zone" aria-labelledby="delete-ticket-heading">
+        <h2 id="delete-ticket-heading">Delete this ticket</h2>
+        <p>Deleting removes the ticket for everyone. This can't be undone.</p>
+        <button
+          type="button"
+          className="button button--danger-outline"
+          // While a delete is on its way, the button ignores presses so it
+          // can't be sent twice. aria-disabled (rather than disabled) keeps
+          // the button focusable, so the dialog can still return focus to it
+          // when it closes. Screen readers still announce it as unavailable.
+          aria-disabled={isDeleting}
+          onClick={() => {
+            if (!isDeleting) {
+              setIsConfirmOpen(true)
+            }
+          }}
+        >
+          Delete ticket
+        </button>
+      </section>
+
+      <ConfirmDialog
+        open={isConfirmOpen}
+        title={`Delete ticket #${ticket.id}?`}
+        description={`"${ticket.title}" will be permanently deleted. This can't be undone.`}
+        confirmLabel="Delete ticket"
+        onConfirm={handleConfirmDelete}
+        onClose={() => setIsConfirmOpen(false)}
+      />
     </>
   )
 }

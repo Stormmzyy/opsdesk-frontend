@@ -9,8 +9,10 @@
   --accent-bg: rgba(109, 40, 217, 0.08);
   --accent-border: rgba(109, 40, 217, 0.5);
   --on-accent: #ffffff;
-  /* Red for form errors. */
+  /* Red for form errors and destructive buttons. */
   --danger: #b91c1c;
+  /* Text on a solid red button: 6.5:1 against --danger. */
+  --on-danger: #ffffff;
   /* Green for success notifications. */
   --success: #15803d;
   /* Placeholder text in inputs: lighter than typed text, but still at least
@@ -52,6 +54,8 @@
     --accent-border: rgba(167, 139, 250, 0.5);
     --on-accent: #111217;
     --danger: #fca5a5;
+    /* Dark text on the light red used in dark mode: 10:1. */
+    --on-danger: #111217;
     --success: #86efac;
     /* The browser's default placeholder grey was only 3.7:1 here. */
     --placeholder: #8f96a3;
@@ -123,8 +127,11 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
-/* A disabled button, e.g. "Previous" on the first page, looks faded. */
-.button:disabled {
+/* A disabled button, e.g. "Previous" on the first page, looks faded.
+   aria-disabled is for buttons that must stay focusable while unavailable
+   (see the Delete and Reset buttons). */
+.button:disabled,
+.button[aria-disabled='true'] {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -133,6 +140,33 @@ a:focus-visible {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--on-accent);
+}
+
+/* For actions that destroy something, like "Delete ticket". Red, so it's
+   never mistaken for an ordinary button. The solid version is for the final
+   "yes, do it" in a confirmation dialog. */
+.button--danger {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+/* A thicker border on hover, since the border is already red. */
+.button--danger:hover {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
+}
+
+/* The outlined version starts a destructive action on a page (it only opens
+   the confirmation dialog), so it's less loud than the final button. */
+.button--danger-outline {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.button--danger-outline:hover {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
 }
 
 /* A labelled search box or dropdown, used by the employee and ticket filters. */
