@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react'
+import { focusMainHeading } from '../utils/focus.ts'
 import './ConfirmDialog.css'
 
 interface ConfirmDialogProps {
@@ -76,6 +77,12 @@ function ConfirmDialog({
     const opener = openerRef.current
     if (opener && opener.isConnected) {
       opener.focus()
+    }
+    // A safety net: if the opener couldn't take focus (for example it was
+    // disabled), focus would be left on a button inside the now hidden
+    // dialog. Send it to the page's heading instead.
+    if (dialogRef.current?.contains(document.activeElement)) {
+      focusMainHeading()
     }
     openerRef.current = null
     onClose()

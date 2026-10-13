@@ -68,12 +68,18 @@ function TicketsPage() {
         <Link to="/tickets/new" className="button button--primary">
           New ticket
         </Link>
-        {/* Disabled while a reset is on its way, so it can't be sent twice. */}
+        {/* Ignores presses while a reset is on its way, so it can't be sent
+            twice. aria-disabled (not disabled) keeps it focusable, so the
+            dialog can return focus to it when it closes. */}
         <button
           type="button"
           className="button"
-          onClick={() => setIsResetConfirmOpen(true)}
-          disabled={isResetting}
+          aria-disabled={isResetting}
+          onClick={() => {
+            if (!isResetting) {
+              setIsResetConfirmOpen(true)
+            }
+          }}
         >
           Reset to sample data
         </button>

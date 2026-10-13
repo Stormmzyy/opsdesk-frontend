@@ -127,8 +127,11 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
-/* A disabled button, e.g. "Previous" on the first page, looks faded. */
-.button:disabled {
+/* A disabled button, e.g. "Previous" on the first page, looks faded.
+   aria-disabled is for buttons that must stay focusable while unavailable
+   (see the Delete and Reset buttons). */
+.button:disabled,
+.button[aria-disabled='true'] {
   opacity: 0.5;
   cursor: not-allowed;
 }

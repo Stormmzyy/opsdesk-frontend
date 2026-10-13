@@ -123,9 +123,16 @@ function TicketDetailPage() {
         <button
           type="button"
           className="button button--danger-outline"
-          onClick={() => setIsConfirmOpen(true)}
-          // Disabled while a delete is on its way, so it can't be sent twice.
-          disabled={isDeleting}
+          // While a delete is on its way, the button ignores presses so it
+          // can't be sent twice. aria-disabled (rather than disabled) keeps
+          // the button focusable, so the dialog can still return focus to it
+          // when it closes. Screen readers still announce it as unavailable.
+          aria-disabled={isDeleting}
+          onClick={() => {
+            if (!isDeleting) {
+              setIsConfirmOpen(true)
+            }
+          }}
         >
           Delete ticket
         </button>
