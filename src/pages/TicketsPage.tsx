@@ -86,8 +86,16 @@ function TicketsPage() {
       )}
 
       {tickets && !isError && tickets.length === 0 && (
-        <StatusMessage type="empty">
-          There are no tickets yet. Create one, or reset to the sample data.
+        <StatusMessage
+          type="empty"
+          action={
+            <Link to="/tickets/new" className="button button--primary">
+              Create a ticket
+            </Link>
+          }
+        >
+          There are no tickets yet. Create the first one, or use "Reset to sample data" above to
+          bring back the examples.
         </StatusMessage>
       )}
 

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import StatusMessage from '../../../components/StatusMessage.tsx'
 import type { Ticket } from '../types.ts'
 import { getPriorityTickets } from '../utils/ticketHelpers.ts'
@@ -15,7 +16,7 @@ function PriorityTicketList({ tickets }: PriorityTicketListProps) {
 
   if (priorityTickets.length === 0) {
     return (
-      <StatusMessage type="empty">
+      <StatusMessage type="empty" action={<Link to="/tickets">See all tickets</Link>}>
         No urgent or high priority tickets are open. Nice work!
       </StatusMessage>
     )
