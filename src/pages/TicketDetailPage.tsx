@@ -11,8 +11,8 @@ import TicketDetails from '../features/tickets/components/TicketDetails.tsx'
 import TicketDetailsSkeleton from '../features/tickets/components/TicketDetailsSkeleton.tsx'
 import TicketNotFound from '../features/tickets/components/TicketNotFound.tsx'
 import { useAppDispatch } from '../store/hooks.ts'
+import { isNotFoundError } from '../store/api.ts'
 import {
-  isNotFoundError,
   useDeleteTicketMutation,
   useGetTicketQuery,
 } from '../store/ticketsApi.ts'

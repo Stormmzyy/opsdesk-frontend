@@ -1,6 +1,4 @@
-import type { SerializedError } from '@reduxjs/toolkit'
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { api } from './api.ts'
 import type { Ticket, TicketFormValues } from '../features/tickets/types.ts'
 
 // Everything the app knows about talking to the ticket API, in one place.
@@ -12,6 +10,10 @@ import type { Ticket, TicketFormValues } from '../features/tickets/types.ts'
 //
 // Tickets are server state: the API owns them, and this cache is just our
 // latest copy. That's why they live here, not in a normal Redux slice.
+//
+// The shared settings (the base URL, the cache, the kinds of tag) live in
+// api.ts. This file "injects" the ticket endpoints into that one api, the
+// same way projectsApi.ts adds the project endpoints.
 
 // The arguments for updateTicket: which ticket, plus only the fields to
 // change, e.g. { id: 3, status: 'RESOLVED' } or a whole edited form.
@@ -25,28 +27,7 @@ type TicketTag = { type: 'Ticket'; id: number | 'LIST' }
 
 const LIST_TAG: TicketTag = { type: 'Ticket', id: 'LIST' }
 
-export const ticketsApi = createApi({
-  // Where this api's cache lives in the store: state.ticketsApi.
-  reducerPath: 'ticketsApi',
-  // fetchBaseQuery is a small wrapper around fetch. Every endpoint's URL is
-  // added onto the base URL, so '/tickets' becomes '<this site>/api/v1/tickets'.
-  //
-  // The base URL comes from the VITE_API_URL environment variable (see
-  // .env.example), so pointing the app at the real backend later only means
-  // changing .env, not this code.
-  // - "?? '/api/v1'": a fresh clone has no .env file, and then the variable
-  //   is undefined. The fallback keeps the app (and the tests) working anyway.
-  // - new URL(..., window.location.origin): turns "/api/v1" into a full URL
-  //   like http://localhost:5173/api/v1. Browsers fill in the site for a
-  //   relative URL by themselves, but the tests run in Node, whose fetch
-  //   rejects relative URLs. A full URL (like https://api.example.com/v1) is
-  //   left as it is, because the second argument is only used for relative ones.
-  baseQuery: fetchBaseQuery({
-    baseUrl: new URL(import.meta.env.VITE_API_URL ?? '/api/v1', window.location.origin).href,
-  }),
-  // The kinds of tag this api uses. We only have one kind: tickets.
-  tagTypes: ['Ticket'],
-
+export const ticketsApi = api.injectEndpoints({
   endpoints: (builder) => ({
     // builder.query<Result, Argument>: reads data. void means "no argument".
     getTickets: builder.query<Ticket[], void>({
@@ -121,7 +102,7 @@ export const ticketsApi = createApi({
   }),
 })
 
-// createApi generates a React hook for every endpoint, named after it:
+// RTK Query generates a React hook for every endpoint, named after it:
 // getTickets -> useGetTicketsQuery, deleteTicket -> useDeleteTicketMutation, etc.
 export const {
   useGetTicketsQuery,
@@ -131,11 +112,3 @@ export const {
   useDeleteTicketMutation,
   useResetTicketsMutation,
 } = ticketsApi
-
-// True when a request failed because the server answered 404 Not Found.
-// RTK Query errors come in two shapes: FetchBaseQueryError (the server
-// answered, and it has a status) or SerializedError (something in our own
-// code threw). The `'status' in error` check tells them apart without a cast.
-export function isNotFoundError(error: FetchBaseQueryError | SerializedError | undefined): boolean {
-  return error !== undefined && 'status' in error && error.status === 404
-}
