@@ -95,6 +95,22 @@ export const ticketsApi = createApi({
       },
     }),
 
+    // builder.mutation<void, number>: takes a ticket id, and returns nothing,
+    // because the server answers 204 No Content.
+    deleteTicket: builder.mutation<void, number>({
+      query: (id) => ({ url: `/tickets/${id}`, method: 'DELETE' }),
+      // Two tags, because deleting changes two kinds of cached data:
+      // - LIST: the list no longer contains this ticket. (Its per-id tag
+      //   would refetch the list too, but LIST says what we mean.)
+      // - { type: 'Ticket', id }: any cached copy of THIS ticket is now wrong.
+      //   RTK Query keeps getTicket(<id>) in its cache for a while after the
+      //   page that used it closes. Without this tag, opening the old link
+      //   again within that time would show the deleted ticket from the
+      //   cache; with it, the next visit asks the server and gets a 404,
+      //   so the page says "Ticket not found".
+      invalidatesTags: (_result, _error, id) => [{ type: 'Ticket', id }, LIST_TAG],
+    }),
+
     // Restores the sample tickets on the mock API. Invalidating the plain
     // 'Ticket' type (no id) refetches EVERY ticket query: the list and every
     // single ticket, since all of them may have changed.
@@ -106,12 +122,13 @@ export const ticketsApi = createApi({
 })
 
 // createApi generates a React hook for every endpoint, named after it:
-// getTickets -> useGetTicketsQuery, addTicket -> useAddTicketMutation, etc.
+// getTickets -> useGetTicketsQuery, deleteTicket -> useDeleteTicketMutation, etc.
 export const {
   useGetTicketsQuery,
   useGetTicketQuery,
   useAddTicketMutation,
   useUpdateTicketMutation,
+  useDeleteTicketMutation,
   useResetTicketsMutation,
 } = ticketsApi
 
