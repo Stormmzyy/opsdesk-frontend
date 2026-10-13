@@ -26,3 +26,8 @@ if (typeof HTMLDialogElement.prototype.showModal !== 'function') {
     this.dispatchEvent(new Event('close'))
   }
 }
+
+// Layout scrolls to the top of the page whenever the page changes. jsdom
+// doesn't do scrolling, and prints "Not implemented: Window's scrollTo()"
+// each time. There's nothing to scroll in a test, so do nothing quietly.
+window.scrollTo = () => {}
