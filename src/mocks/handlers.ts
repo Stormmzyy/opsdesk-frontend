@@ -12,6 +12,11 @@ import { getAllTickets, resetToSampleTickets, saveAllTickets } from './ticketDb.
 // it and sends back its response, as if a real server had answered. The app
 // can't tell the difference, so when the real backend arrives, nothing in the
 // app has to change: these handlers are simply switched off.
+//
+// Every path starts with /api/v1, the default VITE_API_URL (see .env.example).
+// The "v1" is the API's version: if the API ever has to change in a way that
+// breaks old clients, the new version can live at /api/v2 alongside it.
+// If you change VITE_API_URL to another path, change these paths to match.
 
 // What every error response looks like, e.g. { message: 'No ticket with id "99".' }.
 interface ErrorBody {
@@ -58,17 +63,17 @@ const WRONG_SHAPE_MESSAGE =
   'A ticket needs a title, description and team, and a known priority and status.'
 
 export const handlers = [
-  // GET /api/tickets: every ticket.
-  http.get('/api/tickets', async () => {
+  // GET /api/v1/tickets: every ticket.
+  http.get('/api/v1/tickets', async () => {
     // delay() waits a realistic, random time (like a real network), so the
     // loading states actually show up. In tests (Node) it only waits 5ms.
     await delay()
     return HttpResponse.json<Ticket[]>(getAllTickets())
   }),
 
-  // GET /api/tickets/:id: one ticket, or 404.
+  // GET /api/v1/tickets/:id: one ticket, or 404.
   http.get<PathParams<'id'>, DefaultBodyType, TicketOrError>(
-    '/api/tickets/:id',
+    '/api/v1/tickets/:id',
     async ({ params }) => {
       await delay()
       const id = readTicketId(params.id)
@@ -81,9 +86,9 @@ export const handlers = [
     },
   ),
 
-  // POST /api/tickets: create a ticket. The server picks the id, and every
+  // POST /api/v1/tickets: create a ticket. The server picks the id, and every
   // new ticket starts as OPEN, whatever the request says.
-  http.post<PathParams, DefaultBodyType, TicketOrError>('/api/tickets', async ({ request }) => {
+  http.post<PathParams, DefaultBodyType, TicketOrError>('/api/v1/tickets', async ({ request }) => {
     await delay()
     const body = await readJsonBody(request)
     if (!isRecord(body)) {
@@ -118,18 +123,18 @@ export const handlers = [
     return HttpResponse.json<Ticket>(candidate, { status: 201 })
   }),
 
-  // POST /api/tickets/reset: throw away every change and restore the sample
+  // POST /api/v1/tickets/reset: throw away every change and restore the sample
   // tickets. Used by the "Reset to sample data" button. A real backend
   // wouldn't have this; it only exists to make the mock easy to reset.
-  http.post('/api/tickets/reset', async () => {
+  http.post('/api/v1/tickets/reset', async () => {
     await delay()
     return HttpResponse.json<Ticket[]>(resetToSampleTickets())
   }),
 
-  // PATCH /api/tickets/:id: change some fields of a ticket. PATCH means
+  // PATCH /api/v1/tickets/:id: change some fields of a ticket. PATCH means
   // "update only what I send", e.g. { status: 'RESOLVED' } to move a ticket.
   http.patch<PathParams<'id'>, DefaultBodyType, TicketOrError>(
-    '/api/tickets/:id',
+    '/api/v1/tickets/:id',
     async ({ params, request }) => {
       await delay()
       const id = readTicketId(params.id)

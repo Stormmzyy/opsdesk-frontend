@@ -1,0 +1,39 @@
+/* The fallback a crashed page shows instead of a blank area. */
+.error-fallback {
+  max-width: 560px;
+  padding: 32px 24px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--danger);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.error-fallback h1 {
+  margin: 0 0 8px;
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+/* The heading only receives focus from code, when the fallback appears.
+   It can't be clicked or typed into, so it doesn't need a focus ring. */
+.error-fallback h1:focus {
+  outline: none;
+}
+
+.error-fallback p {
+  margin: 0 0 20px;
+}
+
+.error-fallback__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Used only by the outer boundary, when the whole Layout is gone: centre
+   the fallback on an otherwise empty page. */
+.error-fallback-page {
+  display: flex;
+  justify-content: center;
+  padding: 48px 16px;
+}

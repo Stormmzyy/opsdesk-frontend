@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useRef } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import ErrorBoundary from '../components/ErrorBoundary.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'
 import Notifications from './Notifications.tsx'
 import Sidebar from './Sidebar.tsx'
@@ -16,7 +17,9 @@ interface LayoutProps {
 // The frame around every page: navigation on one side, the page in <main>.
 // <Outlet /> is where React Router draws the page that matches the URL.
 function Layout({ pages }: LayoutProps) {
-  const { pathname } = useLocation()
+  // key is a unique id React Router gives every navigation, even to the
+  // same path again. The error boundary below resets when it changes.
+  const { pathname, key: locationKey } = useLocation()
   // The same value the Sidebar reads. Layout needs it too, to make the
   // sidebar's grid column narrower, which is why it lives in Redux.
   const sidebarCollapsed = useAppSelector(selectSidebarCollapsed)
@@ -55,12 +58,20 @@ function Layout({ pages }: LayoutProps) {
         {/* Inside Layout, so notifications show on every page and stay put
             when you move between pages (e.g. after creating a ticket). */}
         <Notifications />
-        {/* Suspense catches a lazy page that is still downloading and shows
-            the fallback in its place. It sits INSIDE <main>, so the sidebar
-            and notifications stay on screen; only the page area waits. */}
-        <Suspense fallback={<StatusMessage type="loading">Loading page…</StatusMessage>}>
-          <Outlet />
-        </Suspense>
+        {/* The inner error boundary. If a page crashes while rendering, only
+            the page area shows the fallback: the sidebar and notifications
+            stay, so the user can still go somewhere else. resetKey clears
+            the error on every navigation, even a click on the link to the
+            page that crashed. It also catches a lazy page whose code fails
+            to download (for example when offline). */}
+        <ErrorBoundary resetKey={locationKey}>
+          {/* Suspense catches a lazy page that is still downloading and shows
+              the fallback in its place. It sits INSIDE <main>, so the sidebar
+              and notifications stay on screen; only the page area waits. */}
+          <Suspense fallback={<StatusMessage type="loading">Loading page…</StatusMessage>}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   )

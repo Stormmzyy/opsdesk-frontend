@@ -2,7 +2,7 @@
 
 OpsDesk is a small internal operations dashboard built during an internship project. It brings the company's tickets, projects, teams and people together in one place.
 
-> **Ticket data is mocked for now.** There is no backend yet. In development, [Mock Service Worker (MSW)](https://mswjs.io/) answers the app's `/api/tickets` requests inside the browser, and keeps the tickets in localStorage so they survive a refresh. The app itself talks to `/api` exactly as it will talk to the real backend when it arrives, so that switch won't need changes to the app's code. The mock only runs under `npm run dev`. A production build (`npm run build`) has no mock, and shows "couldn't load the tickets" until a real API exists.
+> **Ticket data is mocked for now.** There is no backend yet. In development, [Mock Service Worker (MSW)](https://mswjs.io/) answers the app's `/api/v1/tickets` requests inside the browser, and keeps the tickets in localStorage so they survive a refresh. The app itself talks to `/api/v1` exactly as it will talk to the real backend when it arrives, so that switch won't need changes to the app's code. The mock only runs under `npm run dev`. A production build (`npm run build`) has no mock, and shows "couldn't load the tickets" until a real API exists.
 
 ## Getting started
 
@@ -10,6 +10,7 @@ You need [Node.js](https://nodejs.org/) installed.
 
 ```bash
 npm install
+cp .env.example .env   # optional: the app falls back to /api/v1 without it
 npm run dev
 ```
 
@@ -67,12 +68,12 @@ Everything else deliberately stays out:
 ## How ticket data works
 
 ```
-Page  ->  RTK Query hook  ->  fetch('/api/tickets')  ->  MSW  ->  src/mocks/handlers.ts  ->  src/mocks/ticketDb.ts
+Page  ->  RTK Query hook  ->  fetch('/api/v1/tickets')  ->  MSW  ->  src/mocks/handlers.ts  ->  src/mocks/ticketDb.ts
 ```
 
 - **`src/store/ticketsApi.ts`**: one RTK Query api slice with `getTickets`, `getTicket`, `addTicket`, `updateTicket` and `resetTickets`.
 - **Cache tags keep the list up to date.** The list says it contains every ticket it holds, and moving ticket 3 marks "ticket 3" as changed. So RTK Query refetches the list (and ticket 3's page) automatically, with no manual refresh.
-- **`src/mocks/handlers.ts`**: the mock API. `GET /api/tickets`, `GET /api/tickets/:id`, `POST /api/tickets`, `PATCH /api/tickets/:id`, and `POST /api/tickets/reset` for the Reset button.
+- **`src/mocks/handlers.ts`**: the mock API. `GET /api/v1/tickets`, `GET /api/v1/tickets/:id`, `POST /api/v1/tickets`, `PATCH /api/v1/tickets/:id`, and `POST /api/v1/tickets/reset` for the Reset button.
   - Unknown or non-numeric ids return **404**.
   - Invalid data returns **400**, checked with the same rules as the form.
 - **`src/mocks/ticketDb.ts`**: the mock's "database". It holds the tickets in memory and saves them to localStorage under `opsdesk.tickets`.

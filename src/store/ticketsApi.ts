@@ -29,12 +29,21 @@ export const ticketsApi = createApi({
   // Where this api's cache lives in the store: state.ticketsApi.
   reducerPath: 'ticketsApi',
   // fetchBaseQuery is a small wrapper around fetch. Every endpoint's URL is
-  // added onto the base URL, so '/tickets' becomes '<this site>/api/tickets'.
-  // The base is built from the page's own address (e.g.
-  // http://localhost:5173/api) instead of just "/api": browsers fill in the
-  // site for a relative URL, but the tests run in Node, whose fetch rejects
-  // relative URLs. In the browser both versions mean exactly the same URL.
-  baseQuery: fetchBaseQuery({ baseUrl: new URL('/api', window.location.origin).href }),
+  // added onto the base URL, so '/tickets' becomes '<this site>/api/v1/tickets'.
+  //
+  // The base URL comes from the VITE_API_URL environment variable (see
+  // .env.example), so pointing the app at the real backend later only means
+  // changing .env, not this code.
+  // - "?? '/api/v1'": a fresh clone has no .env file, and then the variable
+  //   is undefined. The fallback keeps the app (and the tests) working anyway.
+  // - new URL(..., window.location.origin): turns "/api/v1" into a full URL
+  //   like http://localhost:5173/api/v1. Browsers fill in the site for a
+  //   relative URL by themselves, but the tests run in Node, whose fetch
+  //   rejects relative URLs. A full URL (like https://api.example.com/v1) is
+  //   left as it is, because the second argument is only used for relative ones.
+  baseQuery: fetchBaseQuery({
+    baseUrl: new URL(import.meta.env.VITE_API_URL ?? '/api/v1', window.location.origin).href,
+  }),
   // The kinds of tag this api uses. We only have one kind: tickets.
   tagTypes: ['Ticket'],
 
