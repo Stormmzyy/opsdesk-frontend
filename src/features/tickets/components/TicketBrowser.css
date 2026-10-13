@@ -22,3 +22,9 @@
   margin: 0 0 12px;
   font-size: 0.875rem;
 }
+
+/* Loading placeholder for a filter label: same font size as the real label,
+   so it takes up the same height (see TicketBrowserSkeleton). */
+.ticket-browser__label-skeleton {
+  font-size: 0.875rem;
+}

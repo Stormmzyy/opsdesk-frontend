@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom'
 import type { TicketStatus } from '../features/tickets/types.ts'
 import PageHeader from '../components/PageHeader.tsx'
+import SkeletonGroup from '../components/SkeletonGroup.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'
 import TicketBrowser from '../features/tickets/components/TicketBrowser.tsx'
+import TicketBrowserSkeleton from '../features/tickets/components/TicketBrowserSkeleton.tsx'
+import { useTicketView } from '../features/tickets/hooks/useTicketView.ts'
 import { useAppDispatch } from '../store/hooks.ts'
 import {
   useGetTicketsQuery,
@@ -20,6 +23,8 @@ function TicketsPage() {
   const [updateTicket] = useUpdateTicketMutation()
   const [resetTickets, { isLoading: isResetting }] = useResetTicketsMutation()
   const dispatch = useAppDispatch()
+  // Only read here to draw the right skeleton while the tickets load.
+  const [view] = useTicketView()
 
   // Called by the cards on the board. Sends only the new status (PATCH).
   // When it succeeds, invalidatesTags makes the list refetch by itself.
@@ -65,7 +70,14 @@ function TicketsPage() {
         </button>
       </PageHeader>
 
-      {isLoading && <StatusMessage type="loading">Loading tickets…</StatusMessage>}
+      {/* A placeholder shaped like the list or board (whichever is
+          selected) instead of plain text, so nothing jumps when the tickets
+          arrive. Screen readers hear "Loading tickets" instead. */}
+      {isLoading && (
+        <SkeletonGroup label="Loading tickets">
+          <TicketBrowserSkeleton view={view} />
+        </SkeletonGroup>
+      )}
 
       {isError && (
         <StatusMessage type="error" onRetry={refetch}>
