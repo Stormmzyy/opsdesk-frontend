@@ -1,7 +1,12 @@
 /* A grey block with a lighter band sweeping across it (the "shimmer"),
    which tells sighted users that something is on its way. */
+/* inline-block and vertical-align: middle let a skeleton sit INSIDE the same
+   text element the real content uses (a title, a badge...). That element
+   keeps its normal line height, so the skeleton takes up exactly the space
+   the text will, even though the grey bar itself is a little shorter. */
 .skeleton {
-  display: block;
+  display: inline-block;
+  vertical-align: middle;
   /* Never wider than its container, whatever width was asked for. */
   max-width: 100%;
   border-radius: 6px;
