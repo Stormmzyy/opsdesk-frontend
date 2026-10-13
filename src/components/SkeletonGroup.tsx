@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 
 interface SkeletonGroupProps {
@@ -14,20 +14,24 @@ interface SkeletonGroupProps {
 //   mean nothing to them.
 // - Announces the label instead, in a visually hidden live region.
 function SkeletonGroup({ label, children }: SkeletonGroupProps) {
+  const regionRef = useRef<HTMLParagraphElement>(null)
+
   // Screen readers only reliably announce a change INSIDE a live region that
   // was already on the page (the same reason Notifications keeps its regions
-  // in place). So the region is rendered empty first, and the words are
-  // added straight after, once it exists.
-  const [announcement, setAnnouncement] = useState('')
+  // in place). So the region is rendered empty, and the words are written
+  // into it straight after, once it exists. The effect talks to the page
+  // directly (through the ref) rather than through state, because nothing
+  // else on screen depends on it: it's only there for screen readers.
+  // React never touches the text itself, because the <p> has no children.
   useEffect(() => {
-    setAnnouncement(label ?? '')
+    if (regionRef.current) {
+      regionRef.current.textContent = label ?? ''
+    }
   }, [label])
 
   return (
     <div>
-      <p className="visually-hidden" role="status">
-        {announcement}
-      </p>
+      <p ref={regionRef} className="visually-hidden" role="status" />
       <div aria-hidden="true">{children}</div>
     </div>
   )
