@@ -3,7 +3,7 @@ import type { Ticket } from '../features/tickets/types.ts'
 import { isTicketList } from '../features/tickets/utils/ticketHelpers.ts'
 
 // The mock API's "database". Only the MSW handlers use this file: the app
-// itself never touches localStorage for tickets. It talks to /api/tickets
+// itself never touches localStorage for tickets. It talks to /api/v1/tickets
 // like it would talk to a real backend, and the handlers read and write here.
 //
 // It keeps the tickets in memory, like a server would, and also saves them to
