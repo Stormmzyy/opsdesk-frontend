@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useRef } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import ErrorBoundary from '../components/ErrorBoundary.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'
 import Notifications from './Notifications.tsx'
 import Sidebar from './Sidebar.tsx'
@@ -55,12 +56,19 @@ function Layout({ pages }: LayoutProps) {
         {/* Inside Layout, so notifications show on every page and stay put
             when you move between pages (e.g. after creating a ticket). */}
         <Notifications />
-        {/* Suspense catches a lazy page that is still downloading and shows
-            the fallback in its place. It sits INSIDE <main>, so the sidebar
-            and notifications stay on screen; only the page area waits. */}
-        <Suspense fallback={<StatusMessage type="loading">Loading page…</StatusMessage>}>
-          <Outlet />
-        </Suspense>
+        {/* The inner error boundary. If a page crashes while rendering, only
+            the page area shows the fallback: the sidebar and notifications
+            stay, so the user can still go somewhere else. resetKey clears
+            the error as soon as the URL changes. It also catches a lazy
+            page whose code fails to download (for example when offline). */}
+        <ErrorBoundary resetKey={pathname}>
+          {/* Suspense catches a lazy page that is still downloading and shows
+              the fallback in its place. It sits INSIDE <main>, so the sidebar
+              and notifications stay on screen; only the page area waits. */}
+          <Suspense fallback={<StatusMessage type="loading">Loading page…</StatusMessage>}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   )
