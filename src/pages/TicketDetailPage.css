@@ -1,8 +1,8 @@
 /* The "Delete this ticket" area: set well apart from everything above it,
    and outlined in red, so it reads as "careful" before anything is pressed. */
 .ticket-danger-zone {
+  /* The same width rule as the details card above it, so they line up. */
   max-width: 720px;
-  box-sizing: border-box;
   margin-top: 40px;
   padding: 20px 24px;
   border: 1px solid var(--danger);
