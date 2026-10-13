@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import Pagination from '../../../components/Pagination.tsx'
 import StatusMessage from '../../../components/StatusMessage.tsx'
 import { paginate } from '../../../utils/pagination.ts'
+import { useTicketView } from '../hooks/useTicketView.ts'
 import type { MoveTicketHandler, StatusFilter, Ticket } from '../types.ts'
 import { filterTickets } from '../utils/ticketHelpers.ts'
 import TicketBoard from './TicketBoard.tsx'
@@ -10,8 +11,6 @@ import TicketList from './TicketList.tsx'
 import './TicketBrowser.css'
 
 const PAGE_SIZE = 10
-
-type TicketView = 'list' | 'board'
 
 // "1 ticket" but "2 tickets".
 function countTickets(count: number): string {
@@ -29,7 +28,8 @@ interface TicketBrowserProps {
 // matching ticket into its status column instead.
 function TicketBrowser({ tickets, onMoveTicket }: TicketBrowserProps) {
   // Only what the user chose is kept in state...
-  const [view, setView] = useState<TicketView>('list')
+  // (The view is kept in the URL instead, see useTicketView.)
+  const [view, setView] = useTicketView()
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [page, setPage] = useState(1)
