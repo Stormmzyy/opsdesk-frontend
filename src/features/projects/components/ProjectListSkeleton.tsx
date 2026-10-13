@@ -12,6 +12,11 @@ const WORD_WIDTHS = [
   '3.5rem',
 ]
 
+// Rough widths of the three real values (a status like "Active", a team like
+// "Engineering", a lead's name), so the placeholders fit on one row in the
+// same places the real ones do instead of wrapping onto a second row.
+const FACT_WIDTHS = ['3.5rem', '5rem', '5.5rem']
+
 // The loading placeholder for ProjectList: cards with the same elements and
 // CSS classes as the real ones (name, description, then status, team and
 // lead), with skeletons in place of the text. Wrap it in a SkeletonGroup,
@@ -32,13 +37,13 @@ function ProjectListSkeleton() {
             ))}
           </p>
           <dl className="project-card__facts">
-            {[0, 1, 2].map((fact) => (
-              <div key={fact}>
+            {FACT_WIDTHS.map((width, factIndex) => (
+              <div key={factIndex}>
                 <dt>
                   <Skeleton width="2.5rem" />
                 </dt>
                 <dd>
-                  <Skeleton width="5.5rem" />
+                  <Skeleton width={width} />
                 </dd>
               </div>
             ))}
