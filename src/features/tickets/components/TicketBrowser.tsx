@@ -5,6 +5,7 @@ import { paginate } from '../../../utils/pagination.ts'
 import { useTicketView } from '../hooks/useTicketView.ts'
 import type { MoveTicketHandler, StatusFilter, Ticket } from '../types.ts'
 import { filterTickets } from '../utils/ticketHelpers.ts'
+import { getStatusLabel } from '../utils/ticketStatus.ts'
 import TicketBoard from './TicketBoard.tsx'
 import TicketFilters from './TicketFilters.tsx'
 import TicketList from './TicketList.tsx'
@@ -66,6 +67,31 @@ function TicketBrowser({ tickets, onMoveTicket }: TicketBrowserProps) {
     setPage(1)
   }
 
+  // The "Clear filters" button in the empty state: back to every ticket.
+  function handleClearFilters() {
+    setSearchText('')
+    setStatusFilter('ALL')
+    setPage(1)
+    // The button disappears along with the empty state, which would drop
+    // keyboard focus to the top of the page. Put it in the search box
+    // instead, which is where someone would start a new search.
+    const searchBox = document.getElementById('ticket-search')
+    if (searchBox instanceof HTMLInputElement) {
+      searchBox.focus()
+    }
+  }
+
+  // Says exactly which filters found nothing, e.g.
+  // 'No tickets match "printer" with the status Closed.'
+  let emptyMessage = 'No tickets match your filters.'
+  if (searchText.trim() !== '' && statusFilter !== 'ALL') {
+    emptyMessage = `No tickets match "${searchText.trim()}" with the status ${getStatusLabel(statusFilter)}.`
+  } else if (searchText.trim() !== '') {
+    emptyMessage = `No tickets match "${searchText.trim()}".`
+  } else if (statusFilter !== 'ALL') {
+    emptyMessage = `No tickets have the status ${getStatusLabel(statusFilter)}.`
+  }
+
   let summary = 'No tickets match your search.'
   if (matchingTickets.length > 0) {
     summary =
@@ -111,8 +137,15 @@ function TicketBrowser({ tickets, onMoveTicket }: TicketBrowserProps) {
       </p>
 
       {matchingTickets.length === 0 && (
-        <StatusMessage type="empty">
-          Try a different search, or choose "All statuses".
+        <StatusMessage
+          type="empty"
+          action={
+            <button type="button" className="button" onClick={handleClearFilters}>
+              Clear filters
+            </button>
+          }
+        >
+          {emptyMessage} Try a different search, or clear the filters to see every ticket.
         </StatusMessage>
       )}
 
