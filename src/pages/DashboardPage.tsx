@@ -1,9 +1,14 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.tsx'
+import SkeletonGroup from '../components/SkeletonGroup.tsx'
+import StatGridSkeleton from '../components/StatGridSkeleton.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'
 import PeopleSummary from '../features/employees/components/PeopleSummary.tsx'
 import PriorityTicketList from '../features/tickets/components/PriorityTicketList.tsx'
+import TicketListSkeleton from '../features/tickets/components/TicketListSkeleton.tsx'
 import TicketStatusSummary from '../features/tickets/components/TicketStatusSummary.tsx'
+import { TICKET_STATUSES } from '../features/tickets/utils/ticketStatus.ts'
 import { useGetTicketsQuery } from '../store/ticketsApi.ts'
 import './DashboardPage.css'
 
@@ -14,17 +19,54 @@ function DashboardPage() {
   // coming here from the Tickets page doesn't load the tickets again.
   const { data: tickets, isLoading, isError, refetch } = useGetTicketsQuery()
 
-  // What the two ticket sections show until the tickets are ready.
-  // null means "nothing to report": show the real content instead.
-  let ticketMessage: ReactNode = null
+  // What the two ticket sections show, worked out once for each state.
+  let statusContent: ReactNode = null
+  let priorityContent: ReactNode = null
   if (isLoading) {
-    ticketMessage = <StatusMessage type="loading">Loading tickets…</StatusMessage>
+    // Placeholders shaped like the stat cards and the priority list. Only
+    // the first group announces "Loading tickets", so screen readers don't
+    // hear it twice.
+    statusContent = (
+      <SkeletonGroup label="Loading tickets">
+        <StatGridSkeleton count={TICKET_STATUSES.length} />
+      </SkeletonGroup>
+    )
+    priorityContent = (
+      <SkeletonGroup>
+        <TicketListSkeleton rows={3} />
+      </SkeletonGroup>
+    )
   } else if (isError) {
-    ticketMessage = (
+    const errorMessage = (
       <StatusMessage type="error" onRetry={refetch}>
         Sorry, we couldn't load the tickets.
       </StatusMessage>
     )
+    statusContent = errorMessage
+    priorityContent = errorMessage
+  } else if (tickets && tickets.length === 0) {
+    // No tickets at all: four cards saying "0" would tell the user nothing,
+    // so say so plainly and offer the next step.
+    statusContent = (
+      <StatusMessage
+        type="empty"
+        action={
+          <Link to="/tickets/new" className="button button--primary">
+            Create a ticket
+          </Link>
+        }
+      >
+        There are no tickets yet. Once there are, you'll see how many have each status here.
+      </StatusMessage>
+    )
+    priorityContent = (
+      <StatusMessage type="empty">
+        Nothing needs attention: there are no tickets at all.
+      </StatusMessage>
+    )
+  } else if (tickets) {
+    statusContent = <TicketStatusSummary tickets={tickets} />
+    priorityContent = <PriorityTicketList tickets={tickets} />
   }
 
   return (
@@ -33,8 +75,7 @@ function DashboardPage() {
 
       <section className="dashboard-section" aria-labelledby="ticket-stats-heading">
         <h2 id="ticket-stats-heading">Tickets by status</h2>
-        {/* "??" uses the right-hand side only when ticketMessage is null. */}
-        {ticketMessage ?? (tickets && <TicketStatusSummary tickets={tickets} />)}
+        {statusContent}
       </section>
 
       {/* People come from local data, so this section never waits for tickets. */}
@@ -45,7 +86,7 @@ function DashboardPage() {
 
       <section className="dashboard-section" aria-labelledby="priority-heading">
         <h2 id="priority-heading">Urgent and high priority open tickets</h2>
-        {ticketMessage ?? (tickets && <PriorityTicketList tickets={tickets} />)}
+        {priorityContent}
       </section>
     </>
   )
