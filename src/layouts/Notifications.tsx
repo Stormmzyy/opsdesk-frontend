@@ -1,10 +1,14 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAppDispatch, useAppSelector } from '../store/hooks.ts'
 import { dismissNotification, selectNotifications } from '../store/uiSlice.ts'
 import type { Notification } from '../store/uiSlice.ts'
 import { focusMainHeading } from '../utils/focus.ts'
 import Toast from './Toast.tsx'
 import './Notifications.css'
+
+// Extra room left between the toasts and whatever is just above them, so a
+// focused button's focus ring isn't touching the toasts either.
+const TOAST_CLEARANCE_PX = 8
 
 interface NotificationListProps {
   notifications: Notification[]
@@ -38,6 +42,43 @@ function Notifications() {
   const dispatch = useAppDispatch()
   // The wrapper around both lists, used to find the other Dismiss buttons.
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // The toasts float over the bottom-right corner of the page. An error
+  // toast stays until it's dismissed, so without this it could cover a
+  // control (like the list's "Next page" button) for as long as it's there.
+  //
+  // So whenever the toast stack changes size, we measure how much of the
+  // bottom of the screen it covers and store it in the --toast-space CSS
+  // variable. Layout.css then uses it twice:
+  // - as extra padding under the page, so everything can be scrolled up
+  //   above the toasts, and
+  // - as scroll-padding-bottom, so when keyboard focus moves to something
+  //   near the bottom, the browser scrolls it to just above the toasts
+  //   instead of leaving it underneath.
+  // With no toasts, the stack is 0px tall and so is --toast-space.
+  useEffect(() => {
+    const container = containerRef.current
+    // ResizeObserver tells us whenever an element changes size. Every
+    // current browser has it, but the test environment (jsdom) doesn't;
+    // there's no screen to cover there anyway.
+    if (!container || typeof ResizeObserver === 'undefined') {
+      return
+    }
+    const root = document.documentElement
+    const observer = new ResizeObserver(() => {
+      const box = container.getBoundingClientRect()
+      // From the top of the stack down to the bottom of the screen, which
+      // includes the gap the stack keeps from the screen's edge.
+      const covered = box.height > 0 ? window.innerHeight - box.top + TOAST_CLEARANCE_PX : 0
+      root.style.setProperty('--toast-space', `${Math.ceil(covered)}px`)
+    })
+    observer.observe(container)
+    // Cleanup: stop watching, and give the page its normal spacing back.
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--toast-space')
+    }
+  }, [])
 
   // Removing a notification removes the focused Dismiss button with it, and
   // the browser would then drop keyboard focus back to the top of the page.
