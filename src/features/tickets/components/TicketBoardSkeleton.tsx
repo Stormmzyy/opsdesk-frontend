@@ -1,5 +1,5 @@
 import Skeleton from '../../../components/Skeleton.tsx'
-import { TICKET_STATUSES } from '../utils/ticketStatus.ts'
+import { TICKET_STATUSES, getNextStatus } from '../utils/ticketStatus.ts'
 import './TicketBoard.css'
 import './TicketCard.css'
 import './TicketColumn.css'
@@ -26,16 +26,21 @@ function TicketBoardSkeleton() {
           <div className="ticket-column__list">
             {Array.from({ length: CARDS_PER_COLUMN[columnIndex] ?? 2 }, (_, cardIndex) => (
               <div key={cardIndex} className="ticket-card">
+                {/* Two bars with a space between, like two words: on a wide
+                    card they share one line, and on a narrow one the second
+                    wraps onto a new line, just as a real title's text would. */}
                 <p className="ticket-card__title">
-                  <Skeleton width={cardIndex % 2 === 0 ? '90%' : '70%'} />
+                  <Skeleton width="10rem" /> <Skeleton width={cardIndex % 2 === 0 ? '6rem' : '4rem'} />
                 </p>
                 <div className="ticket-card__meta">
                   <Skeleton width="3.75rem" height="1.25rem" shape="pill" />
                   <Skeleton width="5rem" />
                 </div>
                 <div className="ticket-card__actions">
-                  <Skeleton width="8rem" height="2rem" />
-                  <Skeleton width="6.5rem" height="1.75rem" />
+                  {/* Real cards in the last column (Closed) have no "Move
+                      to…" button, so neither do these. */}
+                  {getNextStatus(status.value) && <Skeleton width="9.5rem" height="2.1875rem" />}
+                  <Skeleton width="8rem" height="1.75rem" />
                 </div>
               </div>
             ))}
