@@ -13,6 +13,8 @@ beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
 afterEach(() => {
   resetToSampleTickets()
   server.resetHandlers()
+  // Stop any request listeners a test added (see the delete test).
+  server.events.removeAllListeners()
 })
 afterAll(() => server.close())
 
@@ -46,6 +48,14 @@ describe('ticket flows', () => {
     const title = 'Login page times out on slow networks'
     const { user } = renderWithProviders(<AppRoutes />, { route: '/tickets/1' })
 
+    // Note the method of every request the mock server receives, so we can
+    // check that Cancel never even SENDS a delete. Checking the screen alone
+    // isn't enough: a delete still on its way wouldn't have changed it yet.
+    const requestMethods: string[] = []
+    server.events.on('request:start', ({ request }) => {
+      requestMethods.push(request.method)
+    })
+
     // The Delete button lives in its own "Delete this ticket" section. Looking
     // inside it tells it apart from the dialog's own "Delete ticket" button.
     const deleteSection = await screen.findByRole('region', { name: /delete this ticket/i })
@@ -63,6 +73,7 @@ describe('ticket flows', () => {
     // Cancel closed the dialog, put focus back on the button that opened it,
     // and changed nothing: the ticket is still on screen and in the database.
     expect(dialog).not.toHaveAttribute('open')
+    expect(requestMethods).not.toContain('DELETE')
     expect(deleteButton).toHaveFocus()
     expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument()
     expect(getAllTickets().some((ticket) => ticket.id === 1)).toBe(true)
@@ -71,6 +82,8 @@ describe('ticket flows', () => {
     await user.click(deleteButton)
     await user.click(within(dialog).getByRole('button', { name: /delete ticket/i }))
 
+    // This time a DELETE was sent.
+    expect(requestMethods).toContain('DELETE')
     // The app goes back to the Tickets page and shows a success toast.
     expect(await screen.findByRole('heading', { level: 1, name: 'Tickets' })).toBeInTheDocument()
     expect(screen.getByText(/ticket #1 was deleted/i)).toBeInTheDocument()
