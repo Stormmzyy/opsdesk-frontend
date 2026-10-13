@@ -16,6 +16,8 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
   hasError: boolean
+  // The resetKey from the last render, so a change can be noticed.
+  resetKey: string | undefined
 }
 
 // Catches errors thrown while React renders the components inside it, and
@@ -28,7 +30,7 @@ interface ErrorBoundaryState {
 // code (like a failed fetch or a setTimeout), or in the boundary itself.
 // Those don't happen while React is rendering, so React can't step in.
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false }
+  state: ErrorBoundaryState = { hasError: false, resetKey: this.props.resetKey }
 
   // A handle on the fallback's heading, so focus can be moved there.
   headingRef = createRef<HTMLHeadingElement>()
@@ -37,8 +39,23 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   // object it returns is merged into state, so the next render shows the
   // fallback. It must only work out new state: no logging or other side
   // effects here, which is what componentDidCatch is for.
-  static getDerivedStateFromError(): ErrorBoundaryState {
+  static getDerivedStateFromError(): Partial<ErrorBoundaryState> {
     return { hasError: true }
+  }
+
+  // React calls this before every render. If resetKey has changed (the user
+  // moved to another page), clear the error so the new page gets a fresh
+  // chance to render. Returning null means "no change to state".
+  // Doing this here, rather than in componentDidUpdate, avoids rendering
+  // the old fallback once and then immediately rendering again.
+  static getDerivedStateFromProps(
+    props: ErrorBoundaryProps,
+    state: ErrorBoundaryState,
+  ): Partial<ErrorBoundaryState> | null {
+    if (props.resetKey !== state.resetKey) {
+      return { hasError: false, resetKey: props.resetKey }
+    }
+    return null
   }
 
   // Called after the fallback is on screen. This is the place for side
@@ -56,18 +73,13 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     }
   }
 
-  componentDidUpdate(previousProps: ErrorBoundaryProps, previousState: ErrorBoundaryState) {
+  // The first parameter (the previous props) isn't needed, hence the _.
+  componentDidUpdate(_previousProps: ErrorBoundaryProps, previousState: ErrorBoundaryState) {
     // The fallback has just appeared: whatever had focus is probably gone,
     // so move focus to the heading. Screen readers then read it out, and
     // keyboard users carry on from the fallback's buttons.
     if (this.state.hasError && !previousState.hasError) {
       this.focusHeading()
-    }
-
-    // The user moved to another page while the fallback was showing: give
-    // the new page a fresh chance to render.
-    if (this.state.hasError && previousProps.resetKey !== this.props.resetKey) {
-      this.setState({ hasError: false })
     }
   }
 
