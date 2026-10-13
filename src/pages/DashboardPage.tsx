@@ -20,6 +20,7 @@ function DashboardPage() {
   const { data: tickets, isLoading, isError, refetch } = useGetTicketsQuery()
 
   // What the two ticket sections show, worked out once for each state.
+  // (An error is handled once for the whole page, further down.)
   let statusContent: ReactNode = null
   let priorityContent: ReactNode = null
   if (isLoading) {
@@ -37,14 +38,6 @@ function DashboardPage() {
         <TicketListSkeleton rows={4} />
       </SkeletonGroup>
     )
-  } else if (isError) {
-    const errorMessage = (
-      <StatusMessage type="error" onRetry={refetch}>
-        Sorry, we couldn't load the tickets.
-      </StatusMessage>
-    )
-    statusContent = errorMessage
-    priorityContent = errorMessage
   } else if (tickets && tickets.length === 0) {
     // No tickets at all: four cards saying "0" would tell the user nothing,
     // so say so plainly and offer the next step.
@@ -74,10 +67,26 @@ function DashboardPage() {
     <>
       <PageHeader title="Dashboard" description="A quick overview of OpsDesk today." />
 
-      <section className="dashboard-section" aria-labelledby="ticket-stats-heading">
-        <h2 id="ticket-stats-heading">Tickets by status</h2>
-        {statusContent}
-      </section>
+      {/* If the tickets fail to load, BOTH ticket sections are affected. One
+          error for the whole page, rather than one in each section: an error
+          message is a role="alert", and two of them would make a screen
+          reader announce the same problem twice. The two ticket sections are
+          left out until the tickets load, so nothing on the page is empty or
+          repeated. People don't need tickets, so they still show. */}
+      {isError && (
+        <div className="dashboard-section">
+          <StatusMessage type="error" onRetry={refetch}>
+            Sorry, we couldn't load the tickets, so the ticket summaries can't be shown.
+          </StatusMessage>
+        </div>
+      )}
+
+      {!isError && (
+        <section className="dashboard-section" aria-labelledby="ticket-stats-heading">
+          <h2 id="ticket-stats-heading">Tickets by status</h2>
+          {statusContent}
+        </section>
+      )}
 
       {/* People come from local data, so this section never waits for tickets. */}
       <section className="dashboard-section" aria-labelledby="people-stats-heading">
@@ -85,10 +94,12 @@ function DashboardPage() {
         <PeopleSummary />
       </section>
 
-      <section className="dashboard-section" aria-labelledby="priority-heading">
-        <h2 id="priority-heading">Urgent and high priority open tickets</h2>
-        {priorityContent}
-      </section>
+      {!isError && (
+        <section className="dashboard-section" aria-labelledby="priority-heading">
+          <h2 id="priority-heading">Urgent and high priority open tickets</h2>
+          {priorityContent}
+        </section>
+      )}
     </>
   )
 }
