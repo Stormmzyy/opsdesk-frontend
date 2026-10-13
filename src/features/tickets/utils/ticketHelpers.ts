@@ -1,18 +1,12 @@
+import { parseId } from '../../../utils/parseId.ts'
 import type { Priority, StatusFilter, Ticket } from '../types.ts'
 import { isOpenTicket, parsePriority, parseStatus } from './ticketStatus.ts'
 
-// Turns the :id part of a URL (e.g. "3" in /tickets/3) into a ticket id.
-// URL params are always strings, but our ticket ids are numbers.
-// Returns undefined for anything that isn't a whole number made only of
-// digits, e.g. "abc", "3.5", "-1", "" or a missing param, because
-// Number() alone would happily turn "" into 0 and " 3 " into 3.
-// Used by the pages (to read the URL) and by the mock API (to read the
-// request URL), so both agree on what a valid id looks like.
+// Turns the :id part of a ticket URL (e.g. "3" in /tickets/3) into a ticket
+// id, or undefined if it isn't a whole number. Projects use the same rule,
+// so the actual check lives in utils/parseId.ts.
 export function parseTicketId(idParam: string | undefined): number | undefined {
-  if (idParam === undefined || !/^\d+$/.test(idParam)) {
-    return undefined
-  }
-  return Number(idParam)
+  return parseId(idParam)
 }
 
 // The priorities that need attention first, most important first.
