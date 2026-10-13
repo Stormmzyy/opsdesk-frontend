@@ -4,8 +4,10 @@ import type { TicketFormValues } from '../features/tickets/types.ts'
 import { parseTicketId } from '../features/tickets/utils/ticketHelpers.ts'
 import BackLink from '../components/BackLink.tsx'
 import PageHeader from '../components/PageHeader.tsx'
+import SkeletonGroup from '../components/SkeletonGroup.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'
 import TicketForm from '../features/tickets/components/TicketForm.tsx'
+import TicketFormSkeleton from '../features/tickets/components/TicketFormSkeleton.tsx'
 import TicketNotFound from '../features/tickets/components/TicketNotFound.tsx'
 import { useAppDispatch } from '../store/hooks.ts'
 import {
@@ -45,7 +47,9 @@ function EditTicketPage() {
       <>
         <BackLink to={detailPath}>Back to ticket</BackLink>
         <PageHeader title="Edit ticket" description={`Ticket #${ticketId}`} />
-        <StatusMessage type="loading">Loading the ticket…</StatusMessage>
+        <SkeletonGroup label="Loading the ticket">
+          <TicketFormSkeleton />
+        </SkeletonGroup>
       </>
     )
   }

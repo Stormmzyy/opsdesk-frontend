@@ -14,15 +14,18 @@ const ROLES: Record<StatusMessageType, 'status' | 'alert' | undefined> = {
 // A dashed box for loading, empty, and error messages.
 // - type: 'loading' | 'empty' | 'error'
 // - onRetry (optional): shows a Retry button that calls it
+// - action (optional): a way out, e.g. a "Clear filters" button or a
+//   "Create a ticket" link, so an empty state isn't a dead end
 // - compact (optional): a smaller box, for tight spaces like board columns
 interface StatusMessageProps {
   type: StatusMessageType
   children: ReactNode
   onRetry?: () => void
+  action?: ReactNode
   compact?: boolean
 }
 
-function StatusMessage({ type, children, onRetry, compact = false }: StatusMessageProps) {
+function StatusMessage({ type, children, onRetry, action, compact = false }: StatusMessageProps) {
   const className = compact
     ? 'status-message status-message--compact'
     : 'status-message'
@@ -35,6 +38,7 @@ function StatusMessage({ type, children, onRetry, compact = false }: StatusMessa
           Retry
         </button>
       )}
+      {action}
     </div>
   )
 }

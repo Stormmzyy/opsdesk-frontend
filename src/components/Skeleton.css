@@ -1,0 +1,46 @@
+/* A grey block with a lighter band sweeping across it (the "shimmer"),
+   which tells sighted users that something is on its way. */
+/* inline-block and vertical-align: middle let a skeleton sit INSIDE the same
+   text element the real content uses (a title, a badge...). That element
+   keeps its normal line height, so the skeleton takes up exactly the space
+   the text will, even though the grey bar itself is a little shorter. */
+.skeleton {
+  display: inline-block;
+  vertical-align: middle;
+  /* Never wider than its container, whatever width was asked for. */
+  max-width: 100%;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--skeleton) 25%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton) 75%
+  );
+  /* The gradient is twice as wide as the block, and the animation slides
+     it from right to left, so the light band moves across the block. */
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton--pill {
+  border-radius: 999px;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* Some people turn on "reduce motion" in their system settings, for example
+   because movement makes them feel unwell. For them: a plain grey block,
+   with no animation at all. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: var(--skeleton);
+  }
+}

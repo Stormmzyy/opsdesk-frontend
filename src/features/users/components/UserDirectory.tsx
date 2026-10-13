@@ -1,6 +1,8 @@
+import SkeletonGroup from '../../../components/SkeletonGroup.tsx'
 import StatusMessage from '../../../components/StatusMessage.tsx'
 import { useUsers } from '../hooks/useUsers.ts'
 import UserList from './UserList.tsx'
+import UserListSkeleton from './UserListSkeleton.tsx'
 
 // Loads the users and shows the right thing for each state of the request.
 function UserDirectory() {
@@ -9,7 +11,9 @@ function UserDirectory() {
   return (
     <>
       {status === 'loading' && (
-        <StatusMessage type="loading">Loading users…</StatusMessage>
+        <SkeletonGroup label="Loading users">
+          <UserListSkeleton />
+        </SkeletonGroup>
       )}
 
       {status === 'error' && (
@@ -18,7 +22,14 @@ function UserDirectory() {
         </StatusMessage>
       )}
 
-      {status === 'empty' && <StatusMessage type="empty">No users found.</StatusMessage>}
+      {/* The directory should never be empty, so this most likely means a
+          problem on the API's side: offer Retry rather than a dead end. */}
+      {status === 'empty' && (
+        <StatusMessage type="empty" onRetry={retry}>
+          The user directory came back empty. This is usually temporary, so try again in a
+          moment.
+        </StatusMessage>
+      )}
 
       {/* users is null until data arrives, so check it as well as the status. */}
       {status === 'success' && users && <UserList users={users} />}

@@ -1,7 +1,9 @@
 import PageHeader from '../components/PageHeader.tsx'
+import SkeletonGroup from '../components/SkeletonGroup.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'
 import EmployeeDirectory from '../features/employees/components/EmployeeDirectory.tsx'
 import TeamSummary from '../features/employees/components/TeamSummary.tsx'
+import TeamSummarySkeleton from '../features/employees/components/TeamSummarySkeleton.tsx'
 import { useGetTicketsQuery } from '../store/ticketsApi.ts'
 
 function TeamsPage() {
@@ -12,7 +14,11 @@ function TeamsPage() {
     <>
       <PageHeader title="Teams" description="Every team, its people, and its open work." />
 
-      {isLoading && <StatusMessage type="loading">Loading team summaries…</StatusMessage>}
+      {isLoading && (
+        <SkeletonGroup label="Loading team summaries">
+          <TeamSummarySkeleton />
+        </SkeletonGroup>
+      )}
 
       {isError && (
         <StatusMessage type="error" onRetry={refetch}>

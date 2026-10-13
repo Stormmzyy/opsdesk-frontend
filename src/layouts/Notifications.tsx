@@ -1,17 +1,10 @@
 import { useRef } from 'react'
 import { useAppDispatch, useAppSelector } from '../store/hooks.ts'
 import { dismissNotification, selectNotifications } from '../store/uiSlice.ts'
-import type { Notification, NotificationType } from '../store/uiSlice.ts'
+import type { Notification } from '../store/uiSlice.ts'
 import { focusMainHeading } from '../utils/focus.ts'
+import Toast from './Toast.tsx'
 import './Notifications.css'
-
-// The visible word in front of each message, so the type isn't shown by
-// colour alone (some people can't tell the colours apart).
-const TYPE_LABELS: Record<NotificationType, string> = {
-  success: 'Success',
-  error: 'Error',
-  info: 'Info',
-}
 
 interface NotificationListProps {
   notifications: Notification[]
@@ -25,38 +18,21 @@ function NotificationList({ notifications, onDismiss }: NotificationListProps) {
     return null
   }
 
+  // Each Toast runs its own auto-dismiss timer, so they come and go
+  // independently of each other.
   return (
     <ul className="notifications__list">
-      {notifications.map((notification) => {
-        const messageId = `notification-${notification.id}`
-        return (
-          <li
-            key={notification.id}
-            className={`notification notification--${notification.type}`}
-          >
-            <p id={messageId} className="notification__message">
-              <strong>{TYPE_LABELS[notification.type]}:</strong> {notification.message}
-            </p>
-            {/* aria-describedby reads the message after "Dismiss" when the
-                button is focused, so it's clear which one it dismisses. */}
-            <button
-              type="button"
-              className="notification__dismiss"
-              aria-describedby={messageId}
-              onClick={(event) => onDismiss(notification.id, event.currentTarget)}
-            >
-              Dismiss
-            </button>
-          </li>
-        )
-      })}
+      {notifications.map((notification) => (
+        <Toast key={notification.id} notification={notification} onDismiss={onDismiss} />
+      ))}
     </ul>
   )
 }
 
-// Shows every current notification, at the top of every page (it's rendered
-// by Layout). Notifications stay until they're dismissed, so nobody misses
-// one because it disappeared before they finished reading it.
+// Shows every current notification as a toast, stacked in the bottom-right
+// corner of every page (it's rendered by Layout). Success and info toasts
+// dismiss themselves after a few seconds; errors stay until dismissed, so
+// nobody misses one because it vanished before they finished reading it.
 function Notifications() {
   const notifications = useAppSelector(selectNotifications)
   const dispatch = useAppDispatch()
