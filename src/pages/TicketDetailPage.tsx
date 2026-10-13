@@ -38,7 +38,9 @@ function TicketDetailPage() {
     return (
       <>
         <BackLink to="/tickets">Back to tickets</BackLink>
-        <PageHeader title={`Ticket #${ticketId}`} />
+        {/* The real header has a description line under the title, so this
+            one has one too, to keep the content below from jumping down. */}
+        <PageHeader title={`Ticket #${ticketId}`} description="Loading the ticket…" />
         <SkeletonGroup label="Loading the ticket">
           <TicketDetailsSkeleton />
         </SkeletonGroup>

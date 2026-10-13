@@ -1,5 +1,16 @@
+import { Fragment } from 'react'
 import Skeleton from '../../../components/Skeleton.tsx'
 import './TicketDetails.css'
+
+// One bar per "word" of a typical description (the sample tickets average
+// about 22 words). Spaces between them let the bars wrap onto new lines like
+// real text, so the placeholder is about as many lines tall as the real
+// description at ANY screen width, instead of a fixed number of lines.
+const WORD_WIDTHS = [
+  '2.5rem', '1.75rem', '3.5rem', '2rem', '1.25rem', '3rem', '1.75rem', '2.5rem', '2rem', '4rem',
+  '1.25rem', '2.75rem', '1.5rem', '3rem', '2rem', '1.25rem', '3.5rem', '2.25rem', '1.5rem',
+  '2.75rem', '2rem', '3rem',
+]
 
 // The loading placeholder for TicketDetails. It uses the same elements and
 // CSS classes (h2, p, dl), with skeletons inside instead of text, so every
@@ -12,11 +23,13 @@ function TicketDetailsSkeleton() {
       <h2>
         <Skeleton width="7rem" />
       </h2>
-      {/* Three lines of description, the last one shorter. */}
       <p className="ticket-detail__description">
-        <Skeleton width="100%" />
-        <Skeleton width="100%" />
-        <Skeleton width="60%" />
+        {WORD_WIDTHS.map((width, index) => (
+          // The index is a fine key: this list never changes order.
+          <Fragment key={index}>
+            <Skeleton width={width} />{' '}
+          </Fragment>
+        ))}
       </p>
 
       <h2>

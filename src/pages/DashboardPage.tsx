@@ -33,7 +33,8 @@ function DashboardPage() {
     )
     priorityContent = (
       <SkeletonGroup>
-        <TicketListSkeleton rows={3} />
+        {/* The sample data has four urgent or high priority open tickets. */}
+        <TicketListSkeleton rows={4} />
       </SkeletonGroup>
     )
   } else if (isError) {
