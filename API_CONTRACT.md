@@ -53,7 +53,7 @@ So `GET /tickets` means `GET /api/v1/tickets`. The frontend reads the base URL f
 - In a path, an id that isn't a whole number (`/tickets/abc`, `/tickets/3.5`, `/tickets/-1`) is treated the same as an id that doesn't exist: **404 `NOT_FOUND`**.
 - Fields the server doesn't recognise in a request body are **ignored**, not rejected.
 - Lists are returned as a **plain JSON array**, sorted by `id`, oldest first. (Pagination is planned for v1.1; see the end of this document.)
-- Text fields are **trimmed**: leading and trailing spaces are removed before the value is checked and saved.
+- Free-text fields (a ticket's `title` and `description`) are **trimmed**: leading and trailing spaces are removed before the value is checked and saved. Fields with a fixed set of values (`priority`, `status`, `team`) are not trimmed: `" Support "` is not a valid team.
 
 ## Errors
 
