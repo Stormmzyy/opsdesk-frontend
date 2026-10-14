@@ -1,9 +1,15 @@
 import { delay, http, HttpResponse } from 'msw'
 import type { DefaultBodyType, PathParams } from 'msw'
 import type { Project } from '../features/projects/types.ts'
+import { employees } from '../data/employees.ts'
+import { getDepartments } from '../features/employees/utils/employeeHelpers.ts'
 import type { Ticket } from '../features/tickets/types.ts'
 import { isRecord, isTicket } from '../features/tickets/utils/ticketHelpers.ts'
-import { hasErrors, validateTicket } from '../features/tickets/utils/ticketValidation.ts'
+import { parsePriority, parseStatus } from '../features/tickets/utils/ticketStatus.ts'
+import {
+  validateDescription,
+  validateTitle,
+} from '../features/tickets/utils/ticketValidation.ts'
 import { parseId } from '../utils/parseId.ts'
 import { getAllProjects } from './projectDb.ts'
 import { getAllTickets, resetToSampleTickets, saveAllTickets } from './ticketDb.ts'
@@ -21,20 +27,42 @@ import { getAllTickets, resetToSampleTickets, saveAllTickets } from './ticketDb.
 // breaks old clients, the new version can live at /api/v2 alongside it.
 // If you change VITE_API_URL to another path, change these paths to match.
 
+// Everything below follows API_CONTRACT.md. If the two ever disagree, the
+// contract wins and this file is fixed (handlers.test.ts checks them).
+
 // What every error response looks like, e.g.
 // { error: 'NOT_FOUND', message: 'No ticket with id "99".' }
 // - error: a fixed code the app can check in code. It never changes wording.
 // - message: a sentence for people. It may be reworded at any time.
-// API_CONTRACT.md lists every code and when it is used.
-type ErrorCode = 'BAD_REQUEST' | 'VALIDATION_ERROR' | 'NOT_FOUND'
+// - fields: only for VALIDATION_ERROR, one message per invalid field.
+// The contract also lists UNAUTHORIZED and CONFLICT, but only the auth
+// endpoints use those, and the mock doesn't serve them yet.
+type ErrorCode = 'BAD_REQUEST' | 'VALIDATION_ERROR' | 'NOT_FOUND' | 'INTERNAL_ERROR'
+
+// The ticket fields a client can send. (Never id: the server owns that.)
+type TicketField = 'title' | 'description' | 'priority' | 'status' | 'team'
+
+// One message per invalid field, e.g. { title: 'Title is required.' }.
+// Partial: only the fields with a problem are in it.
+type FieldProblems = Partial<Record<TicketField, string>>
 
 interface ErrorBody {
   error: ErrorCode
   message: string
+  fields?: FieldProblems
 }
 
 function errorResponse(status: number, error: ErrorCode, message: string) {
   return HttpResponse.json<ErrorBody>({ error, message }, { status })
+}
+
+// 400 VALIDATION_ERROR, listing every invalid field. The message joins the
+// field messages into one sentence, for clients that don't read `fields`.
+function validationErrorResponse(fields: FieldProblems) {
+  return HttpResponse.json<ErrorBody>(
+    { error: 'VALIDATION_ERROR', message: Object.values(fields).join(' '), fields },
+    { status: 400 },
+  )
 }
 
 // URL params can, in theory, be a list (for patterns like /:path*), so only
@@ -55,22 +83,75 @@ async function readJsonBody(request: Request): Promise<unknown> {
   }
 }
 
-// The same rules as the form (e.g. "Title is required."), joined into one
-// message. A real server never trusts the client to have checked already.
-// Returns undefined when the ticket is fine.
-function findRuleProblem(ticket: Ticket): string | undefined {
-  const errors = validateTicket(ticket)
-  return hasErrors(errors) ? Object.values(errors).join(' ') : undefined
+// The five teams a ticket can belong to: the departments in the employee data.
+const TEAMS = getDepartments(employees)
+
+// The messages for fields that must be one of a fixed set of values. They're
+// written out to match API_CONTRACT.md word for word.
+const PRIORITY_MESSAGE = 'Priority must be one of LOW, MEDIUM, HIGH or URGENT.'
+const STATUS_MESSAGE = 'Status must be one of OPEN, IN_PROGRESS, RESOLVED or CLOSED.'
+const TEAM_MESSAGE = 'Team must be one of Engineering, Finance, HR, Operations or Support.'
+
+// Checks one field of a request body. Returns its error message, or
+// undefined when it's fine. A real server never trusts the client to have
+// checked already: anyone can send anything, so `value` is unknown.
+// The title and description use the SAME rules as the form (shared from
+// ticketValidation.ts), so the messages match what the form shows.
+function findFieldProblem(field: TicketField, value: unknown): string | undefined {
+  switch (field) {
+    case 'title':
+      // Missing counts as empty: "Title is required."
+      if (value === undefined || value === null) {
+        return validateTitle('')
+      }
+      return typeof value === 'string' ? validateTitle(value) : 'Title must be text.'
+    case 'description':
+      if (value === undefined || value === null) {
+        return validateDescription('')
+      }
+      return typeof value === 'string' ? validateDescription(value) : 'Description must be text.'
+    case 'priority':
+      return typeof value === 'string' && parsePriority(value) ? undefined : PRIORITY_MESSAGE
+    case 'status':
+      return typeof value === 'string' && parseStatus(value) ? undefined : STATUS_MESSAGE
+    case 'team':
+      return typeof value === 'string' && TEAMS.includes(value) ? undefined : TEAM_MESSAGE
+  }
 }
+
+// Checks the listed fields of a request body, ALL of them, so the client
+// hears about every problem at once rather than fixing one at a time.
+// Returns {} when every field is fine.
+function findFieldProblems(
+  body: Record<string, unknown>,
+  fieldsToCheck: readonly TicketField[],
+): FieldProblems {
+  const problems: FieldProblems = {}
+  for (const field of fieldsToCheck) {
+    const problem = findFieldProblem(field, body[field])
+    if (problem) {
+      problems[field] = problem
+    }
+  }
+  return problems
+}
+
+// The contract says text is trimmed before it's saved, so " Hi " is saved
+// as "Hi". Anything that isn't text is passed through for the checks above.
+function trimIfText(value: unknown): unknown {
+  return typeof value === 'string' ? value.trim() : value
+}
+
+// Every field PATCH may change, and the fields POST needs (no status: new
+// tickets always start as OPEN).
+const PATCHABLE_FIELDS: readonly TicketField[] = ['title', 'description', 'priority', 'status', 'team']
+const CREATE_FIELDS: readonly TicketField[] = ['title', 'description', 'priority', 'team']
 
 // Handlers that can answer with a ticket OR an error say so up front, in the
 // third type parameter of http.get / http.post / http.patch. Otherwise MSW
 // guesses the response type from the first `return` and rejects the other.
 // The first two type parameters are the URL params and the request body.
 type TicketOrError = Ticket | ErrorBody
-
-const WRONG_SHAPE_MESSAGE =
-  'A ticket needs a title, description and team, and a known priority and status.'
 
 export const handlers = [
   // GET /api/v1/tickets: every ticket.
@@ -105,27 +186,32 @@ export const handlers = [
       return errorResponse(400, 'BAD_REQUEST', 'The request body must be a JSON object.')
     }
 
+    const problems = findFieldProblems(body, CREATE_FIELDS)
+    if (Object.keys(problems).length > 0) {
+      return validationErrorResponse(problems)
+    }
+
     const tickets = getAllTickets()
     // One more than the biggest id so far, so the new id is always unique.
     const newId = Math.max(0, ...tickets.map((ticket) => ticket.id)) + 1
-    // Only copy the fields a client may set, so anything extra is ignored.
+    // Only copy the fields a client may set, so anything extra (an id, a
+    // status, a field we don't know) is ignored.
     const candidate = {
       id: newId,
       status: 'OPEN',
-      title: body.title,
-      description: body.description,
+      title: trimIfText(body.title),
+      description: trimIfText(body.description),
       priority: body.priority,
       team: body.team,
     }
 
-    // isTicket checks every field's type. Once it passes, TypeScript treats
-    // candidate as a Ticket, so it can be validated and saved.
+    // Every field was checked above, but TypeScript can't see that: to it,
+    // they're all still "unknown". isTicket checks the types once more and,
+    // when it passes, lets TypeScript treat candidate as a Ticket. It can't
+    // fail after the checks above; if it ever did, that would be a bug in
+    // this file, which is what 500 INTERNAL_ERROR means.
     if (!isTicket(candidate)) {
-      return errorResponse(400, 'VALIDATION_ERROR', WRONG_SHAPE_MESSAGE)
-    }
-    const problem = findRuleProblem(candidate)
-    if (problem) {
-      return errorResponse(400, 'VALIDATION_ERROR', problem)
+      return errorResponse(500, 'INTERNAL_ERROR', 'The ticket could not be saved.')
     }
 
     saveAllTickets([...tickets, candidate])
@@ -159,23 +245,29 @@ export const handlers = [
         return errorResponse(400, 'BAD_REQUEST', 'The request body must be a JSON object.')
       }
 
+      // Only check the fields that were sent: the others keep their
+      // current, already valid, values.
+      const sentFields = PATCHABLE_FIELDS.filter((field) => field in body)
+      const problems = findFieldProblems(body, sentFields)
+      if (Object.keys(problems).length > 0) {
+        return validationErrorResponse(problems)
+      }
+
       // Start from the existing ticket and replace only the fields that were
-      // sent. The id always stays the same.
+      // sent. The id always stays the same, even if the body has one.
       const candidate = {
         id: existing.id,
-        title: 'title' in body ? body.title : existing.title,
-        description: 'description' in body ? body.description : existing.description,
+        title: 'title' in body ? trimIfText(body.title) : existing.title,
+        description: 'description' in body ? trimIfText(body.description) : existing.description,
         priority: 'priority' in body ? body.priority : existing.priority,
         status: 'status' in body ? body.status : existing.status,
         team: 'team' in body ? body.team : existing.team,
       }
 
+      // As in POST: the checks above already passed; this just lets
+      // TypeScript treat candidate as a Ticket.
       if (!isTicket(candidate)) {
-        return errorResponse(400, 'VALIDATION_ERROR', WRONG_SHAPE_MESSAGE)
-      }
-      const problem = findRuleProblem(candidate)
-      if (problem) {
-        return errorResponse(400, 'VALIDATION_ERROR', problem)
+        return errorResponse(500, 'INTERNAL_ERROR', 'The ticket could not be saved.')
       }
 
       saveAllTickets(tickets.map((ticket) => (ticket.id === existing.id ? candidate : ticket)))

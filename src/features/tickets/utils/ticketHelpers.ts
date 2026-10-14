@@ -41,9 +41,11 @@ export function filterTickets(
   })
 }
 
-// True when value is an object we can read properties from.
+// True when value is a plain object we can read properties from, like
+// { title: 'Hi' }. typeof says "object" for arrays and for null too, so both
+// are ruled out: [] or null is never a valid request body or ticket.
 export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 // Checks that one saved item has every field a ticket needs, with the right
