@@ -170,6 +170,33 @@ Everything else above was already fine, so nothing else needed changing. Two pro
 - **Priority badges** were measured at 6.4:1 or better in both themes. The type of a notification is shown in words ("Success:"), not by colour alone.
 - **The search box's built-in clear (×) button** can't be reached with the keyboard, but the text can still be cleared with Delete (or Escape in Chrome), so it was left as it is.
 
+## Security
+
+These notes are about **this** app as it is today: a frontend with a mock API, no sign-in, and no real backend yet.
+
+### What was checked
+
+| Check | Result |
+| --- | --- |
+| `dangerouslySetInnerHTML` anywhere in `src/` or `index.html` | **No matches.** Every piece of text, including ticket titles and descriptions that people type in, reaches the page through normal JSX like `{ticket.title}`, which React always escapes. |
+| Other ways to put raw HTML or run code from a string (`innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`, `eval`, `new Function`) | **No matches.** The one place the app writes to the page directly, the "Loading…" announcement in `SkeletonGroup`, uses `textContent`, which only ever inserts plain text. |
+| Secrets, API keys, passwords or tokens in the source, `.env.example` or the Git history | **None.** A search of every tracked file finds only harmless words: CSS colour "tokens", RTK Query's `skipToken`, a sample ticket about a password reset, the warning in `.env.example`, and field names (plus one made-up example password) in `API_CONTRACT.md`. No `.env` file has ever been committed (`git log --all -- .env` is empty). |
+| A real attack attempt | A ticket created through the API with the title `<img src=x onerror="…">Hacked` and the description `<script>…</script>` was **shown as that exact text**: no `<img>` or `<script>` element was created, and the code inside never ran. |
+
+**Anything in frontend code or a `.env` file ends up in the files the browser downloads.** Vite copies every `VITE_` variable's value into the built JavaScript (the production bundle literally contains `/api/v1`), and anyone can read that JavaScript with the browser's developer tools. So neither the source code nor `.env` is ever a place for a secret. Only variables starting with `VITE_` are exposed at all, which stops a server-only value from leaking by accident; but that's no protection for a value given a `VITE_` name. Real secrets, such as database passwords and signing keys, belong on the backend.
+
+### XSS, and why React's escaping helps
+
+Cross-site scripting (XSS) is when an attacker gets their own JavaScript to run inside our page, for example by typing `<script>…</script>` as a ticket title and waiting for someone else to open it. Code that runs inside our page can do anything the user can do there. OpsDesk shows text that people type (titles and descriptions) to everyone who opens the ticket, so this matters here. React protects us by default: when we write `{ticket.title}` in JSX, React inserts it as plain text, and the browser shows the `<` and `>` characters instead of treating them as HTML. That's exactly what happened in the test above. The protection only switches off if we choose to bypass it with `dangerouslySetInnerHTML` (or put a user's text into an `href` that starts with `javascript:`), and the codebase does neither.
+
+### localStorage, and what it means for Week 8
+
+Anything saved in `localStorage` can be read by **any** JavaScript running on the page: ours, a third-party script, a browser extension, or an attacker's code if an XSS hole ever slipped through. In OpsDesk, only the mock API uses it (`src/mocks/ticketDb.ts` keeps the tickets under `opsdesk.tickets`), and those are sample tickets, so nothing sensitive is stored there today. When sign-in arrives in Week 8, that changes: a login token kept in `localStorage` could be stolen by a single XSS bug and used to act as that person until it expires. That's why `API_CONTRACT.md` leaves the token decision to Week 8. The usual safer choice is an `httpOnly` cookie set by the server, which the browser sends automatically but JavaScript cannot read at all.
+
+### CORS, and where a CORS error is fixed
+
+CORS (Cross-Origin Resource Sharing) is the browser rule that stops a page on one origin (scheme, host and port, like `http://localhost:5173`) from reading responses from another origin, unless that other server says it's allowed. Today OpsDesk never runs into it for tickets and projects: the app asks its own origin for `/api/v1/...` and MSW answers inside the browser. The Users page already crosses origins, though. It reads from `jsonplaceholder.typicode.com`, which works only because that server sends back `Access-Control-Allow-Origin: http://localhost:5173` (checked with a real request). When the real backend arrives on a different origin, through `VITE_API_URL`, it must send the same kind of header for the OpsDesk frontend's origin. **A CORS error is fixed on the backend, not in the frontend.** The browser is enforcing the server's answer, so no frontend change can safely work around it: `mode: 'no-cors'` only hides the response from our code, and turning off browser security is not a fix.
+
 ## What changed in Week 2
 
 | Area | What changed |
