@@ -67,7 +67,10 @@
 
 .notification__dismiss {
   padding: 4px 12px;
-  border: 1px solid var(--border);
+  /* --placeholder rather than --border: the light --border was only about
+     1.3:1 against the toast, so the button's edge was barely visible. This
+     grey is 4.8:1 (light) and 5.7:1 (dark). */
+  border: 1px solid var(--placeholder);
   border-radius: 8px;
   background: transparent;
   color: var(--text-heading);

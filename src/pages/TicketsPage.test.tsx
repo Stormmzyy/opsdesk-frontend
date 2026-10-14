@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import { server } from '../mocks/server.ts'
 import { resetToSampleTickets } from '../mocks/ticketDb.ts'
 import { renderWithProviders } from '../test/renderWithProviders.tsx'
@@ -12,9 +13,15 @@ import TicketsPage from './TicketsPage.tsx'
 // onUnhandledFrame: 'error' makes any request WITHOUT a handler fail loudly,
 // so a typo in a URL can't silently pass.
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
-// After each test, put the mock database back to the sample tickets, so
-// one test's changes can't leak into the next.
-afterEach(() => resetToSampleTickets())
+// After each test:
+// - put the mock database back to the sample tickets, and
+// - remove any handlers a test added with server.use() (see below), so the
+//   normal mock API is back for the next test.
+// Together they mean one test's changes can't leak into the next.
+afterEach(() => {
+  resetToSampleTickets()
+  server.resetHandlers()
+})
 afterAll(() => server.close())
 
 // Ticket #1 in src/data/tickets.ts, which starts as OPEN.
@@ -45,5 +52,37 @@ describe('TicketsPage', () => {
     // and the card re-renders in its new column. findBy... waits for that.
     expect(await within(inProgressColumn).findByRole('link', { name: TITLE })).toBeInTheDocument()
     expect(within(openColumn).queryByRole('link', { name: TITLE })).not.toBeInTheDocument()
+  })
+
+  // server.use() adds a handler IN FRONT of the normal ones, for this test
+  // only (afterEach removes it). Here it makes the tickets request fail the
+  // way a broken server would.
+  it('shows an error message and a Retry button when the tickets fail to load', async () => {
+    server.use(
+      http.get('/api/v1/tickets', () =>
+        HttpResponse.json(
+          { error: 'INTERNAL_ERROR', message: 'Something went wrong on the server.' },
+          { status: 500 },
+        ),
+      ),
+    )
+    renderWithProviders(<TicketsPage />, { route: '/tickets' })
+
+    // role="alert" is how the error is announced to screen readers, so
+    // finding it by role also checks the announcement is set up.
+    expect(await screen.findByRole('alert')).toHaveTextContent(/couldn't load the tickets/i)
+    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+  })
+
+  it('explains there are no tickets and offers a way to create one', async () => {
+    server.use(http.get('/api/v1/tickets', () => HttpResponse.json([])))
+    renderWithProviders(<TicketsPage />, { route: '/tickets' })
+
+    expect(await screen.findByText(/there are no tickets yet/i)).toBeInTheDocument()
+    // Helpful means actionable: there's a way out, not just a dead end.
+    expect(screen.getByRole('link', { name: /create a ticket/i })).toHaveAttribute(
+      'href',
+      '/tickets/new',
+    )
   })
 })

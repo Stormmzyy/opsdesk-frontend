@@ -30,13 +30,21 @@ The tests use [Vitest](https://vitest.dev/) with [Testing Library](https://testi
 | `features/tickets/components/TicketCard.test.tsx` | The ticket's title appears as a link to `/tickets/<id>`, and the Move button asks for the **next** status |
 | `features/tickets/components/TicketForm.test.tsx` | Submitting an empty title marks the field invalid, **links** the error to it (it becomes the field's accessible description), moves focus to it, and submits nothing |
 | `features/tickets/utils/ticketHelpers.test.ts` | `filterTickets` searches titles **and** descriptions ignoring case, trims spaces, and combines with the status filter. `parseTicketId` accepts only whole numbers (`"3"`) and rejects `"abc"`, `"3.5"`, `"-1"`, `""` and `" 3"` |
-| `pages/TicketsPage.test.tsx` | An integration test with the real page, RTK Query and mock API (MSW running in Node): moving a ticket on the board makes the list refresh by itself |
+| `pages/TicketsPage.test.tsx` | Integration tests with the real page, RTK Query and mock API (MSW running in Node): moving a ticket on the board makes the list refresh by itself; when `GET /api/v1/tickets` answers **500**, an error is announced (`role="alert"`) with a **Retry** button; when it answers with an **empty list**, the page says so and links to "Create a ticket" |
+| `pages/TicketFlows.test.tsx` | Whole journeys through the real app (routes, Layout, toasts, RTK Query, mock API): **creating** a ticket lands on its page with a success toast, and a search on the list finds it; **deleting** opens the confirmation dialog, **Cancel** sends no DELETE request, changes nothing and returns focus to the Delete button, then **confirming** returns to the list with a success toast and the ticket gone |
+| `pages/DashboardPage.test.tsx` | When the tickets fail to load, the Dashboard shows exactly **one** alert and one Retry button (not one per section), and the People section still shows |
+| `components/ErrorBoundary.test.tsx` | A component that throws while rendering is replaced by the fallback (heading, Try again, Reload page, a link to the dashboard), the raw error is **not** shown, and it **is** logged. The expected `console.error` is silenced for this test only and restored afterwards |
 
 Two helpers support them:
 - `src/test/renderWithProviders.tsx` renders a component inside a router and a fresh Redux store, like the real app.
-- `src/mocks/server.ts` runs the same mock API handlers in Node.
+- `src/mocks/server.ts` runs the same mock API handlers in Node. A test can swap in a different answer for one request with `server.use(...)`; `server.resetHandlers()` after each test puts the normal handlers back.
 
-Every test was checked by breaking the feature on purpose and confirming the test fails. For example, the integration test fails if `updateTicket` stops invalidating its cache tag.
+`src/setupTests.ts` also stands in for two things jsdom doesn't implement: the `<dialog>` element's `showModal()` and `close()`, and `window.scrollTo()`.
+
+Every test was checked by breaking the feature on purpose and confirming the test fails. For example, the integration test fails if `updateTicket` stops invalidating its cache tag, the delete test fails if Cancel triggers the delete, and the error boundary test fails if `getDerivedStateFromError` stops switching to the fallback.
+
+**Covered:** moving a ticket, the ticket list's error and empty states, the Dashboard's single error message, creating a ticket, deleting a ticket (including Cancel), form validation, the error boundary, the ticket card, and the search and id helpers.
+**Not covered yet:** editing a ticket, the "Clear filters" button, pagination, the toast timer (auto-dismiss, pause and resume) and the space reserved for toasts, "Reset to sample data", the rest of the Dashboard, the Teams, Projects and Users pages, and anything that needs a real browser, such as the dialog's focus trap and Escape key, which jsdom can't do. Those were checked by hand.
 
 ## What changed in Week 3
 
@@ -105,6 +113,43 @@ Page  ->  RTK Query hook  ->  fetch('/api/v1/tickets')  ->  MSW  ->  src/mocks/h
 ## Accessibility
 
 Every page was checked with the keyboard only, in light and dark mode, at phone and desktop widths. Every link, button and form field can be reached with Tab and shows a visible focus ring, and each page has exactly one `<h1>`.
+
+### Week 4 check
+
+Everything added this week (skeletons, empty states, toasts, the confirmation dialog, the error boundary fallback, the project pages) was checked on top of the Week 3 fixes below.
+
+**What was checked, and how**
+
+- **Keyboard only, on every page:** `/dashboard`, `/tickets` (list and board), `/tickets/1`, `/tickets/1/edit`, `/tickets/new`, `/projects`, `/projects/1`, `/teams`, `/users` and an unknown URL. Every link, button and field (up to 47 on the board) shows a visible focus indicator when reached with the keyboard, and no element has a positive `tabindex` that would scramble the order. A real Tab walk through a ticket's page goes: skip link, Main menu, the five pages, Back, Edit, then Delete, last and far from Edit. Tab then leaves the page for the browser's toolbar, so nothing traps focus.
+- **The confirmation dialog:** opening it moves focus to **Cancel**; Tab stays inside it (the page behind can't be reached); **Escape** closes it; and Escape, Cancel and confirming all return focus to the button that opened it. It's named by its heading (`aria-labelledby`) and described by its message (`aria-describedby`). The delete test checks the focus return automatically.
+- **Labels:** every visible `<input>`, `<select>` and `<textarea>` on every page has a real `<label>`.
+- **Images:** the app has **no `<img>` elements and no `<svg>` icons at all**, so there's no alt text to add. The arrows and chevrons are text characters.
+- **Headings:** every page and every state has exactly one `<h1>`, and no page skips a level (for example Teams goes h1, h2, h3, h2). Skeletons use real heading elements to keep their size, but they're inside `aria-hidden`, so screen readers don't see them.
+- **Colour contrast** of this week's additions, in both themes:
+
+| What | Light | Dark | Needs |
+| --- | --- | --- | --- |
+| Toast text | 17.7:1 | 15.4:1 | 4.5:1 |
+| Toast success / error stripe | 5.0:1 / 6.5:1 | 12.1:1 / 8.9:1 | 3:1 |
+| Solid red "Delete ticket" button text | 6.5:1 | 9.9:1 | 4.5:1 |
+| Outlined red "Delete ticket" button text | 6.5:1 | 8.9:1 | 4.5:1 |
+| Dialog and error fallback text | 7.6:1 | 6.7:1 | 4.5:1 |
+| Focus ring against the surface | 7.1:1 | 6.2:1 | 3:1 |
+| Skeleton blocks | 1.2:1 | 1.3:1 | none: decorative and hidden from screen readers, which hear "Loading…" instead |
+
+The focus ring on the red button sits 2px away from it, on the dialog's background, so it's measured against the surface, not the red.
+
+**What was changed**
+
+| Problem | Fix |
+| --- | --- |
+| The toast **Dismiss** button's border was about 1.3:1 against the toast, so its edge was barely visible. (Not strictly a failure, because the word "Dismiss" identifies it, but toasts are new this week.) | The border now uses the `--placeholder` grey: 4.8:1 in light mode, 5.7:1 in dark. |
+| **Toasts could cover controls for good.** They float over the bottom-right corner, and error toasts never dismiss themselves, so a control underneath could stay unreachable until the toast was dismissed. On a phone, where toasts span the full width, an error toast on the Tickets page covered **Previous** and **Next** even when scrolled right to the bottom, and focusing Next with the keyboard left it hidden underneath. | **Space is reserved for the toasts.** `Notifications` measures how much of the screen the toast stack covers (with a `ResizeObserver`) and stores it in a `--toast-space` CSS variable, 0px when there are no toasts. `Layout.css` adds that much padding under the page, so everything can be scrolled above the toasts, and sets it as `scroll-padding-bottom`, so the browser scrolls a keyboard-focused element to just above the toasts rather than leaving it behind them. Checked on the Tickets page with an error toast showing, by focusing every control in turn: with the fix switched off, 3 controls ended up covered at 375px; with it on, none at 375px or 1280px. I chose this over moving the toasts: at the top they would cover the page's header buttons instead, and putting them back in the page flow would lose the toast pattern. |
+| **The Dashboard announced a failed load twice.** Both ticket sections showed their own "couldn't load the tickets" message, and each is a `role="alert"`, so a screen reader read the same error out twice. | **One error for the page.** When the tickets fail to load, the Dashboard shows a single message with one Retry button under its heading, and leaves out the two ticket sections until the tickets load. The People section, which doesn't need tickets, still shows. `DashboardPage.test.tsx` checks there is exactly one alert. |
+
+Everything else above was already fine, so nothing else needed changing. Two problems were found and fixed earlier in the week, while building:
+- After a failed delete, focus was left inside the closed dialog, because the Delete button was `disabled` while the request ran and a disabled button can't take focus. It now uses `aria-disabled`.
+- On the error fallback, "Go to the dashboard" didn't recover when the dashboard itself had crashed. The boundaries now reset on every navigation.
 
 ### Fixes made in Week 3
 

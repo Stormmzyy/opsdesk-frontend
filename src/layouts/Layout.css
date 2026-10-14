@@ -7,7 +7,17 @@
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 28px 16px 48px;
+  /* --toast-space is how much of the bottom of the screen the toasts cover
+     (0px when there are none, see Notifications.tsx). Adding it under the
+     page means everything can always be scrolled up above the toasts. */
+  padding: 28px 16px calc(48px + var(--toast-space, 0px));
+}
+
+/* When keyboard focus moves to an element (or the page scrolls to one), the
+   browser keeps it at least this far from the bottom of the screen, so it
+   never ends up hidden behind the toasts. */
+html {
+  scroll-padding-bottom: var(--toast-space, 0px);
 }
 
 /* Wide screens: sidebar column on the left, page on the right. */
@@ -24,7 +34,7 @@
   }
 
   .layout__main {
-    padding: 40px 32px 56px;
+    padding: 40px 32px calc(56px + var(--toast-space, 0px));
   }
 }
 
