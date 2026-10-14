@@ -38,10 +38,25 @@ export const api = createApi({
   endpoints: () => ({}),
 })
 
-// True when a request failed because the server answered 404 Not Found.
+// True when the API said "that item doesn't exist": a 404 status AND the
+// contract's error body, { "error": "NOT_FOUND", ... } (see API_CONTRACT.md).
+//
+// Why the body matters: a 404 with any other body (or none) means the API
+// itself wasn't found, not the item. That's what happens in a production
+// build with no backend (`npm run preview` answers a bare 404 for every
+// /api/v1 request), or when VITE_API_URL points at the wrong place. Checking
+// the status alone made those pages say "Ticket not found", which is wrong
+// and alarming; now they show the normal "couldn't load" error with Retry.
+//
 // RTK Query errors come in two shapes: FetchBaseQueryError (the server
 // answered, and it has a status) or SerializedError (something in our own
-// code threw). The `'status' in error` check tells them apart without a cast.
+// code threw). The `'status' in error` check tells them apart without a
+// cast. error.data is the parsed response body, typed `unknown` because
+// the server could send anything, so it's checked step by step.
 export function isNotFoundError(error: FetchBaseQueryError | SerializedError | undefined): boolean {
-  return error !== undefined && 'status' in error && error.status === 404
+  if (error === undefined || !('status' in error) || error.status !== 404) {
+    return false
+  }
+  const body = error.data
+  return typeof body === 'object' && body !== null && 'error' in body && body.error === 'NOT_FOUND'
 }
