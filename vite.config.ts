@@ -16,5 +16,15 @@ export default defineConfig({
     globals: true,
     // Runs before every test file: it adds the extra DOM matchers.
     setupFiles: './src/setupTests.ts',
+    // Tests always talk to the mock API, whatever a developer's .env says.
+    // Vitest reads .env like the dev server does, and .env now points at the
+    // real backend (http://localhost:8080/api/v1). The tests' mock handlers
+    // listen on the relative /api/v1 paths, so with the real URL every request
+    // went past them to port 8080 instead, and the tests failed (or would
+    // quietly depend on a running backend). Pinning the URL here keeps the
+    // tests independent of .env and of whether the backend is running.
+    env: {
+      VITE_API_URL: '/api/v1',
+    },
   },
 })
