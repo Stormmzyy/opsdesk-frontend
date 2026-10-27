@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { store } from './store/store.ts'
+import { isMockApiEnabled } from './utils/mockApi.ts'
 
 // getElementById returns null if the element is missing, so check before using it.
 const rootElement = document.getElementById('root')
@@ -12,15 +13,18 @@ if (!rootElement) {
   throw new Error('Could not find the #root element in index.html')
 }
 
-// Starts the mock API (MSW) in development only.
+// Starts the mock API (MSW), but only when asked to, and only in development.
+// - VITE_USE_MOCK_API must be exactly "true" (see .env.example). Now that the
+//   real backend exists, it's the default, and the mock is opt-in: for working
+//   on the frontend without the backend running.
 // - import.meta.env.DEV is true under `npm run dev` and false in a production
 //   build, so the production app never intercepts requests.
 // - The import is dynamic (inside the function), so MSW isn't even included
 //   in the production bundle.
-// - "bypass" lets requests we have no handler for (Vite's own files, the
-//   real JSONPlaceholder API on the Users page) go through untouched.
+// - "bypass" lets requests we have no handler for (such as Vite's own files)
+//   go through untouched.
 async function enableMocking() {
-  if (!import.meta.env.DEV) {
+  if (!isMockApiEnabled()) {
     return
   }
   const { worker } = await import('./mocks/browser.ts')
