@@ -2,10 +2,9 @@
 
 OpsDesk is an internal operations dashboard. Staff raise support **tickets**, move them through a simple workflow (Open → In progress → Resolved → Closed) on a list or a board, and see what each team is working on through **projects**, **teams** and a **users** directory. It was built over four weeks of an internship as a React 19 + TypeScript frontend.
 
-> **There is no backend yet: ticket and project data is mocked.**
-> In development (`npm run dev`), [Mock Service Worker (MSW)](https://mswjs.io/) answers the app's `/api/v1/...` requests inside the browser and keeps tickets in `localStorage`. The real backend arrives in **Week 6**, built against [API_CONTRACT.md](API_CONTRACT.md); the app already talks to `/api/v1` exactly as it will then.
+> **The app talks to a real backend:** [opsdesk-backend](https://github.com/Stormmzyy/opsdesk-backend), a Spring Boot API with PostgreSQL, built in Week 6 against [API_CONTRACT.md](API_CONTRACT.md).
 >
-> **The mock only runs in development.** A production build (`npm run build`, then `npm run preview`) has no mock, so the Dashboard, Tickets, Teams and Projects pages show their **"Sorry, we couldn't load…" error state**. That's expected, not a bug: there's simply no API to answer yet. The Users page still works, because it reads from a real public API.
+> **Or it can run with no backend at all.** Set `VITE_USE_MOCK_API=true`, and [Mock Service Worker (MSW)](https://mswjs.io/) answers the app's `/api/v1/...` requests inside the browser instead, following the same contract. See [Getting started](#getting-started) for both.
 
 ## Contents
 
@@ -31,7 +30,7 @@ OpsDesk is an internal operations dashboard. Staff raise support **tickets**, mo
   - Form validation with errors linked to their fields.
 - **Projects:** project cards, each with its own page (`/projects/:id`).
 - **Teams:** a summary of each team's members and open tickets, plus a searchable Employee Directory.
-- **Users:** people loaded live from the public [JSONPlaceholder](https://jsonplaceholder.typicode.com/users) API.
+- **Users:** the user directory, from `GET /api/v1/users`.
 - **Polished states:**
   - **Skeleton** placeholders shaped like the real content while data loads, with no shimmer for people who ask their system for less motion.
   - **Helpful empty states** with a way out, such as "Clear filters".
@@ -64,37 +63,68 @@ OpsDesk is an internal operations dashboard. Staff raise support **tickets**, mo
 - npm, which comes with Node.js.
 - Git.
 
-### Run it
+### Install
 
 ```bash
 git clone https://github.com/Stormmzyy/opsdesk-frontend.git
 cd opsdesk-frontend
 npm install
 cp .env.example .env     # on Windows Command Prompt: copy .env.example .env
-npm run dev
 ```
 
-Open the address Vite prints (usually http://localhost:5173). The browser console shows `[MSW] Mocking enabled.` when the mock API is running. The app starts with 12 sample tickets. Your changes are saved in your browser, and **Reset to sample data** on the Tickets page brings the samples back.
+**Copying `.env.example` is required.** Without a `.env` file, the app sends its requests to `/api/v1` on the Vite dev server itself, which has no API, and the mock is off, so every page shows its "couldn't load" error.
 
-Copying `.env.example` is optional: without a `.env` file the app falls back to the same default.
+### Run it against the real backend (the default)
+
+1. Start the backend: follow the [opsdesk-backend README](https://github.com/Stormmzyy/opsdesk-backend#readme) to start its database and run `./mvnw spring-boot:run`. It serves the API at http://localhost:8080/api/v1.
+2. Make sure `.env` has the values from `.env.example`:
+   ```
+   VITE_API_URL=http://localhost:8080/api/v1
+   VITE_USE_MOCK_API=false
+   ```
+3. Start the frontend:
+   ```bash
+   npm run dev
+   ```
+4. Open **http://localhost:5173**.
+
+**Keep the dev server on port 5173.** The backend allows browser requests from that origin only (CORS). If 5173 is busy, Vite quietly moves to 5174, and then every request is "blocked by CORS policy" in the console. Free up 5173 and restart.
+
+The data lives in the backend's PostgreSQL database, so every browser sees the same tickets, and changes survive restarts.
+
+### Run it with the mock API instead (no backend needed)
+
+For working on the frontend alone. Set these in `.env`, then restart `npm run dev`, because Vite reads `.env` only when it starts:
+
+```
+VITE_API_URL=/api/v1
+VITE_USE_MOCK_API=true
+```
+
+The browser console shows `[MSW] Mocking enabled.` when the mock is running. It starts with the same sample data as the backend: 12 tickets, 6 projects and 6 users. Ticket changes are saved in your browser (`localStorage`), so they're yours alone. **Reset to sample data** appears on the Tickets page only in this mode; the real backend has no such endpoint, because the contract says it must not.
+
+If you switch back to the real backend and something still looks mocked, an old mock service worker may still be registered: in the browser's developer tools, open **Application**, then **Service workers**, click **Unregister**, and reload.
 
 ## Environment variables
 
 Only variables whose names start with `VITE_` are available to the app, and Vite **copies their values into the JavaScript the browser downloads**. Never put secrets in them (see [Security](#security)).
 
-| Variable | What it does | Default |
-| --- | --- | --- |
-| `VITE_API_URL` | The base URL of the API every ticket and project request goes to. A path (`/api/v1`) means "on this same site"; a full URL (`https://api.example.com/api/v1`) points at another server. The mock API answers at `/api/v1`, so change it only when pointing at a real backend. | `/api/v1` |
+| Variable | What it does | In `.env.example` | If missing |
+| --- | --- | --- | --- |
+| `VITE_API_URL` | The base URL every API request goes to (tickets, projects, users). A full URL points at another server, such as the backend at `http://localhost:8080/api/v1`. A path (`/api/v1`) means "on this same site", which is where the mock API answers. | `http://localhost:8080/api/v1` | `/api/v1` |
+| `VITE_USE_MOCK_API` | `true` starts the MSW mock API in development, so the app runs with no backend. Anything else, or leaving it out, uses the real backend at `VITE_API_URL`. When you turn it on, also set `VITE_API_URL=/api/v1`, because that's where the mock answers. It's a string, not a boolean: every environment variable reaches the app as text. | `false` | off (real backend) |
 
-The variable's type is declared in `src/vite-env.d.ts`, and it's read in `src/store/api.ts`.
+Their types are declared in `src/vite-env.d.ts`. `VITE_API_URL` is read in `src/store/api.ts`, and `VITE_USE_MOCK_API` in `src/utils/mockApi.ts`. **Restart `npm run dev` after changing `.env`,** because Vite reads it only when it starts.
+
+The tests ignore both: `vite.config.ts` pins `VITE_API_URL` to `/api/v1` for every test run, so the tests always use the mock API, whatever your `.env` says and whether or not the backend is running.
 
 ## Scripts
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Starts the dev server **with the mock API**, at http://localhost:5173. |
+| `npm run dev` | Starts the dev server at http://localhost:5173, talking to the backend, or to the mock API when `VITE_USE_MOCK_API=true`. |
 | `npm run build` | Checks the TypeScript types, then builds the production version into `dist/`. |
-| `npm run preview` | Serves the production build from `dist/` at http://localhost:4173. **There's no mock API here**, so ticket and project pages show their error state (see the note at the top). |
+| `npm run preview` | Serves the production build from `dist/` at http://localhost:4173. A production build never includes the mock API. Note that the backend's CORS setting allows only http://localhost:5173, so the browser blocks the preview's requests unless the backend also allows port 4173. |
 | `npm test` | Runs every test once. |
 | `npm run test:watch` | Runs the tests again whenever a file changes. |
 | `npm run typecheck` | Checks the TypeScript types (including the tests) without building. |
@@ -106,7 +136,7 @@ The variable's type is declared in `src/vite-env.d.ts`, and it's read in `src/st
 npm test
 ```
 
-**49 tests in 9 files**, using [Vitest](https://vitest.dev/) and [Testing Library](https://testing-library.com/) in a pretend browser (jsdom). Tests find elements by role and accessible name, the way a screen reader does (`getByRole('button', { name: /create ticket/i })`), and they talk to the **same mock API handlers** as the app, running in Node. Every test was checked by breaking the feature on purpose and confirming the test fails.
+**50 tests in 9 files**, using [Vitest](https://vitest.dev/) and [Testing Library](https://testing-library.com/) in a pretend browser (jsdom). Tests find elements by role and accessible name, the way a screen reader does (`getByRole('button', { name: /create ticket/i })`). They always talk to the **mock API handlers**, running in Node, never to the real backend: `vite.config.ts` pins the API URL for tests (see [Environment variables](#environment-variables)). Every test was checked by breaking the feature on purpose and confirming the test fails.
 
 | Test file | What it covers |
 | --- | --- |
@@ -114,7 +144,7 @@ npm test
 | `src/pages/TicketsPage.test.tsx` | Moving a ticket on the board refreshes the list by itself. A **500** from the API shows an error with **Retry**. An **empty** list shows a helpful message with "Create a ticket". |
 | `src/pages/DashboardPage.test.tsx` | A failed load shows **one** error for the page, not one per section. |
 | `src/components/ErrorBoundary.test.tsx` | A crashing component is replaced by the fallback, the raw error isn't shown, and it is logged. |
-| `src/mocks/handlers.test.ts` | Every mock endpoint against [API_CONTRACT.md](API_CONTRACT.md): status codes, bodies, the error shape, and every failure case. |
+| `src/mocks/handlers.test.ts` | Every mock endpoint against [API_CONTRACT.md](API_CONTRACT.md) (25 checks): status codes, bodies, the error shape, every failure case, and the exact User shape. |
 | `src/store/api.test.ts` | A 404 counts as "not found" only when the API says `NOT_FOUND`, not when the API itself is missing. |
 | `src/features/tickets/components/TicketForm.test.tsx` | An empty title is flagged, linked to its field, focused, and not submitted. |
 | `src/features/tickets/components/TicketCard.test.tsx` | A card links to its ticket and moves it to the **next** status. |
@@ -138,12 +168,10 @@ flowchart TD
     Shared["Shared components<br/>src/components"]
     Store[("Redux store<br/>src/store")]
     UiSlice["uiSlice<br/>sidebar + notifications"]
-    RTKQ["RTK Query api<br/>api.ts, ticketsApi.ts, projectsApi.ts"]
-    MSW["MSW mock API, dev only<br/>src/mocks/handlers.ts"]
-    DB[("Mock database<br/>ticketDb.ts, projectDb.ts<br/>+ localStorage")]
-    Backend["Real backend, Week 6<br/>built to API_CONTRACT.md"]
-    UseFetch["useFetch hook<br/>src/hooks"]
-    JSONPlaceholder["JSONPlaceholder API"]
+    RTKQ["RTK Query api<br/>api.ts, ticketsApi.ts,<br/>projectsApi.ts, usersApi.ts"]
+    Backend["opsdesk-backend<br/>Spring Boot + PostgreSQL<br/>built to API_CONTRACT.md"]
+    MSW["MSW mock API<br/>only when VITE_USE_MOCK_API=true<br/>src/mocks/handlers.ts"]
+    DB[("Mock database<br/>ticketDb.ts, projectDb.ts, userDb.ts<br/>+ localStorage")]
 
     Layout -->|"shows the current"| Pages
     Pages --> Features
@@ -154,20 +182,18 @@ flowchart TD
     UiSlice --- Store
     Pages -->|"hooks like useGetTicketsQuery"| RTKQ
     RTKQ ---|"cache lives in"| Store
-    RTKQ -->|"fetch VITE_API_URL /tickets, /projects"| MSW
+    RTKQ -->|"fetch VITE_API_URL /tickets, /projects, /users"| Backend
+    RTKQ -.->|"or, with the mock on"| MSW
     MSW --> DB
-    RTKQ -.->|"later"| Backend
-    Pages -->|"Users page only"| UseFetch
-    UseFetch -->|fetch| JSONPlaceholder
 ```
 
 How it fits together:
 
 - **Pages are thin.** Each page in `src/pages` reads the URL, asks for data, and arranges **feature components** (`src/features/<feature>/components`) and **shared components** (`src/components`, which know nothing about any feature).
-- **Server data goes through RTK Query.** `src/store/api.ts` is the one api: the base URL from `VITE_API_URL`, the cache, and the cache tags. `ticketsApi.ts` and `projectsApi.ts` add their endpoints to it. After a change, cache tags make every affected list and page refetch by itself.
+- **All server data goes through RTK Query.** `src/store/api.ts` is the one api: the base URL from `VITE_API_URL`, the cache, and the cache tags. `ticketsApi.ts`, `projectsApi.ts` and `usersApi.ts` add their endpoints to it. After a change, cache tags make every affected list and page refetch by itself.
 - **Redux holds only shared UI state:** whether the sidebar is collapsed, and the notifications. Everything else lives in the component that owns it, or in the URL.
-- **MSW pretends to be the backend** in development, and in tests. It follows [API_CONTRACT.md](API_CONTRACT.md) exactly, so switching to the real backend means turning MSW off, with no app changes.
-- **The Users page** deliberately uses a small hand-written `useFetch` hook against a public API, as a comparison with RTK Query. It moves to the real API in Week 6.
+- **The real backend answers by default; MSW can stand in for it.** With `VITE_USE_MOCK_API=true`, MSW answers inside the browser instead, and the tests always use it. It follows [API_CONTRACT.md](API_CONTRACT.md) exactly, and `src/mocks/handlers.test.ts` checks that it does. Switching to the real backend in Week 6 needed no app changes beyond turning the mock off, which is what a contract is for.
+- **The Users page used a hand-written `useFetch` hook** against a public API until Week 6, as a deliberate contrast with RTK Query while there was no real API to point it at. It now uses RTK Query like every other page, and `useFetch` has been removed.
 
 ### Folder structure
 
@@ -176,7 +202,7 @@ API_CONTRACT.md        The API the backend must build (tickets, projects, users,
 docs/                  ARCHITECTURE.md (design decisions) and screenshots/
 public/                mockServiceWorker.js, generated by MSW: don't edit by hand
 src/
-├── main.tsx           Starts the mock API (development only), then mounts the app
+├── main.tsx           Starts the mock API (only if VITE_USE_MOCK_API=true), then mounts the app
 ├── App.tsx            The outer error boundary around every route
 ├── index.css          Colour tokens for light and dark mode, shared buttons and fields
 ├── vite-env.d.ts      The types of the VITE_ environment variables
@@ -191,12 +217,11 @@ src/
 │   ├── tickets/       Board, list, form, details, skeletons, the list/board view hook
 │   ├── projects/      Project cards and details, with their skeletons
 │   ├── employees/     Employee Directory and team summaries
-│   └── users/         User cards and the useUsers hook
+│   └── users/         User cards, the user list and its skeleton
 ├── store/             Redux store, typed hooks, uiSlice, and the RTK Query api
-├── mocks/             The mock API: handlers, its two "databases", browser and Node setups
-├── hooks/             useFetch, the generic loader used by the Users page
-├── utils/             Small shared helpers: parseId, paginate, focusMainHeading
-├── data/              Seed data: sample tickets, projects and employees
+├── mocks/             The mock API: handlers, its three "databases", browser and Node setups
+├── utils/             Small shared helpers: parseId, paginate, focusMainHeading, mockApi
+├── data/              Seed data: sample tickets, projects, employees and users
 └── test/              renderWithProviders, used by the component tests
 ```
 
@@ -281,7 +306,7 @@ Everything else above was already fine, so nothing else needed changing. Two pro
 
 ## Security
 
-These notes are about **this** app as it is today: a frontend with a mock API, no sign-in, and no real backend yet.
+These notes are about **this** app as it is today: a frontend talking to the Week 6 backend (or to a mock API), with no sign-in yet.
 
 ### What was checked
 
@@ -304,20 +329,20 @@ Anything saved in `localStorage` can be read by **any** JavaScript running on th
 
 ### CORS, and where a CORS error is fixed
 
-CORS (Cross-Origin Resource Sharing) is the browser rule that stops a page on one origin (scheme, host and port, like `http://localhost:5173`) from reading responses from another origin, unless that other server says it's allowed. Today OpsDesk never runs into it for tickets and projects: the app asks its own origin for `/api/v1/...` and MSW answers inside the browser. The Users page already crosses origins, though. It reads from `jsonplaceholder.typicode.com`, which works only because that server sends back `Access-Control-Allow-Origin: http://localhost:5173` (checked with a real request). When the real backend arrives on a different origin, through `VITE_API_URL`, it must send the same kind of header for the OpsDesk frontend's origin. **A CORS error is fixed on the backend, not in the frontend.** The browser is enforcing the server's answer, so no frontend change can safely work around it: `mode: 'no-cors'` only hides the response from our code, and turning off browser security is not a fix.
+CORS (Cross-Origin Resource Sharing) is the browser rule that stops a page on one origin (scheme, host and port, like `http://localhost:5173`) from reading responses from another origin, unless that other server says it's allowed. OpsDesk now crosses origins on every request: the page is on `http://localhost:5173` and the backend is on `http://localhost:8080`. The backend allows it by sending `Access-Control-Allow-Origin: http://localhost:5173` on every response to that origin, including error responses. It does this with a filter that runs before any controller (see `CorsConfig` in opsdesk-backend). **A CORS error is fixed on the backend, not in the frontend.** The browser is enforcing the server's answer, so no frontend change can safely work around it: `mode: 'no-cors'` only hides the response from our code, and turning off browser security is not a fix.
+
+Week 6 showed why the backend must send the header on errors too. At first, a response that never reached a controller (such as a 404 for an unknown URL) went out without it. The browser then reported the 404 as "blocked by CORS policy", which hid the real problem. If you see a CORS error, check the Network tab: the real status is often there, behind it.
 
 ## Known limitations
 
-- **No real backend.**
-  - Tickets live in each browser's `localStorage`, so two people (or two browsers) see different data, and clearing site data loses changes.
-  - A production build shows error states on every ticket and project page until the Week 6 backend exists.
+- **The backend allows one origin only.** CORS is set for `http://localhost:5173`, so the dev server must run on that port, and a deployed frontend would need its origin added to the backend.
 - **No sign-in.** Anyone with the app can change or delete any ticket. Auth is specified for Week 8.
 - **Deleting can't be undone.** There's a confirmation dialog, but no undo or trash.
 - **Projects are read-only,** and project pages don't list their related tickets.
 - **The board has no drag and drop.** Tickets move with the "Move to …" button or the status dropdown.
-- **Search, filtering and pagination happen in the browser,** which is fine for a dozen tickets but won't scale. Server-side pagination is specified for v1.1 in [API_CONTRACT.md](API_CONTRACT.md).
-- **The Users page depends on a public test API** (JSONPlaceholder). If it's down, or you're offline, the page shows its error state.
-- **"Reset to sample data" only exists for the mock.** It will be removed when the real backend arrives.
+- **Search, filtering and pagination happen in the browser,** which is fine for a dozen tickets but won't scale. The backend already supports server-side `page`, `size`, `status` and `search` (see [API_CONTRACT.md](API_CONTRACT.md)), but the frontend doesn't use them yet: the Dashboard and Teams pages need every ticket to count correctly. That's planned for Week 7.
+- **Users show only a name, username and email.** The contract's User also has a phone, address and company, but OpsDesk has no source for them yet, so the backend sends empty strings and the cards leave those rows out.
+- **"Reset to sample data" only exists with the mock** (`VITE_USE_MOCK_API=true`). The real backend has no such endpoint, so the button is hidden there.
 - **The team list is fixed** to the five departments in the sample employee data.
 - **Skeleton sizes are tuned to the sample data** (for example 10 list rows and 6 project cards), so with very different data the page may still move a little when content arrives.
 - **Error toasts stay until dismissed,** so several failures in a row leave several toasts to close (space is reserved for them, so they never hide a control).

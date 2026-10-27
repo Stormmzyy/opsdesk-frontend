@@ -9,6 +9,10 @@ interface ImportMetaEnv {
   // has no .env file yet, so the value really can be undefined. That makes
   // TypeScript insist on a fallback wherever it's used.
   readonly VITE_API_URL?: string
+  // "true" starts the MSW mock API in development; anything else, or leaving
+  // it out, uses the real backend at VITE_API_URL. A string, not a boolean,
+  // because every environment variable reaches the app as text.
+  readonly VITE_USE_MOCK_API?: string
 }
 
 interface ImportMeta {

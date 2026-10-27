@@ -3,7 +3,8 @@ import type { Ticket, TicketFormValues } from '../features/tickets/types.ts'
 
 // Everything the app knows about talking to the ticket API, in one place.
 //
-// RTK Query handles the work useFetch does by hand: it sends the request,
+// RTK Query handles the work a hand-written fetch hook would (the app had one,
+// useFetch, until the Users page moved to RTK Query too): it sends the request,
 // tracks isLoading and isError, and keeps the result in a cache inside the
 // Redux store. Two components asking for the same data share ONE request
 // and one cached copy.

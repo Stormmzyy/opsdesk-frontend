@@ -32,8 +32,8 @@ export const api = createApi({
     baseUrl: new URL(import.meta.env.VITE_API_URL ?? '/api/v1', window.location.origin).href,
   }),
   // Every kind of cache tag any feature uses. TypeScript checks each tag in
-  // ticketsApi.ts and projectsApi.ts against this list.
-  tagTypes: ['Ticket', 'Project'],
+  // ticketsApi.ts, projectsApi.ts and usersApi.ts against this list.
+  tagTypes: ['Ticket', 'Project', 'User'],
   // Empty on purpose: the features inject their endpoints.
   endpoints: () => ({}),
 })

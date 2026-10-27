@@ -6,7 +6,7 @@ function UsersPage() {
     <>
       <PageHeader
         title="Users"
-        description="People loaded live from the JSONPlaceholder API."
+        description="Everyone with an OpsDesk account."
       />
       <UserDirectory />
     </>

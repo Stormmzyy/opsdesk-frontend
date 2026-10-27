@@ -15,6 +15,16 @@ import {
   useUpdateTicketMutation,
 } from '../store/ticketsApi.ts'
 import { addNotification } from '../store/uiSlice.ts'
+import { isMockApiEnabled } from '../utils/mockApi.ts'
+
+// "Reset to sample data" calls POST /tickets/reset, which only the mock API
+// has. API_CONTRACT.md lists it as mock-only and says the backend must not
+// build it (it would let anyone wipe every ticket), so against the real
+// backend it can only ever answer 404. The control is hidden there instead of
+// deleted, because it's still useful with the mock (VITE_USE_MOCK_API=true).
+// Worked out once, when the module loads: the setting can't change while the
+// app is running, because Vite reads .env only when it starts.
+const CAN_RESET_SAMPLE_DATA = isMockApiEnabled()
 
 function TicketsPage() {
   // Loads the tickets (or reuses the cached copy). isLoading is only true
@@ -70,29 +80,34 @@ function TicketsPage() {
         </Link>
         {/* Ignores presses while a reset is on its way, so it can't be sent
             twice. aria-disabled (not disabled) keeps it focusable, so the
-            dialog can return focus to it when it closes. */}
-        <button
-          type="button"
-          className="button"
-          aria-disabled={isResetting}
-          onClick={() => {
-            if (!isResetting) {
-              setIsResetConfirmOpen(true)
-            }
-          }}
-        >
-          Reset to sample data
-        </button>
+            dialog can return focus to it when it closes. Only shown with the
+            mock API: see CAN_RESET_SAMPLE_DATA above. */}
+        {CAN_RESET_SAMPLE_DATA && (
+          <button
+            type="button"
+            className="button"
+            aria-disabled={isResetting}
+            onClick={() => {
+              if (!isResetting) {
+                setIsResetConfirmOpen(true)
+              }
+            }}
+          >
+            Reset to sample data
+          </button>
+        )}
       </PageHeader>
 
-      <ConfirmDialog
-        open={isResetConfirmOpen}
-        title="Reset to sample data?"
-        description="Every ticket will be replaced with the original sample tickets. Any tickets you created, edited or deleted will be lost."
-        confirmLabel="Reset tickets"
-        onConfirm={handleConfirmReset}
-        onClose={() => setIsResetConfirmOpen(false)}
-      />
+      {CAN_RESET_SAMPLE_DATA && (
+        <ConfirmDialog
+          open={isResetConfirmOpen}
+          title="Reset to sample data?"
+          description="Every ticket will be replaced with the original sample tickets. Any tickets you created, edited or deleted will be lost."
+          confirmLabel="Reset tickets"
+          onConfirm={handleConfirmReset}
+          onClose={() => setIsResetConfirmOpen(false)}
+        />
+      )}
 
       {/* A placeholder shaped like the list or board (whichever is
           selected) instead of plain text, so nothing jumps when the tickets
@@ -118,8 +133,10 @@ function TicketsPage() {
             </Link>
           }
         >
-          There are no tickets yet. Create the first one, or use "Reset to sample data" above to
-          bring back the examples.
+          {/* Only point at the Reset button when it's actually there. */}
+          {CAN_RESET_SAMPLE_DATA
+            ? 'There are no tickets yet. Create the first one, or use "Reset to sample data" above to bring back the examples.'
+            : 'There are no tickets yet. Create the first one.'}
         </StatusMessage>
       )}
 
