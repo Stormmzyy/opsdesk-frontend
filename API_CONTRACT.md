@@ -22,7 +22,6 @@ Every endpoint is marked with one of:
 - [Projects](#projects)
 - [Users](#users)
 - [Auth](#auth)
-- [Planned for v1.1: server-side pagination and filtering](#planned-for-v11-server-side-pagination-and-filtering)
 - [Mock-only endpoint](#mock-only-endpoint-not-part-of-the-api)
 
 ## Conventions
@@ -52,7 +51,7 @@ So `GET /tickets` means `GET /api/v1/tickets`. The frontend reads the base URL f
 - **Ids are positive whole numbers** (`1`, `2`, `3` …), chosen by the server. Clients never choose an id.
 - In a path, an id that isn't a whole number (`/tickets/abc`, `/tickets/3.5`, `/tickets/-1`) is treated the same as an id that doesn't exist: **404 `NOT_FOUND`**.
 - Fields the server doesn't recognise in a request body are **ignored**, not rejected.
-- Lists are returned as a **plain JSON array**, sorted by `id`, oldest first. (Pagination is planned for v1.1; see the end of this document.)
+- Lists are returned as a **plain JSON array**, sorted by `id`, oldest first. (`GET /tickets` can also return one page at a time; see [Pagination and filtering](#pagination-and-filtering).)
 - Free-text fields (a ticket's `title` and `description`) are **trimmed**: leading and trailing spaces are removed before the value is checked and saved. Fields with a fixed set of values (`priority`, `status`, `team`) are not trimmed: `" Support "` is not a valid team.
 
 ## Errors
@@ -151,10 +150,10 @@ Validation messages, used in `fields` (the frontend's form shows the same ones):
 **IMPLEMENTED.** Every ticket.
 
 - Path parameters: none.
-- Query parameters: none in v1. (Pagination and filtering are planned for v1.1. Until then, unknown query parameters are ignored.)
+- Query parameters: optional `page`, `size`, `status` and `search`, described in [Pagination and filtering](#pagination-and-filtering) below. Any other query parameter is ignored.
 - Request body: none.
 
-**200 OK**: an array of Ticket objects, sorted by `id`. An empty array `[]` when there are no tickets (not a 404).
+**200 OK**, when none of `page`, `size`, `status` or `search` is sent: an array of Ticket objects, sorted by `id`. An empty array `[]` when there are no tickets (not a 404).
 
 ```json
 [
@@ -177,7 +176,73 @@ Validation messages, used in `fields` (the frontend's form shows the same ones):
 ]
 ```
 
-Failures: only 500 (see [Status codes](#status-codes)).
+Failures: 400 `VALIDATION_ERROR` when a pagination parameter is invalid (see [Pagination and filtering](#pagination-and-filtering)); otherwise only 500 (see [Status codes](#status-codes)).
+
+#### Pagination and filtering
+
+**SPECIFIED.** The backend must build this; the frontend doesn't call it yet. The mock doesn't serve it.
+
+The frontend currently paginates, searches and filters tickets **in the browser**, because the dataset is small (a dozen tickets).
+
+`GET /tickets` accepts these query parameters. **If none of them is sent, the response stays the plain v1 array**, so existing clients keep working. If any one is sent, the response is the envelope below.
+
+| Query parameter | Type | Default | Rules |
+| --- | --- | --- | --- |
+| `page` | integer | `1` | Which page, counting from 1. Must be 1 or more. |
+| `size` | integer | `10` | Tickets per page. From 1 to 100. |
+| `status` | string | (none: every status) | One of `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`. |
+| `search` | string | (none) | Keeps tickets whose `title` **or** `description` contains this text, ignoring case and leading and trailing spaces. |
+
+Example: `GET /api/v1/tickets?page=2&size=10&status=OPEN&search=printer`
+
+**200 OK**: an envelope with one page of tickets.
+
+```json
+{
+  "items": [
+    {
+      "id": 14,
+      "title": "Printer on the third floor is out of toner",
+      "description": "The printer by the kitchen says the toner is empty.",
+      "priority": "LOW",
+      "status": "OPEN",
+      "team": "Operations"
+    }
+  ],
+  "page": 2,
+  "size": 10,
+  "totalItems": 11,
+  "totalPages": 2
+}
+```
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `items` | Ticket[] | This page's tickets, sorted by `id`, after the filters are applied. |
+| `page` | integer | The page returned. |
+| `size` | integer | The page size used. |
+| `totalItems` | integer | How many tickets match the filters, across all pages. |
+| `totalPages` | integer | `ceil(totalItems / size)`, and `0` when nothing matches. |
+
+A `page` beyond the last one is not an error: it returns `200` with `"items": []` and the real totals.
+
+**400 Bad Request, `VALIDATION_ERROR`**: a query parameter breaks its rules. The keys in `fields` are the parameter names.
+
+```json
+{
+  "error": "VALIDATION_ERROR",
+  "message": "Size must be a whole number from 1 to 100.",
+  "fields": {
+    "size": "Size must be a whole number from 1 to 100."
+  }
+}
+```
+
+| Parameter | Message |
+| --- | --- |
+| `page` | `Page must be a whole number, 1 or more.` |
+| `size` | `Size must be a whole number from 1 to 100.` |
+| `status` | `Status must be one of OPEN, IN_PROGRESS, RESOLVED or CLOSED.` |
 
 ### GET /tickets/{id}
 
@@ -612,72 +677,6 @@ Request body:
   "message": "The email or password is incorrect."
 }
 ```
-
-## Planned for v1.1: server-side pagination and filtering
-
-> **Not implemented.** Nothing in this section exists yet, in the mock or anywhere else. `GET /tickets` in v1 still returns a plain array of every ticket, exactly as described above. This section is here so the backend can plan for it.
-
-The frontend currently paginates, searches and filters tickets **in the browser**, because the dataset is small (a dozen tickets).
-
-In v1.1, `GET /tickets` will accept these query parameters. **If none of them is sent, the response stays the plain v1 array**, so existing clients keep working. If any one is sent, the response is the envelope below.
-
-| Query parameter | Type | Default | Rules |
-| --- | --- | --- | --- |
-| `page` | integer | `1` | Which page, counting from 1. Must be 1 or more. |
-| `size` | integer | `10` | Tickets per page. From 1 to 100. |
-| `status` | string | (none: every status) | One of `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`. |
-| `search` | string | (none) | Keeps tickets whose `title` **or** `description` contains this text, ignoring case and leading and trailing spaces. |
-
-Example: `GET /api/v1/tickets?page=2&size=10&status=OPEN&search=printer`
-
-**200 OK**: an envelope with one page of tickets.
-
-```json
-{
-  "items": [
-    {
-      "id": 14,
-      "title": "Printer on the third floor is out of toner",
-      "description": "The printer by the kitchen says the toner is empty.",
-      "priority": "LOW",
-      "status": "OPEN",
-      "team": "Operations"
-    }
-  ],
-  "page": 2,
-  "size": 10,
-  "totalItems": 11,
-  "totalPages": 2
-}
-```
-
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `items` | Ticket[] | This page's tickets, sorted by `id`, after the filters are applied. |
-| `page` | integer | The page returned. |
-| `size` | integer | The page size used. |
-| `totalItems` | integer | How many tickets match the filters, across all pages. |
-| `totalPages` | integer | `ceil(totalItems / size)`, and `0` when nothing matches. |
-
-A `page` beyond the last one is not an error: it returns `200` with `"items": []` and the real totals.
-
-**400 Bad Request, `VALIDATION_ERROR`**: a query parameter breaks its rules. The keys in `fields` are the parameter names.
-
-```json
-{
-  "error": "VALIDATION_ERROR",
-  "message": "Size must be a whole number from 1 to 100.",
-  "fields": {
-    "size": "Size must be a whole number from 1 to 100."
-  }
-}
-```
-
-| Parameter | Message |
-| --- | --- |
-| `page` | `Page must be a whole number, 1 or more.` |
-| `size` | `Size must be a whole number from 1 to 100.` |
-| `status` | `Status must be one of OPEN, IN_PROGRESS, RESOLVED or CLOSED.` |
 
 ## Mock-only endpoint (not part of the API)
 
