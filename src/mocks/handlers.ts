@@ -11,10 +11,12 @@ import {
   validateTitle,
 } from '../features/tickets/utils/ticketValidation.ts'
 import { parseId } from '../utils/parseId.ts'
+import type { User } from '../features/users/types.ts'
 import { getAllProjects } from './projectDb.ts'
 import { getAllTickets, resetToSampleTickets, saveAllTickets } from './ticketDb.ts'
+import { getAllUsers } from './userDb.ts'
 
-// Request handlers for the mock API: tickets and projects.
+// Request handlers for the mock API: tickets, projects and users.
 //
 // MSW (Mock Service Worker) catches the app's fetch requests before they
 // leave the browser. When a request matches one of these handlers, MSW calls
@@ -318,4 +320,11 @@ export const handlers = [
       return HttpResponse.json<Project>(project)
     },
   ),
+
+  // GET /api/v1/users: every user, sorted by id. Read-only for now: registering
+  // (POST /users) arrives in Week 8. The real backend serves the same six users.
+  http.get('/api/v1/users', async () => {
+    await delay()
+    return HttpResponse.json<User[]>(getAllUsers())
+  }),
 ]

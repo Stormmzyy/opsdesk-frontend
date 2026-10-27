@@ -221,3 +221,38 @@ describe('GET /projects and GET /projects/{id}', () => {
     expect(body).toEqual({ error: 'NOT_FOUND', message: `No project with id "${id}".` })
   })
 })
+
+describe('GET /users', () => {
+  it('returns 200 and every user in the contract shape, sorted by id', async () => {
+    const { status, body } = await call('GET', '/users')
+    expect(status).toBe(200)
+    expect(Array.isArray(body)).toBe(true)
+    expect(body).toHaveLength(6)
+
+    const users = body as { id: number }[]
+    const ids = users.map((user) => user.id)
+    expect(ids).toEqual([...ids].sort((a, b) => a - b))
+
+    // toEqual on the whole object fails on any extra field as well as a
+    // missing one, so this catches the mock drifting from the contract in
+    // either direction: a leftover JSONPlaceholder field (website, geo,
+    // catchPhrase), or a password or password hash, which a User must never
+    // include.
+    for (const user of users) {
+      expect(user).toEqual({
+        id: expect.any(Number),
+        name: expect.any(String),
+        username: expect.any(String),
+        email: expect.any(String),
+        phone: expect.any(String),
+        address: {
+          street: expect.any(String),
+          suite: expect.any(String),
+          city: expect.any(String),
+          zipcode: expect.any(String),
+        },
+        company: { name: expect.any(String) },
+      })
+    }
+  })
+})

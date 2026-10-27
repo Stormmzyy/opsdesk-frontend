@@ -4,7 +4,7 @@ OpsDesk is an internal operations desk: staff raise support **tickets**, move th
 
 This document is the agreement between the frontend and the backend. It says exactly which requests the frontend sends and exactly what it expects back. **The Week 6 backend is built against this document**, and if the frontend and this document ever disagree, this document wins and the code is fixed.
 
-**Today there is no real backend.** In development, the frontend talks to a mock API built with [Mock Service Worker (MSW)](https://mswjs.io/), which answers requests inside the browser (`src/mocks/handlers.ts`). The mock follows this contract exactly for every endpoint marked IMPLEMENTED, and is checked against it by `src/mocks/handlers.test.ts`.
+**The frontend talks to the real backend (opsdesk-backend) by default.** When `VITE_USE_MOCK_API=true`, a mock API built with [Mock Service Worker (MSW)](https://mswjs.io/) stands in for it instead, answering requests inside the browser (`src/mocks/handlers.ts`), so the frontend can be worked on without the backend running. The mock follows this contract exactly for every endpoint marked IMPLEMENTED, and is still checked against it by `src/mocks/handlers.test.ts`.
 
 Every endpoint is marked with one of:
 
@@ -540,9 +540,9 @@ A User object **never** includes a password or a password hash, in any response.
 
 ### GET /users
 
-**SPECIFIED.** The backend must build this; the frontend doesn't call it yet.
+**IMPLEMENTED.** The mock API serves it, and the frontend's Users page uses it.
 
-Today the Users page reads its list from the public [JSONPlaceholder](https://jsonplaceholder.typicode.com/users) API with the app's own `useFetch` hook, which is why the User object above uses the same field names (JSONPlaceholder also sends `website`, `address.geo` and more of `company`, which the frontend doesn't use). **In Week 6, the Users page switches to this endpoint**, and to RTK Query like the rest of the app.
+Until Week 6, the Users page read its list from the public [JSONPlaceholder](https://jsonplaceholder.typicode.com/users) API with a hand-written `useFetch` hook, which is why the User object above uses the same field names. JSONPlaceholder also sends `website`, `address.geo` and more of `company`, which the frontend never used, so they aren't part of this contract. **Since Week 6, the Users page reads this endpoint**, through RTK Query like the rest of the app.
 
 - Path and query parameters: none.
 - Request body: none.
