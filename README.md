@@ -2,9 +2,11 @@
 
 OpsDesk is an internal operations dashboard. Staff raise support **tickets**, move them through a simple workflow (Open → In progress → Resolved → Closed) on a list or a board, and see what each team is working on through **projects**, **teams** and a **users** directory. It was built over four weeks of an internship as a React 19 + TypeScript frontend.
 
-> **The app talks to a real backend:** [opsdesk-backend](https://github.com/Stormmzyy/opsdesk-backend), a Spring Boot API with PostgreSQL, built in Week 6 against [API_CONTRACT.md](API_CONTRACT.md).
+> **The app talks to a real backend:** [opsdesk-backend](https://github.com/Stormmzyy/opsdesk-backend), a Spring Boot API with PostgreSQL, built against [API_CONTRACT.md](API_CONTRACT.md).
 >
-> **Or it can run with no backend at all.** Set `VITE_USE_MOCK_API=true`, and [Mock Service Worker (MSW)](https://mswjs.io/) answers the app's `/api/v1/...` requests inside the browser instead, following the same contract. See [Getting started](#getting-started) for both.
+> **Or it can run with no backend at all.** Set `VITE_USE_MOCK_API=true`, and [Mock Service Worker (MSW)](https://mswjs.io/) answers the app's `/api/v1/...` requests inside the browser instead. The mock follows the Week 6 part of the contract. See [Getting started](#getting-started) for both.
+>
+> **Right now, the app works only with the mock.** See [The frontend and the Week 7 backend don't work together yet](#the-frontend-and-the-week-7-backend-dont-work-together-yet).
 
 ## Contents
 
@@ -73,6 +75,18 @@ cp .env.example .env     # on Windows Command Prompt: copy .env.example .env
 ```
 
 **Copying `.env.example` is required.** Without a `.env` file, the app sends its requests to `/api/v1` on the Vite dev server itself, which has no API, and the mock is off, so every page shows its "couldn't load" error.
+
+### The frontend and the Week 7 backend don't work together yet
+
+**This is deliberate, not a broken build.** In Week 7 the backend gained sign-in and permissions: every request except registering and logging in now needs a token, sent as `Authorization: Bearer <token>` (see [API_CONTRACT.md](API_CONTRACT.md#signing-in-and-the-token)). The frontend doesn't have a sign-in page yet, and sends no token. Carrying a session, with a login page, storing the token and sending it on every request, is **Week 8** work.
+
+So if you run both repos' `main` today, following the steps below:
+
+- the backend starts and seeds its data normally;
+- the frontend starts normally;
+- **every API request the frontend makes answers `401 UNAUTHORIZED`**, which you can see in the browser's **Network** tab, so the pages can't load their tickets, projects or users.
+
+Nothing is wrong with either repo. To use the app until Week 8, run it with the mock API instead (below). To try the backend on its own, start it as its README describes, sign in with `POST /api/v1/auth/login` as one of its seeded accounts (their emails and development password are in its README), and send the returned token with each request, for example with `curl -H "Authorization: Bearer <token>"`.
 
 ### Run it against the real backend (the default)
 
@@ -144,7 +158,7 @@ npm test
 | `src/pages/TicketsPage.test.tsx` | Moving a ticket on the board refreshes the list by itself. A **500** from the API shows an error with **Retry**. An **empty** list shows a helpful message with "Create a ticket". |
 | `src/pages/DashboardPage.test.tsx` | A failed load shows **one** error for the page, not one per section. |
 | `src/components/ErrorBoundary.test.tsx` | A crashing component is replaced by the fallback, the raw error isn't shown, and it is logged. |
-| `src/mocks/handlers.test.ts` | Every mock endpoint against [API_CONTRACT.md](API_CONTRACT.md) (25 checks): status codes, bodies, the error shape, every failure case, and the exact User shape. |
+| `src/mocks/handlers.test.ts` | Every mock endpoint against the Week 6 part of [API_CONTRACT.md](API_CONTRACT.md) (25 checks): status codes, bodies, the error shape, every failure case, and the exact User shape as it was in Week 6 (no `role`). |
 | `src/store/api.test.ts` | A 404 counts as "not found" only when the API says `NOT_FOUND`, not when the API itself is missing. |
 | `src/features/tickets/components/TicketForm.test.tsx` | An empty title is flagged, linked to its field, focused, and not submitted. |
 | `src/features/tickets/components/TicketCard.test.tsx` | A card links to its ticket and moves it to the **next** status. |
