@@ -37,6 +37,15 @@ So `GET /tickets` means `GET /api/v1/tickets`. The frontend reads the base URL f
 
 `v1` is the version of this contract. Changes that don't break existing clients (a new endpoint, a new field in a response) can be added to v1. A change that would break a client (renaming or removing a field, changing a type, changing a status code that a working request gets) needs a new version, `/api/v2`, served alongside v1 until clients have moved.
 
+**Week 7 broke that rule on purpose: v1 was changed in place, not bumped.** These changes would break a client written against the earlier v1:
+- **Unknown query parameters on `GET /tickets` went from ignored to `400 VALIDATION_ERROR`.** A misspelt or stale parameter (`?stauts=OPEN`) used to return the full list. It's now refused, naming the parameter.
+- **A Ticket's five output-only fields went from ignored to `400` on `POST /tickets` and `PATCH /tickets/{id}`:** `assigneeId`, `assigneeName`, `createdById`, `createdByName` and `version`. Sending a ticket that was read straight back used to work. It's now refused for each of those fields, even sent as `null`.
+- **A User's `phone`, `address` and `company` (its `name`) are deprecated.** This isn't breaking yet: they're still returned, always empty. But removing them will be.
+
+This was acceptable because **the API has no external consumer**. The only client is this frontend, in the same project, and the backend and the frontend change together, with this document recording the new behaviour in the same week.
+
+**It's only safe while every consumer is in the room.** The first time anything outside this project consumes the API, a breaking change needs `/api/v2` and a deprecation period: v1 keeps working unchanged, v2 is served alongside it, and v1 goes only after its consumers have moved. That includes removing the deprecated User fields.
+
 ### Paths
 
 - Resources are **plural nouns**: `/tickets`, `/projects`, `/users`.
