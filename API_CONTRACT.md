@@ -2,7 +2,7 @@
 
 OpsDesk is an internal operations desk: staff raise support **tickets**, move them through a workflow (Open → In progress → Resolved → Closed), and see what each team is working on through **projects** and a **users** directory. Since Week 7, everyone signs in, and what they may do depends on their **role**.
 
-This document is the agreement between the frontend and the backend. It says exactly which requests a client sends and exactly what it gets back. **The Week 7 backend (opsdesk-backend) is built against this document**, and every example response below was captured from it, not written by hand: each example sits under a hidden comment naming the exact request and caller that produced it, run against a freshly seeded database. There is one exception, the [409](#patch-ticketsid), which is pinned by a test instead. A capture records what was true on the day it was taken, and goes stale silently; the examples that matter most should be pinned by backend tests, which fail when the code drifts. If the backend and this document ever disagree, this document wins and the code is fixed, with one exception: **who may do what**. The backend is the source of truth for permissions, and this document's [permission table](#the-permission-table) only describes it.
+This document is the agreement between the frontend and the backend. It says exactly which requests a client sends and exactly what it gets back. **The Week 7 backend (opsdesk-backend) is built against this document**, and every example response below was captured from it, not written by hand: each example sits under a hidden comment naming the exact request and caller that produced it, run against a freshly seeded database. There is one exception, the [409](#patch-ticketsid), which is pinned by a test instead. A capture records what was true on the day it was taken, and goes stale silently; the examples that matter most are also pinned by backend tests, which fail when the code drifts. **Each pinned example has a "Pinned by:" line under it naming its test**, and that test names the section here that it pins. An example with no "Pinned by:" line is a capture only: true when it was taken, and checked by nothing since. If the backend and this document ever disagree, this document wins and the code is fixed, with one exception: **who may do what**. The backend is the source of truth for permissions, and this document's [permission table](#the-permission-table) only describes it.
 
 **The mock API is Week 6 vintage.** When `VITE_USE_MOCK_API=true`, a mock built with [Mock Service Worker (MSW)](https://mswjs.io/) answers requests inside the browser instead (`src/mocks/handlers.ts`). It still implements the Week 6 part of this contract: the six-field Ticket object, `GET`, `POST`, `PATCH` and `DELETE` on `/tickets`, `/projects` and `/users`, with the same validation and 404 messages. It does **not** implement anything added in Week 7: signing in, the token, roles and permissions (401 and 403), the new Ticket fields, the assignee endpoints, filtering, sorting and pagination, or the 409 for a stale write. Each endpoint below says whether the mock serves it.
 
@@ -87,6 +87,8 @@ Every endpoint except `POST /auth/register` and `POST /auth/login` needs a valid
 }
 ```
 
+**Pinned by:** [`ApiContractTest.aRequestWithoutATokenGetsThe401Body`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
+
 The same answer comes back for a missing header, a malformed or expired token, and a token whose account is gone.
 
 ## Roles and permissions
@@ -134,6 +136,8 @@ A client that shows a button can still get a 403: for example, when the ticket w
 }
 ```
 
+**Pinned by:** [`ApiContractTest.aValidationErrorNamesEachFieldAndJoinsTheirMessages`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
+
 | Field | Type | Present | Meaning |
 | --- | --- | --- | --- |
 | `error` | string | always | A fixed **error code** from the list below. Code can check it (`if (body.error === 'NOT_FOUND')`). It never changes. |
@@ -167,6 +171,8 @@ The 403's message is always the same. It never says which rule refused, so a cal
 }
 ```
 
+**Pinned by:** [`ApiContractTest.everyRefusalIsTheSameFixed403Body`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
+
 ## Status codes
 
 | Code | Name | Used for |
@@ -191,6 +197,8 @@ The API has no 405: a method a path doesn't support (`PUT /tickets/1`) is a 404,
   "message": "Nothing exists at PUT /api/v1/tickets/1."
 }
 ```
+
+**Pinned by:** [`ApiContractTest.anUnsupportedMethodIsA404NamingIt`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
 
 ## The order of the checks
 
@@ -225,6 +233,8 @@ This order is why the same request can get different answers from different call
 }
 ```
 
+**Pinned by:** [`ApiContractTest.theRoleGateRefusesBeforeTheTicketIsLookedUp`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
+
 <!-- captured from the running backend: DELETE /api/v1/tickets/999 as priya → 404 -->
 
 ```json
@@ -233,6 +243,8 @@ This order is why the same request can get different answers from different call
   "message": "No ticket with id \"999\"."
 }
 ```
+
+**Pinned by:** [`ApiContractTest.theRoleGateRefusesBeforeTheTicketIsLookedUp`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
 
 ## Tickets
 
@@ -255,6 +267,8 @@ This order is why the same request can get different answers from different call
   "version": 0
 }
 ```
+
+**Pinned by:** [`ApiContractTest.theTicketHasExactlyTheContractsElevenFields`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
 
 | Field | Type | Rules |
 | --- | --- | --- |
@@ -308,6 +322,8 @@ Here is ticket 2, which exists and belongs to Kwame, asked for by Fatima, and th
 }
 ```
 
+**Pinned by:** [`ApiContractTest.aHiddenTicketIsTheSame404AsAMissingOne`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
+
 <!-- captured from the running backend: GET /api/v1/tickets/999 as fatima → 404 -->
 
 ```json
@@ -316,6 +332,8 @@ Here is ticket 2, which exists and belongs to Kwame, asked for by Fatima, and th
   "message": "No ticket with id \"999\"."
 }
 ```
+
+**Pinned by:** [`ApiContractTest.aHiddenTicketIsTheSame404AsAMissingOne`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
 
 Writing this down gives nothing away. **What protects other people's tickets is the visibility rule**, which the server applies to every request. The identical 404 only makes sure the rule isn't leaked *through the error*: a 403 would confirm that the ticket exists and belongs to someone else, and would let a caller count other people's tickets by trying ids. Knowing that hidden and missing look alike tells a reader nothing about which tickets exist.
 
@@ -362,6 +380,8 @@ The tickets the caller may see.
   }
 ]
 ```
+
+**Pinned by:** [`ApiContractTest.withNoParametersTheListIsAPlainArrayOfTheCallersTickets`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
 
 Failures: 400 `VALIDATION_ERROR` when a parameter breaks its rules; 401.
 
@@ -427,6 +447,8 @@ Example: `GET /api/v1/tickets?status=OPEN&sort=priority,desc&size=2&page=2`, as 
 }
 ```
 
+**Pinned by:** [`ApiContractTest.aPageHasExactlyTheEnvelopesFiveKeys`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
+
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `items` | Ticket[] | This page's tickets, after the filters, in the requested order. |
@@ -454,6 +476,8 @@ A `page` beyond the last one is not an error: it returns `200` with `"items": []
   }
 }
 ```
+
+**Pinned by:** [`ApiContractTest.queryStringProblemsAreReportedTogetherInOneEnvelope`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
 
 | Parameter | Problem | Message |
 | --- | --- | --- |
@@ -509,6 +533,8 @@ One ticket.
   "message": "No ticket with id \"abc\"."
 }
 ```
+
+**Pinned by:** [`ApiContractTest.aNonNumericIdIsA404QuotingWhatWasSent`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
 
 ### POST /tickets
 
@@ -568,6 +594,8 @@ Request body:
 }
 ```
 
+**Pinned by:** [`ApiContractTest.aBodyThatIsNotAJsonObjectIsABadRequest`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
+
 **400 Bad Request, `VALIDATION_ERROR`**: one or more fields break the rules. Every invalid field is listed.
 
 <!-- captured from the running backend: POST /api/v1/tickets as fatima with {"title": "  ", "description": "x", "priority": "HIGH", "team": "Marketing", "assigneeId": 2} → 400 -->
@@ -583,6 +611,8 @@ Request body:
   }
 }
 ```
+
+**Pinned by:** [`ApiContractTest.createRefusesAnAssigneeAndReportsEveryBadField`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
 
 ### PATCH /tickets/{id}
 
@@ -657,6 +687,8 @@ What happens then depends on who is saving:
 }
 ```
 
+**Pinned by:** [`ApiContractTest.everyRefusalIsTheSameFixed403Body`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
+
 **404 Not Found**: no ticket has that id, or the caller may not see it. Decided before the body is read.
 
 <!-- captured from the running backend: PATCH /api/v1/tickets/999 as priya with {"status": "RESOLVED"} → 404 -->
@@ -704,6 +736,8 @@ What happens then depends on who is saving:
 ```
 
 This is the one hand-written example in this document. It isn't captured, because it needs two requests to overlap within milliseconds, which no single request can trigger on demand. It's **pinned by `GlobalExceptionHandlerTest`** in the backend, which asserts this exact status, code and message. That makes it better evidence than a capture, not worse: a test fails the moment the backend drifts from it, while a capture just goes quietly stale.
+
+**Pinned by:** [`GlobalExceptionHandlerTest.anOptimisticLockFailureIsA409WithTheFixedMessage`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/error/GlobalExceptionHandlerTest.java) in the backend. Change this response and that test together.
 
 A 409 only covers requests that overlap in time. A client saving a page that was loaded minutes ago gets no 409, however much has changed since: see [Send only the fields being changed](#send-only-the-fields-being-changed).
 
@@ -783,6 +817,8 @@ Request body:
 }
 ```
 
+**Pinned by:** [`ApiContractTest.aUserCannotBeAssignedATicket`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
+
 | Problem | Message |
 | --- | --- |
 | missing | `Assignee id is required.` |
@@ -842,6 +878,8 @@ Projects are **read-only** in v1: there are no endpoints to create, change or de
   "lead": "Kwame Asante"
 }
 ```
+
+**Pinned by:** [`ApiContractTest.theProjectHasExactlyItsFields`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
@@ -908,6 +946,8 @@ One project. Used by the frontend's project page, `/projects/:id`.
 }
 ```
 
+**Pinned by:** [`ApiContractTest.theUserShapeHasExactlyItsFieldsAndNoPassword`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
+
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `id` | integer | Chosen by the server. |
@@ -943,6 +983,8 @@ Every user, sorted by `id`.
   "message": "You don't have permission to do this."
 }
 ```
+
+**Pinned by:** [`ApiContractTest.everyRefusalIsTheSameFixed403Body`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
 
 ## Auth
 
@@ -1078,6 +1120,8 @@ Request body:
 }
 ```
 
+**Pinned by:** [`ApiContractTest.loginReturnsExactlyATokenAndTheUser`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend, by shape: the token differs on every login, so the test checks it is a non-empty string and compares everything else strictly, for a seeded user. Change this response and that test together.
+
 **400 Bad Request, `BAD_REQUEST`**: the body isn't a JSON object.
 
 **400 Bad Request, `VALIDATION_ERROR`**: the email or password is missing.
@@ -1096,7 +1140,9 @@ Request body:
 
 **401 Unauthorized**: the email isn't registered, **or** the password is wrong. Both get exactly the same answer, and take about as long, so the response never reveals which emails have accounts.
 
-<!-- captured from the running backend: POST /api/v1/auth/login with {"email": "ama@example.com", "password": "wrong-password"} → 401 -->
+Here is a seeded user with the wrong password, then an email with no account. The two bodies are identical:
+
+<!-- captured from the running backend: POST /api/v1/auth/login with {"email": "fatima.bello@opsdesk.com", "password": "wrong-password"} → 401 -->
 
 ```json
 {
@@ -1104,6 +1150,17 @@ Request body:
   "message": "The email or password is incorrect."
 }
 ```
+
+<!-- captured from the running backend: POST /api/v1/auth/login with {"email": "nobody@example.com", "password": "wrong-password"} → 401 -->
+
+```json
+{
+  "error": "UNAUTHORIZED",
+  "message": "The email or password is incorrect."
+}
+```
+
+**Pinned by:** [`ApiContractTest.aWrongPasswordAndAnUnknownEmailGetTheSame401`](https://github.com/Stormmzyy/opsdesk-backend/blob/main/src/test/java/com/opsdesk/backend/ApiContractTest.java) in the backend. Change this response and that test together.
 
 ### GET /auth/me
 
