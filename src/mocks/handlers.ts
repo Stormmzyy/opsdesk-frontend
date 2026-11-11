@@ -2,9 +2,10 @@ import { delay, http, HttpResponse } from 'msw'
 import type { DefaultBodyType, PathParams } from 'msw'
 import type { Project } from '../features/projects/types.ts'
 import { employees } from '../data/employees.ts'
+import { MOCK_CREATOR } from '../data/tickets.ts'
 import { getDepartments } from '../features/employees/utils/employeeHelpers.ts'
-import type { Ticket } from '../features/tickets/types.ts'
-import { isRecord, isTicket } from '../features/tickets/utils/ticketHelpers.ts'
+import type { Ticket, TicketPage } from '../features/tickets/types.ts'
+import { filterTickets, isRecord, isTicket } from '../features/tickets/utils/ticketHelpers.ts'
 import { parsePriority, parseStatus } from '../features/tickets/utils/ticketStatus.ts'
 import {
   validateDescription,
@@ -14,7 +15,7 @@ import { parseId } from '../utils/parseId.ts'
 import type { User } from '../features/users/types.ts'
 import { getAllProjects } from './projectDb.ts'
 import { getAllTickets, resetToSampleTickets, saveAllTickets } from './ticketDb.ts'
-import { getAllUsers } from './userDb.ts'
+import { addUser, getAllUsers } from './userDb.ts'
 
 // Request handlers for the mock API: tickets, projects and users.
 //
@@ -39,7 +40,13 @@ import { getAllUsers } from './userDb.ts'
 // - fields: only for VALIDATION_ERROR, one message per invalid field.
 // The contract also lists UNAUTHORIZED and CONFLICT, but only the auth
 // endpoints use those, and the mock doesn't serve them yet.
-type ErrorCode = 'BAD_REQUEST' | 'VALIDATION_ERROR' | 'NOT_FOUND' | 'INTERNAL_ERROR'
+type ErrorCode =
+  | 'BAD_REQUEST'
+  | 'VALIDATION_ERROR'
+  | 'NOT_FOUND'
+  | 'INTERNAL_ERROR'
+  | 'UNAUTHORIZED'
+  | 'CONFLICT'
 
 // The ticket fields a client can send. (Never id: the server owns that.)
 type TicketField = 'title' | 'description' | 'priority' | 'status' | 'team'
@@ -51,7 +58,8 @@ type FieldProblems = Partial<Record<TicketField, string>>
 interface ErrorBody {
   error: ErrorCode
   message: string
-  fields?: FieldProblems
+  // Keyed by body field, or by query parameter name for GET /tickets.
+  fields?: Partial<Record<string, string>>
 }
 
 function errorResponse(status: number, error: ErrorCode, message: string) {
@@ -60,7 +68,7 @@ function errorResponse(status: number, error: ErrorCode, message: string) {
 
 // 400 VALIDATION_ERROR, listing every invalid field. The message joins the
 // field messages into one sentence, for clients that don't read `fields`.
-function validationErrorResponse(fields: FieldProblems) {
+function validationErrorResponse(fields: Partial<Record<string, string>>) {
   return HttpResponse.json<ErrorBody>(
     { error: 'VALIDATION_ERROR', message: Object.values(fields).join(' '), fields },
     { status: 400 },
@@ -149,6 +157,124 @@ function trimIfText(value: unknown): unknown {
 const PATCHABLE_FIELDS: readonly TicketField[] = ['title', 'description', 'priority', 'status', 'team']
 const CREATE_FIELDS: readonly TicketField[] = ['title', 'description', 'priority', 'team']
 
+// --- GET /tickets' query parameters -----------------------------------------
+// The contract's seven parameters, its messages word for word, and its
+// orders "by meaning". Every problem is reported, keyed by the parameter's
+// NAME (or the unknown name that was sent), in the order they were sent.
+
+const LIST_PARAMETERS = ['page', 'size', 'status', 'priority', 'team', 'search', 'sort']
+const SORT_MESSAGE =
+  'Sort must be id, title, status, priority or team, optionally followed by ,asc or ,desc.'
+const STATUS_ORDER = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']
+const PRIORITY_ORDER = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
+
+function findListParameterProblems(params: URLSearchParams): Record<string, string> {
+  const problems: Record<string, string> = {}
+  for (const name of new Set(params.keys())) {
+    if (!LIST_PARAMETERS.includes(name)) {
+      problems[name] = `There is no query parameter called "${name}".`
+      continue
+    }
+    const values = params.getAll(name)
+    if (values.length > 1) {
+      // "Status can only be sent once.", with the parameter's own name.
+      problems[name] = `${name[0].toUpperCase()}${name.slice(1)} can only be sent once.`
+      continue
+    }
+    const value = values[0]
+    // Every parameter except search refuses an empty value.
+    switch (name) {
+      case 'page':
+        if (!/^[0-9]+$/.test(value) || Number(value) < 1) {
+          problems.page = 'Page must be a whole number, 1 or more.'
+        }
+        break
+      case 'size':
+        if (!/^[0-9]+$/.test(value) || Number(value) < 1 || Number(value) > 100) {
+          problems.size = 'Size must be a whole number from 1 to 100.'
+        }
+        break
+      case 'status':
+        if (parseStatus(value) === undefined) problems.status = STATUS_MESSAGE
+        break
+      case 'priority':
+        if (parsePriority(value) === undefined) problems.priority = PRIORITY_MESSAGE
+        break
+      case 'team':
+        if (!TEAMS.includes(value)) problems.team = TEAM_MESSAGE
+        break
+      case 'sort':
+        // Lowercase direction, one of five fields: "title,DESC" is a 400.
+        if (!/^(id|title|status|priority|team)(,(asc|desc))?$/.test(value)) {
+          problems.sort = SORT_MESSAGE
+        }
+        break
+    }
+  }
+  return problems
+}
+
+// --- Signing in -------------------------------------------------------------
+
+// The backend's development password for its seeded accounts, which its
+// README publishes. The mock's sample users are the same six people, so they
+// sign in the same way. It is not a secret, and it is never a real password.
+const MOCK_PASSWORD = 'devpassword123'
+
+// A mock token is just this prefix and the user's id: there's nothing to
+// sign, because nothing in the mock checks a token except /auth/me.
+const MOCK_TOKEN_PREFIX = 'mock-token-'
+
+const NO_VALID_TOKEN_MESSAGE =
+  'You need to log in first. Send your token as "Authorization: Bearer <token>".'
+
+function userForToken(header: string | null): User | undefined {
+  const prefix = `Bearer ${MOCK_TOKEN_PREFIX}`
+  if (header === null || !header.startsWith(prefix)) {
+    return undefined
+  }
+  const id = Number(header.slice(prefix.length))
+  return getAllUsers().find((user) => user.id === id)
+}
+
+// The contract's register rules and messages (POST /auth/register).
+function findRegisterProblems(body: Record<string, unknown>): Record<string, string> {
+  const problems: Record<string, string> = {}
+  if (typeof body.name !== 'string' || body.name.trim() === '') {
+    problems.name = 'Name is required.'
+  }
+  if (typeof body.username !== 'string' || !/^[A-Za-z0-9_.]{3,30}$/.test(body.username)) {
+    problems.username = 'Username must be 3 to 30 letters, numbers, dots or underscores.'
+  }
+  if (typeof body.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
+    problems.email = 'Enter a valid email address.'
+  }
+  if (typeof body.password !== 'string' || body.password.length < 8) {
+    problems.password = 'Password must be at least 8 characters.'
+  } else if (new TextEncoder().encode(body.password).length > 72) {
+    // Counted in bytes, as BCrypt does on the server.
+    problems.password = 'Password must be at most 72 bytes.'
+  }
+  return problems
+}
+
+// Orders by meaning, not spelling: priority LOW to URGENT, status OPEN to
+// CLOSED, title ignoring case, team alphabetically, id numerically.
+function compareBy(field: string, a: Ticket, b: Ticket): number {
+  switch (field) {
+    case 'title':
+      return a.title.toLowerCase().localeCompare(b.title.toLowerCase())
+    case 'status':
+      return STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status)
+    case 'priority':
+      return PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority)
+    case 'team':
+      return a.team.localeCompare(b.team)
+    default:
+      return a.id - b.id
+  }
+}
+
 // Handlers that can answer with a ticket OR an error say so up front, in the
 // third type parameter of http.get / http.post / http.patch. Otherwise MSW
 // guesses the response type from the first `return` and rejects the other.
@@ -156,13 +282,62 @@ const CREATE_FIELDS: readonly TicketField[] = ['title', 'description', 'priority
 type TicketOrError = Ticket | ErrorBody
 
 export const handlers = [
-  // GET /api/v1/tickets: every ticket.
-  http.get('/api/v1/tickets', async () => {
-    // delay() waits a realistic, random time (like a real network), so the
-    // loading states actually show up. In tests (Node) it only waits 5ms.
-    await delay()
-    return HttpResponse.json<Ticket[]>(getAllTickets())
-  }),
+  // GET /api/v1/tickets: every ticket as a plain array, or, as soon as any
+  // query parameter is sent, one page of them in the contract's envelope
+  // (API_CONTRACT.md, "Filtering, sorting and pagination").
+  //
+  // The mock has no signed-in user, so it lists every ticket; the real
+  // server counts only the tickets the caller may see.
+  http.get<PathParams, DefaultBodyType, Ticket[] | TicketPage | ErrorBody>(
+    '/api/v1/tickets',
+    async ({ request }) => {
+      // delay() waits a realistic, random time (like a real network), so the
+      // loading states actually show up. In tests (Node) it only waits 5ms.
+      await delay()
+      const params = new URL(request.url).searchParams
+      if ([...params.keys()].length === 0) {
+        return HttpResponse.json<Ticket[]>(getAllTickets())
+      }
+
+      const problems = findListParameterProblems(params)
+      if (Object.keys(problems).length > 0) {
+        return validationErrorResponse(problems)
+      }
+
+      const page = Number(params.get('page') ?? '1')
+      const size = Number(params.get('size') ?? '10')
+      const status = params.get('status')
+      const priority = params.get('priority')
+      const team = params.get('team')
+      const [sortField, direction] = (params.get('sort') ?? 'id').split(',')
+
+      // Search: the same "contains, ignoring case and surrounding spaces, in
+      // title or description" rule as the server.
+      const matching = filterTickets(getAllTickets(), params.get('search') ?? '', 'ALL').filter(
+        (ticket) =>
+          (status === null || ticket.status === status) &&
+          (priority === null || ticket.priority === priority) &&
+          (team === null || ticket.team === team),
+      )
+      const sorted = [...matching].sort((a, b) => {
+        const byField = compareBy(sortField, a, b) * (direction === 'desc' ? -1 : 1)
+        // Equal values stay in id order, so a page boundary falls in the same
+        // place on every request.
+        return byField !== 0 ? byField : a.id - b.id
+      })
+
+      // page counts from 1. A page past the end is not an error: no items,
+      // and the real totals.
+      const start = (page - 1) * size
+      return HttpResponse.json<TicketPage>({
+        items: sorted.slice(start, start + size),
+        page,
+        size,
+        totalItems: sorted.length,
+        totalPages: Math.ceil(sorted.length / size),
+      })
+    },
+  ),
 
   // GET /api/v1/tickets/:id: one ticket, or 404.
   http.get<PathParams<'id'>, DefaultBodyType, TicketOrError>(
@@ -205,6 +380,12 @@ export const handlers = [
       description: trimIfText(body.description),
       priority: body.priority,
       team: body.team,
+      // Set by the server, never by the client. The mock has no signed-in
+      // user to credit yet (Part 6), so it uses the sample tickets' creator.
+      assigneeId: null,
+      assigneeName: null,
+      ...MOCK_CREATOR,
+      version: 0,
     }
 
     // Every field was checked above, but TypeScript can't see that: to it,
@@ -264,6 +445,20 @@ export const handlers = [
         priority: 'priority' in body ? body.priority : existing.priority,
         status: 'status' in body ? body.status : existing.status,
         team: 'team' in body ? body.team : existing.team,
+        // The people stay as they were.
+        assigneeId: existing.assigneeId,
+        assigneeName: existing.assigneeName,
+        createdById: existing.createdById,
+        createdByName: existing.createdByName,
+        // Settled just below: it only goes up if something changed.
+        version: existing.version,
+      }
+      // As on the server: a PATCH that changes nothing writes nothing, so
+      // the version stays. (Hibernate's @DynamicUpdate skips the UPDATE when
+      // no column differs, and @Version only moves on an UPDATE.)
+      const changed = PATCHABLE_FIELDS.some((field) => candidate[field] !== existing[field])
+      if (changed) {
+        candidate.version += 1
       }
 
       // As in POST: the checks above already passed; this just lets
@@ -296,6 +491,170 @@ export const handlers = [
       // 204 No Content: "it worked, and there's nothing to send back".
       // The ticket is gone, so there's no ticket to return.
       return new HttpResponse(null, { status: 204 })
+    },
+  ),
+
+  // PATCH /api/v1/tickets/:id/assignee: give the ticket to someone.
+  // The contract's checks in decision 22's order: a missing ticket (404)
+  // before anything about the body. The mock has no signed-in user, so it
+  // never answers the 403 the real server gives anyone but ADMIN and MANAGER.
+  http.patch<PathParams<'id'>, DefaultBodyType, TicketOrError>(
+    '/api/v1/tickets/:id/assignee',
+    async ({ params, request }) => {
+      await delay()
+      const id = readId(params.id)
+      const tickets = getAllTickets()
+      const existing = tickets.find((item) => item.id === id)
+      if (!existing) {
+        return errorResponse(404, 'NOT_FOUND', `No ticket with id "${String(params.id)}".`)
+      }
+
+      const body = await readJsonBody(request)
+      if (!isRecord(body)) {
+        return errorResponse(400, 'BAD_REQUEST', 'The request body must be a JSON object.')
+      }
+
+      // The contract's messages, word for word, in its order: missing (null
+      // counts as missing: {"assigneeId": null} is never "unassign"), not a
+      // whole number of 1 or more, no such user, a USER.
+      const assigneeId = body.assigneeId
+      if (assigneeId === undefined || assigneeId === null) {
+        return validationErrorResponse({ assigneeId: 'Assignee id is required.' })
+      }
+      if (typeof assigneeId !== 'number' || !Number.isInteger(assigneeId) || assigneeId < 1) {
+        return validationErrorResponse({ assigneeId: 'Assignee id must be a positive whole number.' })
+      }
+      const assignee = getAllUsers().find((user) => user.id === assigneeId)
+      if (!assignee) {
+        return validationErrorResponse({ assigneeId: `No user with id ${assigneeId}.` })
+      }
+      if (assignee.role === 'USER') {
+        return validationErrorResponse({ assigneeId: "A USER can't be assigned tickets." })
+      }
+
+      // Assigning the person who already has it is not an error: 200, and
+      // nothing is written, so the version stays the same.
+      if (existing.assigneeId === assignee.id) {
+        return HttpResponse.json<Ticket>(existing)
+      }
+      const saved: Ticket = {
+        ...existing,
+        assigneeId: assignee.id,
+        assigneeName: assignee.name,
+        version: existing.version + 1,
+      }
+      saveAllTickets(tickets.map((ticket) => (ticket.id === existing.id ? saved : ticket)))
+      return HttpResponse.json<Ticket>(saved)
+    },
+  ),
+
+  // DELETE /api/v1/tickets/:id/assignee: nobody has it any more. Unassigning
+  // a ticket nobody has is not an error: 200, and the version stays.
+  http.delete<PathParams<'id'>, DefaultBodyType, TicketOrError>(
+    '/api/v1/tickets/:id/assignee',
+    async ({ params }) => {
+      await delay()
+      const id = readId(params.id)
+      const tickets = getAllTickets()
+      const existing = tickets.find((item) => item.id === id)
+      if (!existing) {
+        return errorResponse(404, 'NOT_FOUND', `No ticket with id "${String(params.id)}".`)
+      }
+      if (existing.assigneeId === null) {
+        return HttpResponse.json<Ticket>(existing)
+      }
+      const saved: Ticket = {
+        ...existing,
+        assigneeId: null,
+        assigneeName: null,
+        version: existing.version + 1,
+      }
+      saveAllTickets(tickets.map((ticket) => (ticket.id === existing.id ? saved : ticket)))
+      return HttpResponse.json<Ticket>(saved)
+    },
+  ),
+
+  // --- Signing in (API_CONTRACT.md, "Auth") ---------------------------------
+  //
+  // Enough for the app's sign-in flow to work against the mock: the six
+  // sample users sign in with the backend's development password, and
+  // /auth/me answers for the mock's own tokens. The mock still doesn't CHECK
+  // a token anywhere else: every other endpoint answers whoever asks, with
+  // no 401 and no 403 (see API_CONTRACT.md's note on the mock).
+
+  // POST /api/v1/auth/login
+  http.post<PathParams, DefaultBodyType, { token: string; user: User } | ErrorBody>(
+    '/api/v1/auth/login',
+    async ({ request }) => {
+      await delay()
+      const body = await readJsonBody(request)
+      if (!isRecord(body)) {
+        return errorResponse(400, 'BAD_REQUEST', 'The request body must be a JSON object.')
+      }
+      const problems: Record<string, string> = {}
+      if (typeof body.email !== 'string' || body.email === '') problems.email = 'Email is required.'
+      if (typeof body.password !== 'string' || body.password === '') {
+        problems.password = 'Password is required.'
+      }
+      if (Object.keys(problems).length > 0) {
+        return validationErrorResponse(problems)
+      }
+      // Compared without regard to case, as the server does. A wrong password
+      // and an unknown email get exactly the same answer.
+      const email = String(body.email).toLowerCase()
+      const user = getAllUsers().find((candidate) => candidate.email === email)
+      if (!user || body.password !== MOCK_PASSWORD) {
+        return errorResponse(401, 'UNAUTHORIZED', 'The email or password is incorrect.')
+      }
+      return HttpResponse.json({ token: `${MOCK_TOKEN_PREFIX}${user.id}`, user })
+    },
+  ),
+
+  // GET /api/v1/auth/me: the user a mock token belongs to, or the contract's 401.
+  http.get<PathParams, DefaultBodyType, User | ErrorBody>('/api/v1/auth/me', async ({ request }) => {
+    await delay()
+    const user = userForToken(request.headers.get('Authorization'))
+    if (!user) {
+      return errorResponse(401, 'UNAUTHORIZED', NO_VALID_TOKEN_MESSAGE)
+    }
+    return HttpResponse.json<User>(user)
+  }),
+
+  // POST /api/v1/auth/register: a new USER, with the contract's rules and
+  // messages. The email is checked first for a 409, then the username.
+  http.post<PathParams, DefaultBodyType, User | ErrorBody>(
+    '/api/v1/auth/register',
+    async ({ request }) => {
+      await delay()
+      const body = await readJsonBody(request)
+      if (!isRecord(body)) {
+        return errorResponse(400, 'BAD_REQUEST', 'The request body must be a JSON object.')
+      }
+      const problems = findRegisterProblems(body)
+      if (Object.keys(problems).length > 0) {
+        return validationErrorResponse(problems)
+      }
+      const email = String(body.email).toLowerCase()
+      const username = String(body.username).toLowerCase()
+      const existing = getAllUsers()
+      if (existing.some((user) => user.email === email)) {
+        return errorResponse(409, 'CONFLICT', 'An account with this email already exists.')
+      }
+      if (existing.some((user) => user.username === username)) {
+        return errorResponse(409, 'CONFLICT', 'An account with this username already exists.')
+      }
+      const user: User = {
+        id: Math.max(0, ...existing.map((candidate) => candidate.id)) + 1,
+        name: String(body.name).trim(),
+        username,
+        email,
+        role: 'USER',
+        phone: '',
+        address: { street: '', suite: '', city: '', zipcode: '' },
+        company: { name: '' },
+      }
+      addUser(user)
+      return HttpResponse.json<User>(user, { status: 201 })
     },
   ),
 
