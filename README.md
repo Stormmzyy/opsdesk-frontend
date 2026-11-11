@@ -1,5 +1,7 @@
 # OpsDesk
 
+[![Frontend CI](https://github.com/Stormmzyy/opsdesk-frontend/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Stormmzyy/opsdesk-frontend/actions/workflows/ci.yml)
+
 OpsDesk is an internal operations dashboard. Staff raise support **tickets**, move them through a simple workflow (Open → In progress → Resolved → Closed) on a list or a board, and see what each team is working on through **projects**, **teams** and a **users** directory. It was built over four weeks of an internship as a React 19 + TypeScript frontend.
 
 > **The app talks to a real backend:** [opsdesk-backend](https://github.com/Stormmzyy/opsdesk-backend), a Spring Boot API with PostgreSQL, built against [API_CONTRACT.md](API_CONTRACT.md).
