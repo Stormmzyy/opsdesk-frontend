@@ -2,8 +2,10 @@
 
 [![Frontend CI](https://github.com/Stormmzyy/opsdesk-frontend/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Stormmzyy/opsdesk-frontend/actions/workflows/ci.yml)
 
-OpsDesk is an internal operations dashboard. Staff raise support **tickets**, move them through a simple workflow (Open → In progress → Resolved → Closed) on a list or a board, and see what each team is working on through **projects**, **teams** and a **users** directory. It was built over four weeks of an internship as a React 19 + TypeScript frontend.
+OpsDesk is an internal operations dashboard. Staff raise support **tickets**, move them through a simple workflow (Open → In progress → Resolved → Closed) on a list or a board, and see what each team is working on through **projects**, **teams** and a **users** directory. It's a React 19 + TypeScript frontend, built during an internship.
 
+> **To run all of OpsDesk** (the database, the backend and this app, together, with Docker), follow the [opsdesk-system README](https://github.com/Stormmzyy/opsdesk-system#readme). This README is for working on the frontend on its own.
+>
 > **The app talks to a real backend:** [opsdesk-backend](https://github.com/Stormmzyy/opsdesk-backend), a Spring Boot API with PostgreSQL, built against [API_CONTRACT.md](API_CONTRACT.md).
 >
 > **Or it can run with no backend at all.** Set `VITE_USE_MOCK_API=true`, and [Mock Service Worker (MSW)](https://mswjs.io/) answers the app's `/api/v1/...` requests inside the browser instead. The mock follows the contract for tickets, users and signing in, but checks no permissions. See [Getting started](#getting-started) for both.
@@ -107,7 +109,7 @@ cp .env.example .env     # on Windows Command Prompt: copy .env.example .env
 
 A session lasts 60 minutes. After that, the next request sends you back to the sign-in page with "Your session expired", and signing in returns you to the page you were on.
 
-**Keep the dev server on port 5173.** The backend allows browser requests from that origin only (CORS). If 5173 is busy, Vite quietly moves to 5174, and then every request is "blocked by CORS policy" in the console. Free up 5173 and restart.
+**Keep the dev server on port 5173.** The backend accepts browser requests from one origin, its `ALLOWED_ORIGIN` setting (CORS), and under its `dev` profile that's `http://localhost:5173`. If 5173 is busy, Vite quietly moves to 5174, and then every request is "blocked by CORS policy" in the console. Free up 5173 and restart.
 
 The data lives in the backend's PostgreSQL database, so every browser sees the same tickets, and changes survive restarts.
 
@@ -145,11 +147,23 @@ The tests ignore both: `vite.config.ts` pins `VITE_API_URL` to `/api/v1` for eve
 | --- | --- |
 | `npm run dev` | Starts the dev server at http://localhost:5173, talking to the backend, or to the mock API when `VITE_USE_MOCK_API=true`. |
 | `npm run build` | Checks the TypeScript types, then builds the production version into `dist/`. Needs `VITE_API_URL` (from the environment or `.env`), and refuses to build without it. |
-| `npm run preview` | Serves the production build from `dist/` at http://localhost:4173. A production build never includes the mock API. Note that the backend's CORS setting allows only http://localhost:5173, so the browser blocks the preview's requests unless the backend also allows port 4173. |
+| `npm run preview` | Serves the production build from `dist/` at http://localhost:4173. A production build never includes the mock API. The backend accepts one origin (`ALLOWED_ORIGIN`, `http://localhost:5173` under `dev`), so the browser blocks the preview's requests unless the backend is started with `ALLOWED_ORIGIN=http://localhost:4173`. |
 | `npm test` | Runs every test once. |
 | `npm run test:watch` | Runs the tests again whenever a file changes. |
 | `npm run typecheck` | Checks the TypeScript types (including the tests) without building. |
 | `npm run lint` | Checks the code for problems with [Oxlint](https://oxc.rs/). |
+
+## The production image
+
+The [Dockerfile](Dockerfile) builds the app with Node and serves `dist/` with nginx ([nginx.conf](nginx.conf), which sends every route that isn't a file to `index.html`, so a refresh on `/tickets/12` loads the app). It's normally built and run by the [opsdesk-system](https://github.com/Stormmzyy/opsdesk-system#readme) compose file. To build it on its own:
+
+```bash
+docker build --build-arg VITE_API_URL=http://localhost:8080/api/v1 -t opsdesk-frontend .
+```
+
+**`VITE_API_URL` is a build argument, and it's written into the bundle.** Without it the build stops, by design. To point the app at a different API, rebuild the image; setting a variable on a running container changes nothing. Every `VITE_` value ends up in the JavaScript anyone can download, so none may hold a secret.
+
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) lints, tests and builds on every push to `main` and every pull request, and builds the image and checks its nginx config.
 
 ## Tests
 
@@ -273,6 +287,7 @@ Every component's CSS file and tests sit next to it, and every file in `src/` is
 
 ## Further documentation
 
+- **[opsdesk-system README](https://github.com/Stormmzyy/opsdesk-system#readme):** running all of OpsDesk with Docker Compose, and the diagram of how the browser, this app, the backend and the database fit together.
 - **[API_CONTRACT.md](API_CONTRACT.md):** every endpoint, request and response, the error shape and status codes. The backend is built against it.
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md):** why the less obvious design decisions were made.
 - **[NOTES.md](NOTES.md):** every piece of state in the app and why it lives where it does.
@@ -414,7 +429,7 @@ Week 6 showed why the backend must send the header on errors too. At first, a re
 
 ## Known limitations
 
-- **The backend allows one origin only.** CORS is set for `http://localhost:5173`, so the dev server must run on that port, and a deployed frontend would need its origin added to the backend.
+- **The backend allows one origin only,** its `ALLOWED_ORIGIN` setting: `http://localhost:5173` under its `dev` profile, so the dev server must run on that port, and `http://localhost:3000` under Docker Compose. A frontend served from anywhere else needs the backend's `ALLOWED_ORIGIN` set to match.
 - **The token is kept in `localStorage`,** where any script on the page could read it. That's acceptable here only under the conditions in backend NOTES.md, decision 70 (no way to inject script, no third-party scripts, a 60-minute token, low-stakes data). See [Security](#security).
 - **Deleting can't be undone.** There's a confirmation dialog, but no undo or trash.
 - **Projects are read-only,** and project pages don't list their related tickets.
