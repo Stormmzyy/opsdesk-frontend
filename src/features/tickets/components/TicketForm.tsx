@@ -30,7 +30,20 @@ interface TicketFormProps {
   // True while the values are being sent to the server. Disables the submit
   // button, so a double click can't create the same ticket twice.
   isSubmitting?: boolean
+  // The server's answer to the last submit, when it was a 400
+  // VALIDATION_ERROR: one message per field name (API_CONTRACT.md, "The
+  // error shape"). Title and description show under their fields; any other
+  // name (priority, team, status, or one this form doesn't have) is listed
+  // above the buttons, so no message is ever dropped. The page clears it
+  // when it submits again.
+  serverErrors?: Record<string, string>
 }
+
+// The fields with a message slot of their own.
+const FIELDS_WITH_A_MESSAGE = ['title', 'description']
+
+// A shared empty default, so the prop's default isn't a new object each render.
+const NO_SERVER_ERRORS: Record<string, string> = {}
 
 // One form for both creating and editing a ticket.
 function TicketForm({
@@ -40,10 +53,21 @@ function TicketForm({
   onCancel,
   showStatus = false,
   isSubmitting = false,
+  serverErrors = NO_SERVER_ERRORS,
 }: TicketFormProps) {
   const [values, setValues] = useState<TicketFormValues>(initialValues)
   // Starts empty, so no errors show until the user first tries to submit.
   const [errors, setErrors] = useState<TicketFormErrors>({})
+
+  // What shows under each field: the browser's own check first (it's the
+  // most recent), then the server's answer to the last submit.
+  const shownErrors: TicketFormErrors = {
+    title: errors.title ?? serverErrors.title,
+    description: errors.description ?? serverErrors.description,
+  }
+  const otherServerErrors = Object.entries(serverErrors).filter(
+    ([name]) => !FIELDS_WITH_A_MESSAGE.includes(name),
+  )
 
   // Saves a new value for one field and returns the updated values.
   // K is "one of the form's field names", and TicketFormValues[K] is that
@@ -125,12 +149,12 @@ function TicketForm({
           required
           // aria-invalid tells screen readers the field has a problem, and
           // aria-describedby makes them read the error message with the field.
-          aria-invalid={Boolean(errors.title)}
-          aria-describedby={errors.title ? 'ticket-title-error' : undefined}
+          aria-invalid={Boolean(shownErrors.title)}
+          aria-describedby={shownErrors.title ? 'ticket-title-error' : undefined}
         />
-        {errors.title && (
+        {shownErrors.title && (
           <p id="ticket-title-error" className="ticket-form__error">
-            {errors.title}
+            {shownErrors.title}
           </p>
         )}
       </div>
@@ -144,12 +168,12 @@ function TicketForm({
           value={values.description}
           onChange={(event) => handleTextChange('description', event.target.value)}
           required
-          aria-invalid={Boolean(errors.description)}
-          aria-describedby={errors.description ? 'ticket-description-error' : undefined}
+          aria-invalid={Boolean(shownErrors.description)}
+          aria-describedby={shownErrors.description ? 'ticket-description-error' : undefined}
         />
-        {errors.description && (
+        {shownErrors.description && (
           <p id="ticket-description-error" className="ticket-form__error">
-            {errors.description}
+            {shownErrors.description}
           </p>
         )}
       </div>
@@ -201,6 +225,19 @@ function TicketForm({
               </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {otherServerErrors.length > 0 && (
+        <div className="ticket-form__server-errors" role="alert">
+          <p>The server didn&apos;t accept these values:</p>
+          <ul>
+            {otherServerErrors.map(([name, message]) => (
+              <li key={name}>
+                <strong>{name}</strong>: {message}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

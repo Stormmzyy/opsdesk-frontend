@@ -60,3 +60,21 @@
   flex-wrap: wrap;
   gap: 12px;
 }
+
+/* Server messages for fields without a slot of their own (a 400 naming
+   priority, team, status, or a field this form doesn't have). */
+.ticket-form__server-errors {
+  padding: 10px 12px;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  color: var(--danger);
+}
+
+.ticket-form__server-errors p,
+.ticket-form__server-errors ul {
+  margin: 0;
+}
+
+.ticket-form__server-errors ul {
+  padding-left: 20px;
+}

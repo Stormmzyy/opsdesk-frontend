@@ -4,3 +4,14 @@
   flex-wrap: wrap;
   gap: 16px;
 }
+
+/* A message from the server about one filter (a 400 naming its parameter). */
+.filter-field__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.875rem;
+}
+
+.filter-field [aria-invalid="true"] {
+  border-color: var(--danger);
+}
