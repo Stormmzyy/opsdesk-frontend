@@ -1,5 +1,12 @@
 import { api } from './api.ts'
-import type { Ticket, TicketFormValues } from '../features/tickets/types.ts'
+import type {
+  EditableTicketField,
+  Ticket,
+  TicketFormValues,
+  TicketPage,
+  TicketQuery,
+} from '../features/tickets/types.ts'
+import { buildTicketParams } from '../features/tickets/utils/ticketQuery.ts'
 
 // Everything the app knows about talking to the ticket API, in one place.
 //
@@ -18,7 +25,11 @@ import type { Ticket, TicketFormValues } from '../features/tickets/types.ts'
 
 // The arguments for updateTicket: which ticket, plus only the fields to
 // change, e.g. { id: 3, status: 'RESOLVED' } or a whole edited form.
-export type TicketUpdate = Pick<Ticket, 'id'> & Partial<Omit<Ticket, 'id'>>
+//
+// Only the editable fields: the output-only ones (assigneeId, version, ...)
+// are refused by the server on input (backend decision 39), so the type
+// refuses them first. Assigning has its own endpoint, assignTicket below.
+export type TicketUpdate = Pick<Ticket, 'id'> & Partial<Pick<Ticket, EditableTicketField>>
 
 // A cache "tag": a label saying what a piece of cached data contains.
 // - { type: 'Ticket', id: 3 } means "this data includes ticket 3".
@@ -38,6 +49,26 @@ export const ticketsApi = api.injectEndpoints({
       providesTags: (result) =>
         result
           ? [...result.map((ticket): TicketTag => ({ type: 'Ticket', id: ticket.id })), LIST_TAG]
+          : [LIST_TAG],
+    }),
+
+    // GET /tickets WITH query parameters: one page of the tickets the caller
+    // may see, filtered and sorted by the server, in the contract's
+    // envelope. The Tickets page uses this; the Dashboard and Teams pages
+    // still use getTickets above, the plain array of every visible ticket,
+    // because they summarise all of them.
+    //
+    // Each different query (page, filter, sort) is cached separately, so
+    // going back to page 1 is instant.
+    getTicketPage: builder.query<TicketPage, TicketQuery>({
+      query: (ticketQuery) => ({ url: '/tickets', params: buildTicketParams(ticketQuery) }),
+      // The same tags as the plain list: a per-ticket tag for every ticket
+      // on the page, so editing, moving or (un)assigning one refetches the
+      // pages that show it; and LIST, so creating or deleting a ticket
+      // refetches every page (it shifts what's on each).
+      providesTags: (result) =>
+        result
+          ? [...result.items.map((ticket): TicketTag => ({ type: 'Ticket', id: ticket.id })), LIST_TAG]
           : [LIST_TAG],
     }),
 
@@ -62,6 +93,21 @@ export const ticketsApi = api.injectEndpoints({
       // "Ticket <id> changed." RTK Query then refetches every cached query
       // that PROVIDED this tag: the list (it contains ticket <id>) and
       // getTicket(<id>). Other single tickets in the cache are left alone.
+      //
+      // This runs when the save FAILS too, and the app depends on that.
+      // RTK Query invalidates a mutation's tags when it succeeds AND when it
+      // fails with an error value, and every error our base query returns
+      // (an HTTP error or a network failure) is one. So after a refused
+      // save (a 403 because the ticket was reassigned meanwhile), the ticket
+      // is fetched again, and the error message can truthfully say it "now
+      // shows where it stands" (describeTicketChangeFailure). It isn't a side
+      // effect of refocusing: nothing here calls setupListeners, so
+      // refetch-on-focus is off.
+      //
+      // What guards this is a test, not this comment: "explains a 403 on
+      // save, keeps the form, and fetches the ticket again" in
+      // TicketPermissions.test.tsx checks for the GET after the refused PATCH.
+      // If an RTK Query upgrade changed the behaviour, that test fails.
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Ticket', id }],
       // Also put the saved ticket straight into the getTicket(<id>) cache as
       // soon as the server answers. Without this, going from the edit page to
@@ -90,7 +136,46 @@ export const ticketsApi = api.injectEndpoints({
       //   again within that time would show the deleted ticket from the
       //   cache; with it, the next visit asks the server and gets a 404,
       //   so the page says "Ticket not found".
+      // (As with updateTicket, these are invalidated on failure too.)
       invalidatesTags: (_result, _error, id) => [{ type: 'Ticket', id }, LIST_TAG],
+    }),
+
+    // PATCH /tickets/{id}/assignee: give the ticket to someone. ADMIN and
+    // MANAGER only; the answer is the whole updated ticket.
+    assignTicket: builder.mutation<Ticket, { id: number; assigneeId: number }>({
+      query: ({ id, assigneeId }) => ({
+        url: `/tickets/${id}/assignee`,
+        method: 'PATCH',
+        body: { assigneeId },
+      }),
+      // Refetches this ticket and the list, on success AND on failure (see
+      // updateTicket): after a refusal the page shows the ticket as it is.
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Ticket', id }],
+      // Show the server's answer at once, as updateTicket does.
+      async onQueryStarted({ id }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          dispatch(ticketsApi.util.upsertQueryData('getTicket', id, data))
+        } catch {
+          // The page that sent it shows the error.
+        }
+      },
+    }),
+
+    // DELETE /tickets/{id}/assignee: nobody has it any more. Its own
+    // endpoint, because {"assigneeId": null} is refused (backend decision
+    // 36), so a missing field can never unassign by accident.
+    unassignTicket: builder.mutation<Ticket, number>({
+      query: (id) => ({ url: `/tickets/${id}/assignee`, method: 'DELETE' }),
+      invalidatesTags: (_result, _error, id) => [{ type: 'Ticket', id }],
+      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          dispatch(ticketsApi.util.upsertQueryData('getTicket', id, data))
+        } catch {
+          // The page that sent it shows the error.
+        }
+      },
     }),
 
     // Restores the sample tickets on the mock API. Invalidating the plain
@@ -108,8 +193,11 @@ export const ticketsApi = api.injectEndpoints({
 export const {
   useGetTicketsQuery,
   useGetTicketQuery,
+  useGetTicketPageQuery,
   useAddTicketMutation,
   useUpdateTicketMutation,
   useDeleteTicketMutation,
+  useAssignTicketMutation,
+  useUnassignTicketMutation,
   useResetTicketsMutation,
 } = ticketsApi

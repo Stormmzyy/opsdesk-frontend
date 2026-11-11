@@ -4,9 +4,9 @@ OpsDesk is an internal operations desk: staff raise support **tickets**, move th
 
 This document is the agreement between the frontend and the backend. It says exactly which requests a client sends and exactly what it gets back. **The Week 7 backend (opsdesk-backend) is built against this document**, and every example response below was captured from it, not written by hand: each example sits under a hidden comment naming the exact request and caller that produced it, run against a freshly seeded database. There is one exception, the [409](#patch-ticketsid), which is pinned by a test instead. A capture records what was true on the day it was taken, and goes stale silently; the examples that matter most are also pinned by backend tests, which fail when the code drifts. **Each pinned example has a "Pinned by:" line under it naming its test**, and that test names the section here that it pins. An example with no "Pinned by:" line is a capture only: true when it was taken, and checked by nothing since. If the backend and this document ever disagree, this document wins and the code is fixed, with one exception: **who may do what**. The backend is the source of truth for permissions, and this document's [permission table](#the-permission-table) only describes it.
 
-**The mock API is Week 6 vintage.** When `VITE_USE_MOCK_API=true`, a mock built with [Mock Service Worker (MSW)](https://mswjs.io/) answers requests inside the browser instead (`src/mocks/handlers.ts`). It still implements the Week 6 part of this contract: the six-field Ticket object, `GET`, `POST`, `PATCH` and `DELETE` on `/tickets`, `/projects` and `/users`, with the same validation and 404 messages. It does **not** implement anything added in Week 7: signing in, the token, roles and permissions (401 and 403), the new Ticket fields, the assignee endpoints, filtering, sorting and pagination, or the 409 for a stale write. Each endpoint below says whether the mock serves it.
+**The mock API covers the tickets, not the people.** When `VITE_USE_MOCK_API=true`, a mock built with [Mock Service Worker (MSW)](https://mswjs.io/) answers requests inside the browser instead (`src/mocks/handlers.ts`). It implements the full Ticket object (its people are fixed: nobody assigned until someone assigns, and every ticket raised by user 1), `GET`, `POST`, `PATCH` and `DELETE` on `/tickets`, filtering, sorting and pagination, both assignee endpoints, `/projects`, and `/users` with each user's `role`, and signing in (the backend's six seeded people, with its published development password), all with this document's messages. It does **not** check the token anywhere but `/auth/me`, so nothing that depends on who is asking is implemented: no 401 on other endpoints, no 403, no visibility rules (every caller sees every ticket), and no 409 for a stale write. Each endpoint below says what the mock serves.
 
-**On `main` today the frontend and the backend don't work together**, on purpose: the backend requires a token, and the frontend doesn't send one yet. Carrying a session is Week 8 work. See the frontend README.
+**Since Week 8, the frontend signs in and works against the real backend.** It sends the token on every request, and a 401 sends the person back to sign in. The frontend README describes the session and what the UI does with roles.
 
 ## Contents
 
@@ -351,7 +351,7 @@ Writing this down gives nothing away. **What protects other people's tickets is 
 The tickets the caller may see.
 
 - **Who:** any signed-in user. A USER gets only her own tickets.
-- **Mock:** serves the plain array (the six Week 6 fields) and no query parameters.
+- **Mock:** serves it: the plain array with no parameters, and the envelope with them, with the same parameter rules and messages. It lists every ticket, for every caller.
 - Query parameters: optional `page`, `size`, `status`, `priority`, `team`, `search` and `sort`, described in [Filtering, sorting and pagination](#filtering-sorting-and-pagination). Any other query parameter is refused with a 400.
 - Request body: none.
 
@@ -396,7 +396,7 @@ Failures: 400 `VALIDATION_ERROR` when a parameter breaks its rules; 401.
 
 #### Filtering, sorting and pagination
 
-**The frontend doesn't call these yet**; it still pages, filters and searches a dozen tickets in the browser. The mock doesn't serve them.
+**The frontend's Tickets page uses these** for its list and its board: the server does the searching, filtering, sorting and paging. The Dashboard and Teams pages still read the plain array, because they summarise every ticket. The mock serves them too.
 
 **If none of these parameters is sent, the response stays the plain array**, so existing clients keep working. If any one is sent, even `?page=1`, the response is the envelope below.
 
@@ -504,7 +504,7 @@ A `page` beyond the last one is not an error: it returns `200` with `"items": []
 One ticket.
 
 - **Who:** any signed-in user who may see it. A USER may see only her own.
-- **Mock:** serves it, with the six Week 6 fields.
+- **Mock:** serves it, with the full Ticket object.
 
 | Path parameter | Type | Rules |
 | --- | --- | --- |
@@ -550,7 +550,7 @@ One ticket.
 Create a ticket. Its creator is the signed-in user, and it starts as `OPEN` and unassigned.
 
 - **Who:** any signed-in user.
-- **Mock:** serves it, with the six Week 6 fields and no creator.
+- **Mock:** serves it, with the full Ticket object; the creator is always user 1, because the mock doesn't know who is asking.
 
 Request body:
 
@@ -628,7 +628,7 @@ Request body:
 Change some of a ticket's fields. Only the fields sent are changed; everything else stays as it was. An empty object `{}` is allowed and changes nothing.
 
 - **Who:** depends on the ticket ([the permission table](#the-permission-table)): an ADMIN or MANAGER any ticket, an AGENT only a ticket assigned to them, a USER only her own `OPEN` ticket, and only its `title` and `description`.
-- **Mock:** serves it, with no permissions and the six Week 6 fields.
+- **Mock:** serves it, with no permissions and the full Ticket object.
 
 | Path parameter | Type | Rules |
 | --- | --- | --- |
@@ -655,9 +655,9 @@ What happens then depends on who is saving:
 - **A USER gets a 403.** Her form sends the old `priority` or `status`. If someone has since changed it, her request is changing it back, which a USER may not do. Nothing is written, but she's told she lacks permission when she only edited the title.
 - **An ADMIN, MANAGER or AGENT silently reverts the other change.** Daniel opens ticket 1, Kwame moves it to `IN_PROGRESS`, and Daniel fixes a typo in the title and saves the whole form. His request sends `"status": "OPEN"`, which is different from the ticket's status, so it's applied. Kwame's change is undone, with no error for either of them.
 
-**A field sent with the value it already has is not a change.** So a USER's whole-form save from an *up-to-date* page succeeds, as long as only `title` or `description` differ. That's what keeps today's edit form working, and it's exactly what fails the moment the page is out of date.
+**A field sent with the value it already has is not a change.** So a USER's whole-form save from an *up-to-date* page succeeds, as long as only `title` or `description` differ. That's what kept the frontend's old whole-form edit page working, and it's exactly what fails the moment the page is out of date.
 
-**The frontend's edit form sends every field today. That's a bug in the frontend, and this is where it's named:** the form should compare its values with the ticket as loaded, and send only the ones that differ. A client whose page may be out of date should reload the ticket first. (The server can't fix this alone; nothing in the request says which values were meant.)
+**The frontend's edit form sends only what changed, since Week 8.** It compares its values with a snapshot of the ticket taken when the form loaded, and sends only the fields that differ; with no difference it sends nothing. That fixes it for this frontend only. Any client that sends the whole form, such as a hand-written script, still has both problems above. A client whose page may be out of date should reload the ticket first. (The server can't fix this alone; nothing in the request says which values were meant.)
 
 ```json
 {
@@ -774,7 +774,7 @@ Delete a ticket for good. Its id is never reused.
 Assign a ticket to a user.
 
 - **Who:** an ADMIN or MANAGER.
-- **Mock:** doesn't serve it.
+- **Mock:** serves it, with no permissions.
 
 Request body:
 
@@ -844,7 +844,7 @@ That filter is **a copy of a server rule**, and it's a known duplication, not an
 Unassign a ticket. (Not `{"assigneeId": null}`: that's refused, so a missing field can never unassign by accident.)
 
 - **Who:** an ADMIN or MANAGER.
-- **Mock:** doesn't serve it.
+- **Mock:** serves it, with no permissions.
 - Request body: none.
 
 **200 OK**: the whole updated Ticket, with `assigneeId` and `assigneeName` both `null`. Unassigning a ticket nobody has is not an error.
@@ -977,7 +977,7 @@ A User object **never** includes a password or a password hash, in any response.
 Every user, sorted by `id`.
 
 - **Who:** an ADMIN or MANAGER.
-- **Mock:** serves it, with JSONPlaceholder-style data and no `role`.
+- **Mock:** serves it: the backend's six seeded people, each with the seeder's `role`, and with no permissions.
 - Path and query parameters: none.
 
 **200 OK**: an array of User objects.
@@ -997,7 +997,7 @@ Every user, sorted by `id`.
 
 ## Auth
 
-`POST /auth/register` and `POST /auth/login` are the only endpoints that don't need a token. **The frontend doesn't call any of the three yet**, and the mock doesn't serve them.
+`POST /auth/register` and `POST /auth/login` are the only endpoints that don't need a token. **The frontend calls all three**: register and login from their pages, and `/auth/me` straight after signing in and whenever it starts with a stored token. The mock serves all three, for its six sample users and anyone registered since the page loaded.
 
 ### POST /auth/register
 

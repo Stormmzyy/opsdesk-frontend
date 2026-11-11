@@ -3,14 +3,10 @@ import { Link } from 'react-router-dom'
 import type { TicketStatus } from '../features/tickets/types.ts'
 import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import PageHeader from '../components/PageHeader.tsx'
-import SkeletonGroup from '../components/SkeletonGroup.tsx'
-import StatusMessage from '../components/StatusMessage.tsx'
 import TicketBrowser from '../features/tickets/components/TicketBrowser.tsx'
-import TicketBrowserSkeleton from '../features/tickets/components/TicketBrowserSkeleton.tsx'
-import { useTicketView } from '../features/tickets/hooks/useTicketView.ts'
+import { describeTicketChangeFailure } from '../store/apiError.ts'
 import { useAppDispatch } from '../store/hooks.ts'
 import {
-  useGetTicketsQuery,
   useResetTicketsMutation,
   useUpdateTicketMutation,
 } from '../store/ticketsApi.ts'
@@ -27,16 +23,16 @@ import { isMockApiEnabled } from '../utils/mockApi.ts'
 const CAN_RESET_SAMPLE_DATA = isMockApiEnabled()
 
 function TicketsPage() {
-  // Loads the tickets (or reuses the cached copy). isLoading is only true
-  // for the very first load; isError is true if the request failed.
-  const { data: tickets, isLoading, isError, refetch } = useGetTicketsQuery()
+  // The tickets themselves are fetched by TicketBrowser, a page at a time,
+  // filtered and sorted by the server (GET /tickets with query parameters).
+  // This page keeps what's around the list: the header, moving a ticket
+  // on the board, and the mock's reset.
+  //
   // A mutation hook returns [the function that sends it, its status].
   // We only need the function here.
   const [updateTicket] = useUpdateTicketMutation()
   const [resetTickets, { isLoading: isResetting }] = useResetTicketsMutation()
   const dispatch = useAppDispatch()
-  // Only read here to draw the right skeleton while the tickets load.
-  const [view] = useTicketView()
   // Whether the "Reset to sample data?" dialog is showing.
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
 
@@ -46,9 +42,12 @@ function TicketsPage() {
   async function handleMoveTicket(ticketId: number, newStatus: TicketStatus) {
     try {
       await updateTicket({ id: ticketId, status: newStatus }).unwrap()
-    } catch {
+    } catch (error) {
       dispatch(
-        addNotification({ message: `Ticket #${ticketId} couldn't be moved.`, type: 'error' }),
+        addNotification({
+          message: describeTicketChangeFailure(error, `Ticket #${ticketId} wasn't moved`),
+          type: 'error',
+        }),
       )
     }
   }
@@ -109,40 +108,7 @@ function TicketsPage() {
         />
       )}
 
-      {/* A placeholder shaped like the list or board (whichever is
-          selected) instead of plain text, so nothing jumps when the tickets
-          arrive. Screen readers hear "Loading tickets" instead. */}
-      {isLoading && (
-        <SkeletonGroup label="Loading tickets">
-          <TicketBrowserSkeleton view={view} />
-        </SkeletonGroup>
-      )}
-
-      {isError && (
-        <StatusMessage type="error" onRetry={refetch}>
-          Sorry, we couldn't load the tickets.
-        </StatusMessage>
-      )}
-
-      {tickets && !isError && tickets.length === 0 && (
-        <StatusMessage
-          type="empty"
-          action={
-            <Link to="/tickets/new" className="button button--primary">
-              Create a ticket
-            </Link>
-          }
-        >
-          {/* Only point at the Reset button when it's actually there. */}
-          {CAN_RESET_SAMPLE_DATA
-            ? 'There are no tickets yet. Create the first one, or use "Reset to sample data" above to bring back the examples.'
-            : 'There are no tickets yet. Create the first one.'}
-        </StatusMessage>
-      )}
-
-      {tickets && !isError && tickets.length > 0 && (
-        <TicketBrowser tickets={tickets} onMoveTicket={handleMoveTicket} />
-      )}
+      <TicketBrowser onMoveTicket={handleMoveTicket} canResetSampleData={CAN_RESET_SAMPLE_DATA} />
     </>
   )
 }

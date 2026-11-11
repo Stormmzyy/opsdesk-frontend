@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react'
+import { users } from '../data/users.ts'
 import { server } from '../mocks/server.ts'
 import { getAllTickets, resetToSampleTickets } from '../mocks/ticketDb.ts'
 import AppRoutes from '../routes/AppRoutes.tsx'
@@ -18,10 +19,18 @@ afterEach(() => {
 })
 afterAll(() => server.close())
 
+// The flows run signed in, as the app's pages now require. As the ADMIN
+// (Priya, the backend seeder's role), because deleting is ADMIN-only: a
+// screen that hides what a role can't do would hide Delete from anyone else.
+const ADMIN = users.find((candidate) => candidate.role === 'ADMIN')!
+
 describe('ticket flows', () => {
   it('creates a ticket and shows it on its own page and in the list', async () => {
     const title = 'Printer on the second floor is jammed'
-    const { user } = renderWithProviders(<AppRoutes />, { route: '/tickets/new' })
+    const { user } = renderWithProviders(<AppRoutes />, {
+      route: '/tickets/new',
+      signedInAs: ADMIN,
+    })
 
     // Fields are found by their labels, which also proves they're labelled.
     await user.type(screen.getByRole('textbox', { name: /title/i }), title)
@@ -46,7 +55,10 @@ describe('ticket flows', () => {
   it('does nothing on Cancel, and deletes the ticket after confirming', async () => {
     // Ticket #1 in src/data/tickets.ts.
     const title = 'Login page times out on slow networks'
-    const { user } = renderWithProviders(<AppRoutes />, { route: '/tickets/1' })
+    const { user } = renderWithProviders(<AppRoutes />, {
+      route: '/tickets/1',
+      signedInAs: ADMIN,
+    })
 
     // Note the method of every request the mock server receives, so we can
     // check that Cancel never even SENDS a delete. Checking the screen alone

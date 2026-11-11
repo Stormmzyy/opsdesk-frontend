@@ -1,8 +1,14 @@
 import type { Ticket } from '../features/tickets/types.ts'
 
+// The contract's output-only fields: who has the ticket, who raised it, and its
+// version (see Ticket in types.ts).
+type TicketPeopleField = 'assigneeId' | 'assigneeName' | 'createdById' | 'createdByName' | 'version'
+
 // Mock support tickets for the board.
 // "team" uses the same department names as employees.ts.
-export const tickets: Ticket[] = [
+// The fields written out below. The people and version are added at the
+// bottom, the same for every sample ticket.
+const SAMPLE_TICKETS: Omit<Ticket, TicketPeopleField>[] = [
   {
     id: 1,
     title: 'Login page times out on slow networks',
@@ -112,3 +118,19 @@ export const tickets: Ticket[] = [
     team: 'Operations',
   },
 ]
+
+// The mock doesn't model people yet: nobody is assigned, and every sample
+// ticket was raised by user 1 (Priya Sharma in users.ts). That's enough for
+// the ticket shape to be complete, and for the pages to render assignees.
+// Assigning through the mock, and creators per signed-in user, come with the
+// mock's auth support (Week 8, Part 6). Against the real backend, all five
+// fields come from the server.
+export const MOCK_CREATOR = { createdById: 1, createdByName: 'Priya Sharma' } as const
+
+export const tickets: Ticket[] = SAMPLE_TICKETS.map((ticket) => ({
+  ...ticket,
+  assigneeId: null,
+  assigneeName: null,
+  ...MOCK_CREATOR,
+  version: 0,
+}))

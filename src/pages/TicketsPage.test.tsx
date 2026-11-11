@@ -36,7 +36,9 @@ describe('TicketsPage', () => {
 
     // Each board column is a <section> labelled by its heading, which gives
     // it the "region" role, so we can look inside one column at a time.
-    const openColumn = screen.getByRole('region', { name: 'Open' })
+    // The board asks the server for its own page of tickets, so its columns
+    // appear once that answer arrives.
+    const openColumn = await screen.findByRole('region', { name: 'Open' })
     const inProgressColumn = screen.getByRole('region', { name: 'In progress' })
     expect(within(openColumn).getByRole('link', { name: TITLE })).toBeInTheDocument()
     expect(within(inProgressColumn).queryByRole('link', { name: TITLE })).not.toBeInTheDocument()
@@ -75,7 +77,13 @@ describe('TicketsPage', () => {
   })
 
   it('explains there are no tickets and offers a way to create one', async () => {
-    server.use(http.get('/api/v1/tickets', () => HttpResponse.json([])))
+    // The page always sends query parameters now, so the server answers with
+    // the envelope: nothing found, and nothing at all to page through.
+    server.use(
+      http.get('/api/v1/tickets', () =>
+        HttpResponse.json({ items: [], page: 1, size: 10, totalItems: 0, totalPages: 0 }),
+      ),
+    )
     renderWithProviders(<TicketsPage />, { route: '/tickets' })
 
     expect(await screen.findByText(/there are no tickets yet/i)).toBeInTheDocument()

@@ -4,9 +4,9 @@ OpsDesk is an internal operations dashboard. Staff raise support **tickets**, mo
 
 > **The app talks to a real backend:** [opsdesk-backend](https://github.com/Stormmzyy/opsdesk-backend), a Spring Boot API with PostgreSQL, built against [API_CONTRACT.md](API_CONTRACT.md).
 >
-> **Or it can run with no backend at all.** Set `VITE_USE_MOCK_API=true`, and [Mock Service Worker (MSW)](https://mswjs.io/) answers the app's `/api/v1/...` requests inside the browser instead. The mock follows the Week 6 part of the contract. See [Getting started](#getting-started) for both.
+> **Or it can run with no backend at all.** Set `VITE_USE_MOCK_API=true`, and [Mock Service Worker (MSW)](https://mswjs.io/) answers the app's `/api/v1/...` requests inside the browser instead. The mock follows the contract for tickets, users and signing in, but checks no permissions. See [Getting started](#getting-started) for both.
 >
-> **Right now, the app works only with the mock.** See [The frontend and the Week 7 backend don't work together yet](#the-frontend-and-the-week-7-backend-dont-work-together-yet).
+> **Everyone signs in.** What each person sees and may do depends on their role (ADMIN, MANAGER, AGENT or USER), and the server enforces it. See [Security](#security).
 
 ## Contents
 
@@ -25,9 +25,13 @@ OpsDesk is an internal operations dashboard. Staff raise support **tickets**, mo
 
 ## Features
 
+- **Signing in:** register and sign-in pages, a session that survives a refresh, and Log out. An expired session goes back to sign in, then returns to where you were.
+- **Roles:** each person sees the controls their role can use (Delete for ADMIN, Assign for ADMIN and MANAGER). The server enforces every rule; the screens only follow them. A refusal that still happens (say, a ticket reassigned while you were editing it) is explained, not shown as a blank failure.
 - **Dashboard:** ticket counts by status, people and team counts, and the urgent and high priority tickets still open.
 - **Tickets:**
-  - A **list** with search (titles and descriptions), a status filter and pages of 10, or a **board** with one column per status. The view is kept in the URL (`/tickets?view=board`).
+  - A **list** with search (titles and descriptions), status and priority filters, nine sort orders and pages of 10, or a **board** with one column per status. The **server** does the searching, filtering, sorting and paging. The view is kept in the URL (`/tickets?view=board`).
+  - **Assign** and **unassign** tickets (ADMIN and MANAGER); everyone who can see a ticket sees who has it.
+  - **Editing sends only what changed**, compared with the ticket as it was when the form opened, so a save never undoes someone else's change to a field you didn't touch.
   - **Create**, **edit**, **move** (one click to the next status, or pick any status) and **delete** tickets. Deleting asks first, in an accessible confirmation dialog.
   - Form validation with errors linked to their fields.
 - **Projects:** project cards, each with its own page (`/projects/:id`).
@@ -76,21 +80,9 @@ cp .env.example .env     # on Windows Command Prompt: copy .env.example .env
 
 **Copying `.env.example` is required.** Without a `.env` file, the app sends its requests to `/api/v1` on the Vite dev server itself, which has no API, and the mock is off, so every page shows its "couldn't load" error.
 
-### The frontend and the Week 7 backend don't work together yet
-
-**This is deliberate, not a broken build.** In Week 7 the backend gained sign-in and permissions: every request except registering and logging in now needs a token, sent as `Authorization: Bearer <token>` (see [API_CONTRACT.md](API_CONTRACT.md#signing-in-and-the-token)). The frontend doesn't have a sign-in page yet, and sends no token. Carrying a session, with a login page, storing the token and sending it on every request, is **Week 8** work.
-
-So if you run both repos' `main` today, following the steps below:
-
-- the backend starts and seeds its data normally;
-- the frontend starts normally;
-- **every API request the frontend makes answers `401 UNAUTHORIZED`**, which you can see in the browser's **Network** tab, so the pages can't load their tickets, projects or users.
-
-Nothing is wrong with either repo. To use the app until Week 8, run it with the mock API instead (below). To try the backend on its own, start it as its README describes, sign in with `POST /api/v1/auth/login` as one of its seeded accounts (their emails and development password are in its README), and send the returned token with each request, for example with `curl -H "Authorization: Bearer <token>"`.
-
 ### Run it against the real backend (the default)
 
-1. Start the backend: follow the [opsdesk-backend README](https://github.com/Stormmzyy/opsdesk-backend#readme) to start its database and run `./mvnw spring-boot:run`. It serves the API at http://localhost:8080/api/v1.
+1. Start the backend: follow the [opsdesk-backend README](https://github.com/Stormmzyy/opsdesk-backend#readme) to start its database, and run it with the `dev` profile, which seeds the sample accounts and tickets: `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`. It serves the API at http://localhost:8080/api/v1.
 2. Make sure `.env` has the values from `.env.example`:
    ```
    VITE_API_URL=http://localhost:8080/api/v1
@@ -100,7 +92,18 @@ Nothing is wrong with either repo. To use the app until Week 8, run it with the 
    ```bash
    npm run dev
    ```
-4. Open **http://localhost:5173**.
+4. Open **http://localhost:5173** and sign in. The seeded accounts all use the development password `devpassword123` (published in the backend's README; it is development data, never a real password). One of each role:
+
+   | Email | Role |
+   | --- | --- |
+   | `priya.sharma@opsdesk.com` | ADMIN: everything, including Delete |
+   | `kwame.asante@opsdesk.com` | MANAGER: assigns tickets |
+   | `daniel.mensah@opsdesk.com` | AGENT: works the tickets assigned to them |
+   | `fatima.bello@opsdesk.com` | USER: sees and edits only her own tickets |
+
+   Or create an account on the register page: it's always a USER.
+
+A session lasts 60 minutes. After that, the next request sends you back to the sign-in page with "Your session expired", and signing in returns you to the page you were on.
 
 **Keep the dev server on port 5173.** The backend allows browser requests from that origin only (CORS). If 5173 is busy, Vite quietly moves to 5174, and then every request is "blocked by CORS policy" in the console. Free up 5173 and restart.
 
@@ -115,7 +118,7 @@ VITE_API_URL=/api/v1
 VITE_USE_MOCK_API=true
 ```
 
-The browser console shows `[MSW] Mocking enabled.` when the mock is running. It starts with the same sample data as the backend: 12 tickets, 6 projects and 6 users. Ticket changes are saved in your browser (`localStorage`), so they're yours alone. **Reset to sample data** appears on the Tickets page only in this mode; the real backend has no such endpoint, because the contract says it must not.
+The browser console shows `[MSW] Mocking enabled.` when the mock is running. It starts with the same sample data as the backend: 12 tickets, 6 projects and 6 users. Sign in as any of the six with `devpassword123`, as against the backend. **The mock checks no permissions**: every role sees every ticket, and nothing is ever refused with a 403. Use the real backend to see what each role may do. Ticket changes are saved in your browser (`localStorage`), so they're yours alone. **Reset to sample data** appears on the Tickets page only in this mode; the real backend has no such endpoint, because the contract says it must not.
 
 If you switch back to the real backend and something still looks mocked, an old mock service worker may still be registered: in the browser's developer tools, open **Application**, then **Service workers**, click **Unregister**, and reload.
 
@@ -123,9 +126,11 @@ If you switch back to the real backend and something still looks mocked, an old 
 
 Only variables whose names start with `VITE_` are available to the app, and Vite **copies their values into the JavaScript the browser downloads**. Never put secrets in them (see [Security](#security)).
 
+**Any `VITE_` variable is baked into the bundle at build time and is readable by anyone who loads the page, so it is public by definition and must never hold a secret; that is also why `.env.production` doesn't need to be ignored by Git.**
+
 | Variable | What it does | In `.env.example` | If missing |
 | --- | --- | --- | --- |
-| `VITE_API_URL` | The base URL every API request goes to (tickets, projects, users). A full URL points at another server, such as the backend at `http://localhost:8080/api/v1`. A path (`/api/v1`) means "on this same site", which is where the mock API answers. | `http://localhost:8080/api/v1` | `/api/v1` |
+| `VITE_API_URL` | The base URL every API request goes to (tickets, projects, users). A full URL points at another server, such as the backend at `http://localhost:8080/api/v1`. A path (`/api/v1`) means "on this same site", which is where the mock API answers. | `http://localhost:8080/api/v1` | `npm run dev`: `/api/v1`. `npm run build`: **refuses to build** (also when it isn't an `http(s)://` URL or a `/` path), because the value is written into the bundle and a missing one would make every request go to the page's own server |
 | `VITE_USE_MOCK_API` | `true` starts the MSW mock API in development, so the app runs with no backend. Anything else, or leaving it out, uses the real backend at `VITE_API_URL`. When you turn it on, also set `VITE_API_URL=/api/v1`, because that's where the mock answers. It's a string, not a boolean: every environment variable reaches the app as text. | `false` | off (real backend) |
 
 Their types are declared in `src/vite-env.d.ts`. `VITE_API_URL` is read in `src/store/api.ts`, and `VITE_USE_MOCK_API` in `src/utils/mockApi.ts`. **Restart `npm run dev` after changing `.env`,** because Vite reads it only when it starts.
@@ -137,7 +142,7 @@ The tests ignore both: `vite.config.ts` pins `VITE_API_URL` to `/api/v1` for eve
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Starts the dev server at http://localhost:5173, talking to the backend, or to the mock API when `VITE_USE_MOCK_API=true`. |
-| `npm run build` | Checks the TypeScript types, then builds the production version into `dist/`. |
+| `npm run build` | Checks the TypeScript types, then builds the production version into `dist/`. Needs `VITE_API_URL` (from the environment or `.env`), and refuses to build without it. |
 | `npm run preview` | Serves the production build from `dist/` at http://localhost:4173. A production build never includes the mock API. Note that the backend's CORS setting allows only http://localhost:5173, so the browser blocks the preview's requests unless the backend also allows port 4173. |
 | `npm test` | Runs every test once. |
 | `npm run test:watch` | Runs the tests again whenever a file changes. |
@@ -150,22 +155,36 @@ The tests ignore both: `vite.config.ts` pins `VITE_API_URL` to `/api/v1` for eve
 npm test
 ```
 
-**50 tests in 9 files**, using [Vitest](https://vitest.dev/) and [Testing Library](https://testing-library.com/) in a pretend browser (jsdom). Tests find elements by role and accessible name, the way a screen reader does (`getByRole('button', { name: /create ticket/i })`). They always talk to the **mock API handlers**, running in Node, never to the real backend: `vite.config.ts` pins the API URL for tests (see [Environment variables](#environment-variables)). Every test was checked by breaking the feature on purpose and confirming the test fails.
+**97 tests in 14 files**, using [Vitest](https://vitest.dev/) and [Testing Library](https://testing-library.com/) in a pretend browser (jsdom). Tests find elements by role and accessible name, the way a screen reader does (`getByRole('button', { name: /create ticket/i })`). They always talk to the **mock API handlers**, running in Node, never to the real backend: `vite.config.ts` pins the API URL for tests (see [Environment variables](#environment-variables)). Every test was checked by breaking the feature on purpose and confirming the test fails.
+
+> **On Windows, run the tests from a path whose drive letter is a capital `C:`.**
+> If the terminal's folder starts with a lowercase `c:\` (VS Code's built-in terminal can open
+> that way), **9 tests fail** with errors such as `Invalid Chai property: toBeInTheDocument`
+> or `toHaveAttribute`. Nothing is broken. Windows treats `c:\…` and `C:\…` as the same folder,
+> but Node treats them as two different paths, so Vitest gets loaded twice. The test-only
+> matchers attach to one copy, and the tests run on the other. Check with `pwd` (Git Bash) or
+> `Get-Location` (PowerShell). If it starts with `c:`, run `cd C:\path\to\opsdesk-frontend`
+> (PowerShell) and `npm test` again: all 97 pass. macOS and Linux aren't affected.
 
 | Test file | What it covers |
 | --- | --- |
+| `src/features/auth/session.test.tsx` | How a session ends. A stored token that `/auth/me` rejects sends the person to sign in, and **no ticket request is sent on the way** (it checks the requests sent, not just the final screen). A **wrong password** stays on the form with the server's message and isn't treated as an expired session. A **401** in the middle of a session goes to sign in with "Your session expired". **Log out** clears the token, `localStorage` and RTK Query's cache, and nothing refetches. |
+| `src/pages/EditTicketPage.test.tsx` | The form opens on a **fresh answer from the server**, never on the cached ticket: if someone else changed the ticket while it sat in the cache, the form shows their change. The Edit page **sends only what changed**: editing the title sends exactly `{ "title": … }`; saving with no changes sends **no request**; and if someone else moves the ticket while the form is open and the page refetches it, the save still sends only the title, never the stale status. The tests check the request body, because a stale field overwriting someone's change looks fine on screen. |
+| `src/pages/TicketPermissions.test.tsx` | **Delete** is offered to an ADMIN and not to an AGENT, not even the closed dialog's button. A **403** on save is explained ("you don't have permission… if the ticket changed since you opened it…"), the form keeps what was typed, and the ticket is fetched again. **Assigning**: an AGENT sees who has a ticket but gets no controls, and `GET /users` is never requested. A MANAGER's picker offers everyone but the USER, sends exactly `{"assigneeId": …}`, and can unassign. The server's **400** appears under the picker, linked to it, and a **403** is explained and followed by a refetch. The mock doesn't serve the assign endpoints yet, so these tests stage the server's answers. |
 | `src/pages/TicketFlows.test.tsx` | Whole journeys through the real app. **Creating** a ticket lands on its page with a success toast, and a search finds it. **Deleting** opens the confirmation dialog: Cancel sends no request and returns focus, and confirming deletes the ticket and shows a toast. |
 | `src/pages/TicketsPage.test.tsx` | Moving a ticket on the board refreshes the list by itself. A **500** from the API shows an error with **Retry**. An **empty** list shows a helpful message with "Create a ticket". |
 | `src/pages/DashboardPage.test.tsx` | A failed load shows **one** error for the page, not one per section. |
 | `src/components/ErrorBoundary.test.tsx` | A crashing component is replaced by the fallback, the raw error isn't shown, and it is logged. |
-| `src/mocks/handlers.test.ts` | Every mock endpoint against the Week 6 part of [API_CONTRACT.md](API_CONTRACT.md) (25 checks): status codes, bodies, the error shape, every failure case, and the exact User shape as it was in Week 6 (no `role`). |
+| `src/mocks/handlers.test.ts` | Every mock endpoint against [API_CONTRACT.md](API_CONTRACT.md) (48 checks): status codes, bodies, the error shape, every failure case, and the exact User shape, now with `role`. `GET /tickets` with query parameters answers in the contract's **envelope**, ordered by meaning; a page past the end is 200 with no items and the real totals; bad parameters are refused with every problem keyed by the **parameter name** (the contract's own captured example); `status=` is a 400 but `search=` isn't. **Assigning**: the contract's messages word for word (including "A USER can't be assigned tickets."), `null` never meaning "unassign", a missing ticket's 404 before the body is read, and the no-ops (assigning the current assignee, unassigning nobody) answering 200 with the version unchanged. **Signing in**: the seeded people with the development password, the same 401 for a wrong password and an unknown email, `/auth/me` for a mock token, and registering with the contract's messages and 409. |
 | `src/store/api.test.ts` | A 404 counts as "not found" only when the API says `NOT_FOUND`, not when the API itself is missing. |
 | `src/features/tickets/components/TicketForm.test.tsx` | An empty title is flagged, linked to its field, focused, and not submitted. |
 | `src/features/tickets/components/TicketCard.test.tsx` | A card links to its ticket and moves it to the **next** status. |
-| `src/features/tickets/utils/ticketHelpers.test.ts` | Search and status filtering, and which ids count as valid. |
+| `src/features/tickets/utils/ticketHelpers.test.ts` | The mock API's search rule (the app itself asks the server to search), and which ids count as valid. |
+| `src/features/tickets/utils/ticketQuery.test.ts` | The query string for `GET /tickets`: page, size and sort always sent; an unset filter **left out**, never sent empty; enum values uppercase and the sort direction lowercase; only the server's ten sort spellings. |
+| `src/pages/TicketsServerTerms.test.tsx` | The list asks the **server**: the exact parameters sent after choosing a priority and a sort; page 2 is tickets 11 and 12 (pages count from 1). A **400** naming a parameter with a control shows under that control; one with no control (`stauts`) is listed by name, never dropped. A ticket form's **400** puts each message under its field, lists the ones without a field, and shows no toast. |
 
 **Not covered by automated tests:**
-- editing a ticket, "Clear filters" and pagination;
+- "Clear filters";
 - the toast timer and the space reserved for toasts;
 - "Reset to sample data", and the Teams, Projects and Users pages;
 - anything needing a real browser, such as the dialog's focus trap and Escape key.
@@ -224,17 +243,22 @@ src/
 ├── routes/            AppRoutes (every route in one place) and the sidebar's links
 ├── layouts/           Layout (skip link, sidebar, toasts, inner error boundary), Sidebar,
 │                      Notifications and Toast
-├── pages/             One thin component per page
+├── pages/             One thin component per page, including Login and Register
 ├── components/        Shared UI: ErrorBoundary, ConfirmDialog, Skeleton, StatusMessage,
 │                      PageHeader, Pagination, StatCard, BackLink…
 ├── features/          Code grouped by feature, each with components/, types.ts and utils/
-│   ├── tickets/       Board, list, form, details, skeletons, the list/board view hook
+│   ├── auth/          ProtectedRoute, the token's localStorage copy, and permissions.ts
+│   │                  (what each role is offered; the server enforces it)
+│   ├── tickets/       Board, list, form, details, assignment, skeletons, the list/board
+│   │                  view hook, and the server query (ticketQuery.ts)
 │   ├── projects/      Project cards and details, with their skeletons
 │   ├── employees/     Employee Directory and team summaries
 │   └── users/         User cards, the user list and its skeleton
-├── store/             Redux store, typed hooks, uiSlice, and the RTK Query api
+├── store/             Redux store, typed hooks, uiSlice, authSlice (token and user), the
+│                      RTK Query api with its 401 handling, and the contract's error reader
 ├── mocks/             The mock API: handlers, its three "databases", browser and Node setups
-├── utils/             Small shared helpers: parseId, paginate, focusMainHeading, mockApi
+├── utils/             Small shared helpers: parseId, focusMainHeading, mockApi,
+│                      useDebouncedValue
 ├── data/              Seed data: sample tickets, projects, employees and users
 └── test/              renderWithProviders, used by the component tests
 ```
@@ -247,7 +271,7 @@ Every component's CSS file and tests sit next to it, and every file in `src/` is
 
 ## Further documentation
 
-- **[API_CONTRACT.md](API_CONTRACT.md):** every endpoint, request and response, the error shape and status codes. The Week 6 backend is built against it.
+- **[API_CONTRACT.md](API_CONTRACT.md):** every endpoint, request and response, the error shape and status codes. The backend is built against it.
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md):** why the less obvious design decisions were made.
 - **[NOTES.md](NOTES.md):** every piece of state in the app and why it lives where it does.
 
@@ -320,7 +344,7 @@ Everything else above was already fine, so nothing else needed changing. Two pro
 
 ## Security
 
-These notes are about **this** app as it is today: a frontend talking to the Week 6 backend (or to a mock API), with no sign-in yet.
+These notes are about **this** app as it is today: a frontend that signs in to the OpsDesk backend (or talks to a mock API) and shows each person what their role allows.
 
 ### What was checked
 
@@ -333,13 +357,52 @@ These notes are about **this** app as it is today: a frontend talking to the Wee
 
 **Anything in frontend code or a `.env` file ends up in the files the browser downloads.** Vite copies every `VITE_` variable's value into the built JavaScript (the production bundle literally contains `/api/v1`), and anyone can read that JavaScript with the browser's developer tools. So neither the source code nor `.env` is ever a place for a secret. Only variables starting with `VITE_` are exposed at all, which stops a server-only value from leaking by accident; but that's no protection for a value given a `VITE_` name. Real secrets, such as database passwords and signing keys, belong on the backend.
 
+### Hiding a button is not security
+
+**The UI hides a control for convenience; the backend is what refuses.**
+
+The ticket page shows **Delete** only to an ADMIN, and the **Assignment** controls only to an ADMIN or MANAGER (`src/features/auth/permissions.ts`, a display copy of the contract's permission table). Everyone who can see a ticket sees who has it. That saves everyone else from pressing a button that can only fail. It protects nothing: the request still exists whether or not a button sends it. Here is Daniel Mensah, an AGENT, whose ticket page has no Delete button, calling Delete and both assignee endpoints directly. This was captured against the real backend in Week 8:
+
+```console
+$ curl -X DELETE http://localhost:8080/api/v1/tickets/1 -H "Authorization: Bearer <Daniel's token>"
+{"error":"FORBIDDEN","message":"You don't have permission to do this."}
+HTTP 403
+
+$ curl -X PATCH http://localhost:8080/api/v1/tickets/1/assignee -H "Authorization: Bearer <Daniel's token>" \
+       -H "Content-Type: application/json" -d '{"assigneeId": 2}'
+{"error":"FORBIDDEN","message":"You don't have permission to do this."}
+HTTP 403
+
+$ curl -X DELETE http://localhost:8080/api/v1/tickets/1/assignee -H "Authorization: Bearer <Daniel's token>"
+{"error":"FORBIDDEN","message":"You don't have permission to do this."}
+HTTP 403
+```
+
+Ticket 1 still answered 200 afterwards. The server decides from the caller's role **as stored in its database**, on every request (backend NOTES.md, decision 28). It doesn't use the token's role claim, and it knows nothing about what the page chose to show. So if the frontend's copy of the rules and the server ever disagree, the worst outcome is a button that fails, or a missing button. It's never an action the server allowed by mistake.
+
+A refusal can also reach someone who did nothing wrong, so the app treats it as a real outcome rather than a glitch. Daniel opens the edit form for a ticket assigned to him. A manager reassigns it to someone else. Daniel saves, and the server answers 403. This was checked in the browser: Daniel sees "Ticket #1 wasn't saved: you don't have permission to make this change. If the ticket changed since you opened it (reassigned, or moved on), it now shows where it stands." He stays on the form with his edit, and the ticket is fetched again. Delete and moving a card on the board explain a refusal the same way (`describeTicketChangeFailure` in `src/store/apiError.ts`).
+
+### Coming back to a page after a session expires
+
+When a session expires, signing in again returns to the page the person was on. That page can belong to someone else: Fatima's session expires on ticket 4, and Kwame signs in next on the same computer and lands on ticket 4. **That's safe because the server refuses whatever the person signing in may not see or do.** If Kwame may not see ticket 4, it answers 404 (decision 23), exactly as for a ticket that doesn't exist. If he may see it but not change it, his changes get a 403. It's the same principle as the hidden button: **the frontend doesn't have to be careful here precisely because the backend is.** (A deliberate **Log out** doesn't return anyone to the previous page, and it clears the cached data. That isn't for safety. Landing on someone else's last page is just a poor start.)
+
 ### XSS, and why React's escaping helps
 
 Cross-site scripting (XSS) is when an attacker gets their own JavaScript to run inside our page, for example by typing `<script>…</script>` as a ticket title and waiting for someone else to open it. Code that runs inside our page can do anything the user can do there. OpsDesk shows text that people type (titles and descriptions) to everyone who opens the ticket, so this matters here. React protects us by default: when we write `{ticket.title}` in JSX, React inserts it as plain text, and the browser shows the `<` and `>` characters instead of treating them as HTML. That's exactly what happened in the test above. The protection only switches off if we choose to bypass it with `dangerouslySetInnerHTML` (or put a user's text into an `href` that starts with `javascript:`), and the codebase does neither.
 
-### localStorage, and what it means for Week 8
+### The sign-in token lives in localStorage
 
-Anything saved in `localStorage` can be read by **any** JavaScript running on the page: ours, a third-party script, a browser extension, or an attacker's code if an XSS hole ever slipped through. In OpsDesk, only the mock API uses it (`src/mocks/ticketDb.ts` keeps the tickets under `opsdesk.tickets`), and those are sample tickets, so nothing sensitive is stored there today. When sign-in arrives in Week 8, that changes: a login token kept in `localStorage` could be stolen by a single XSS bug and used to act as that person until it expires. That's why `API_CONTRACT.md` leaves the token decision to Week 8. The usual safer choice is an `httpOnly` cookie set by the server, which the browser sends automatically but JavaScript cannot read at all.
+Anything saved in `localStorage` can be read by **any** JavaScript running on the page: ours, a third-party script, a browser extension, or an attacker's code if an XSS hole ever slipped through. Since Week 8, the sign-in token is kept there (`opsdesk.token`), so that a refresh doesn't sign people out. A token copied out of it by an XSS bug would work from anywhere, until it expired, whatever the person did.
+
+That's accepted here, and only while four things hold (backend NOTES.md, decision 70):
+- **there's no way to inject script:** no `dangerouslySetInnerHTML`, and React escapes everything people type (see above);
+- **no third-party script runs on the page;**
+- **a token lasts 60 minutes,** with no refresh token, which bounds what a stolen one is worth;
+- **the data is low-stakes.**
+
+If any of those stops being true, the decision is reopened. The usual stronger choice is an `httpOnly` cookie set by the server, which JavaScript can't read at all. It limits what an XSS bug can do, rather than preventing one: script could still act while the page was open. It would also bring CSRF protection back into play. Decision 70 has the full argument.
+
+The mock API also keeps its tickets in `localStorage` (`opsdesk.tickets`). Those are sample tickets, so nothing sensitive.
 
 ### CORS, and where a CORS error is fixed
 
@@ -350,11 +413,13 @@ Week 6 showed why the backend must send the header on errors too. At first, a re
 ## Known limitations
 
 - **The backend allows one origin only.** CORS is set for `http://localhost:5173`, so the dev server must run on that port, and a deployed frontend would need its origin added to the backend.
-- **No sign-in.** Anyone with the app can change or delete any ticket. Auth is specified for Week 8.
+- **The token is kept in `localStorage`,** where any script on the page could read it. That's acceptable here only under the conditions in backend NOTES.md, decision 70 (no way to inject script, no third-party scripts, a 60-minute token, low-stakes data). See [Security](#security).
 - **Deleting can't be undone.** There's a confirmation dialog, but no undo or trash.
 - **Projects are read-only,** and project pages don't list their related tickets.
 - **The board has no drag and drop.** Tickets move with the "Move to …" button or the status dropdown.
-- **Search, filtering and pagination happen in the browser,** which is fine for a dozen tickets but won't scale. The backend already supports server-side `page`, `size`, `status` and `search` (see [API_CONTRACT.md](API_CONTRACT.md)), but the frontend doesn't use them yet: the Dashboard and Teams pages need every ticket to count correctly. That's planned for Week 7.
+- **The board shows at most 100 tickets.** Search, filters, sorting and pages are all done by the server now, and the list pages through any number of tickets. The board can't page (a column with only some of its cards would mislead), so it asks for one page of 100, the most the contract allows. Past 100 matching tickets, cards are **missing** from the board, and which ones depends on the order it asked for (by id, so the newest are the ones left out). The board says so ("Showing the first 100 of …"), which is honest, but it isn't the same as working: a ticket can be off the board with nothing on its column to say so. Narrowing the filters, or using the list, shows everything. A real fix needs the board to ask per column, or a server-side count per status.
+- **Decision 40 is mitigated, not closed.** The Edit page sends only the fields that changed, compared with a snapshot taken when the form loaded, so it no longer silently reverts other people's changes to fields the person never touched. But the hole was never in the frontend: the server can't tell "I want this value" from "this was the value when my page loaded", so **any client that sends the whole form reopens it**, Swagger's "Try it out" included. Two people changing the same field is still "the later save wins". Only a version check (`If-Match`) would close it, and that was rejected for its cost (backend decision 40).
+- **The Dashboard and Teams pages still read every ticket** with the plain `GET /tickets` (no parameters), because they summarise all of them. That's fine at this size and grows with the data.
 - **Users show only a name, username and email.** The contract's User also has a phone, address and company, but OpsDesk has no source for them yet, so the backend sends empty strings and the cards leave those rows out.
 - **"Reset to sample data" only exists with the mock** (`VITE_USE_MOCK_API=true`). The real backend has no such endpoint, so the button is hidden there.
 - **The team list is fixed** to the five departments in the sample employee data.

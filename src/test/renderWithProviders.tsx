@@ -6,6 +6,7 @@ import { Provider } from 'react-redux'
 import { MemoryRouter } from 'react-router-dom'
 import { makeStore } from '../store/store.ts'
 import type { AppStore } from '../store/store.ts'
+import type { User } from '../features/users/types.ts'
 
 interface ProviderOptions extends Omit<RenderOptions, 'wrapper'> {
   // The URL the test starts on, e.g. '/tickets'. Defaults to '/'.
@@ -13,6 +14,11 @@ interface ProviderOptions extends Omit<RenderOptions, 'wrapper'> {
   // A store to use. Defaults to a brand new one, so no test can see what an
   // earlier test put in the store.
   store?: AppStore
+  // Start signed in as this user, with a placeholder token. The signed-in
+  // pages sit behind ProtectedRoute, which sends anyone without a token to
+  // /login, so a test rendering AppRoutes needs this. The mock API doesn't
+  // check the token, so its value doesn't matter.
+  signedInAs?: User
 }
 
 // Renders a component the way the app does: inside a router (so <Link> and
@@ -27,8 +33,13 @@ interface ProviderOptions extends Omit<RenderOptions, 'wrapper'> {
 //   does (focus, key presses, pointer events), not just by firing one event.
 export function renderWithProviders(
   ui: ReactElement,
-  { route = '/', store = makeStore(), ...renderOptions }: ProviderOptions = {},
+  { route = '/', signedInAs, store: givenStore, ...renderOptions }: ProviderOptions = {},
 ) {
+  const startingAuth = signedInAs
+    ? { token: 'test-token', user: signedInAs, signOutReason: null }
+    : undefined
+  const store = givenStore ?? makeStore(startingAuth)
+
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <Provider store={store}>

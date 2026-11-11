@@ -84,6 +84,31 @@
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+/* The signed-in person and Log out. On narrow screens, a row of its own
+   under the links. */
+.sidebar__account {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sidebar__user {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  color: var(--text-heading);
+  font-weight: 600;
+}
+
+.sidebar__role {
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
 /* Wide screens: a full-height column on the left. */
 @media (min-width: 800px) {
   .sidebar {
@@ -111,6 +136,16 @@
 
   .sidebar__list {
     flex-direction: column;
+  }
+
+  /* Pushed to the bottom of the column, out of the way of the links. */
+  .sidebar__account {
+    flex: none;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: auto;
+    padding: 16px 0 0 12px;
+    border-top: 1px solid var(--border);
   }
 
   /* Collapsed: the links are hidden, so the strip doesn't need the gap

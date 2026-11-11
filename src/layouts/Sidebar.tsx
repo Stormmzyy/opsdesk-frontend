@@ -1,11 +1,21 @@
 import { NavLink } from 'react-router-dom'
+import type { Role } from '../features/users/types.ts'
 import type { NavPage } from '../routes/navPages.ts'
+import { selectCurrentUser, signedOut } from '../store/authSlice.ts'
 import { useAppDispatch, useAppSelector } from '../store/hooks.ts'
 import { selectSidebarCollapsed, toggleSidebar } from '../store/uiSlice.ts'
 import './Sidebar.css'
 
 interface SidebarProps {
   pages: NavPage[]
+}
+
+// The server's role names, as people read them.
+const ROLE_LABELS: Record<Role, string> = {
+  ADMIN: 'Admin',
+  MANAGER: 'Manager',
+  AGENT: 'Agent',
+  USER: 'User',
 }
 
 // The id that links the toggle button to the navigation it shows and hides.
@@ -24,6 +34,7 @@ function getLinkClassName({ isActive }: { isActive: boolean }): string {
 function Sidebar({ pages }: SidebarProps) {
   // Read from Redux, because Layout needs the same value to resize its grid.
   const collapsed = useAppSelector(selectSidebarCollapsed)
+  const user = useAppSelector(selectCurrentUser)
   const dispatch = useAppDispatch()
 
   return (
@@ -65,6 +76,26 @@ function Sidebar({ pages }: SidebarProps) {
           ))}
         </ul>
       </nav>
+
+      {/* Who is signed in, and the way out. Outside the collapsible <nav>,
+          so Log out is always reachable, even with the menu collapsed. */}
+      {user && (
+        <div className="sidebar__account">
+          <p className="sidebar__user">
+            {user.name}
+            {/* The role as the server sees it (from /auth/me): the same
+                one that decides what each request is allowed to do. */}
+            <span className="sidebar__role">{ROLE_LABELS[user.role]}</span>
+          </p>
+          {/* Clears the session (the slice, localStorage and RTK Query's
+              cache: see store.ts). ProtectedRoute then sees no token and
+              moves to /login. There's no logout endpoint to call: the token
+              simply stops being sent (API_CONTRACT.md). */}
+          <button type="button" className="button" onClick={() => dispatch(signedOut())}>
+            Log out
+          </button>
+        </div>
+      )}
     </header>
   )
 }
