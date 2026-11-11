@@ -1,0 +1,51 @@
+# Continuous integration: installs, lints, tests and builds the frontend on a
+# clean Linux machine, for each push to main and each pull request.
+#
+# What a clean machine catches that this laptop can't: a file that exists
+# here but was never committed, an environment variable only set here (such
+# as anything in .env, which is never committed), and anything that only
+# works on Windows.
+name: Frontend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Read-only: this workflow only checks out the code and builds it.
+permissions:
+  contents: read
+
+# A newer push to the same branch or pull request cancels the run still going
+# for the older one, since only the newest result matters.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The job's name is the status check's name ("check"). Branch protection
+  # will refer to it by that name, so keep it stable.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Node 22, the version this was developed on and the one the Docker
+      # image builds with. cache: npm keeps npm's download cache between
+      # runs, keyed on package-lock.json.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      # Exactly the versions in package-lock.json, installed for Linux.
+      - run: npm ci
+
+      - run: npm run lint
+
+      # The tests use the mock API, with VITE_API_URL pinned in
+      # vite.config.ts, so they need no backend.
+      - run: npm test
+
+      # Type-checks (tsc -b), then builds the production bundle.
+      - run: npm run build
