@@ -1,3 +1,5 @@
+import { rm } from 'node:fs/promises'
+import { join } from 'node:path'
 import react from '@vitejs/plugin-react'
 import type { Plugin } from 'vite'
 // Importing defineConfig from "vitest/config" instead of "vite" gives it the
@@ -50,9 +52,26 @@ function requireApiUrl(): Plugin {
   }
 }
 
+// Keeps MSW's service worker out of production builds. Everything in public/
+// is copied into the build as it is, and Vite has no way to leave one file
+// out, so this deletes it from the output after the copy. The file stays in
+// public/, where the dev server serves it and `msw init` keeps it current.
+// The mock's own code is dropped separately, by the DEV check in main.tsx.
+function dropMockServiceWorker(): Plugin {
+  return {
+    name: 'opsdesk:drop-mock-service-worker',
+    apply: 'build',
+    async writeBundle(options) {
+      if (options.dir) {
+        await rm(join(options.dir, 'mockServiceWorker.js'), { force: true })
+      }
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), requireApiUrl()],
+  plugins: [react(), requireApiUrl(), dropMockServiceWorker()],
   test: {
     // Tests run in Node, which has no browser. jsdom fakes one (document,
     // window, elements), so components can render as if in a real page.

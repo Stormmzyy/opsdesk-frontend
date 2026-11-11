@@ -19,11 +19,20 @@ if (!rootElement) {
 //   on the frontend without the backend running.
 // - import.meta.env.DEV is true under `npm run dev` and false in a production
 //   build, so the production app never intercepts requests.
-// - The import is dynamic (inside the function), so MSW isn't even included
-//   in the production bundle.
+// - The first check keeps MSW out of the production bundle altogether. In a
+//   build, Vite replaces import.meta.env.DEV with the literal false, so this
+//   line becomes "if (true) return" and the bundler can see that the import
+//   below never runs, and drops it with everything it pulls in (404 kB).
+//   isMockApiEnabled() returns false in a build too, but the bundler doesn't
+//   look inside another module's function to find that out, so without this
+//   line the mock was still emitted as a chunk (found in Week 8). The service
+//   worker file is removed from the build by vite.config.ts.
 // - "bypass" lets requests we have no handler for (such as Vite's own files)
 //   go through untouched.
 async function enableMocking() {
+  if (!import.meta.env.DEV) {
+    return
+  }
   if (!isMockApiEnabled()) {
     return
   }
