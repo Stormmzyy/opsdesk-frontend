@@ -14,7 +14,9 @@ import type { RootState } from './store.ts'
 // .env.example), so pointing the app at the real backend later only means
 // changing .env, not this code.
 // - "?? '/api/v1'": a fresh clone has no .env file, and then the variable
-//   is undefined. The fallback keeps the app (and the tests) working anyway.
+//   is undefined. The fallback keeps `npm run dev` working anyway (the
+//   tests pin the value in vite.config.ts). It never reaches a production
+//   bundle: `npm run build` refuses to run without VITE_API_URL.
 // - new URL(..., window.location.origin): turns "/api/v1" into a full URL
 //   like http://localhost:5173/api/v1. Browsers fill in the site for a
 //   relative URL by themselves, but the tests run in Node, whose fetch

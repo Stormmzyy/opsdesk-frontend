@@ -128,7 +128,7 @@ Only variables whose names start with `VITE_` are available to the app, and Vite
 
 | Variable | What it does | In `.env.example` | If missing |
 | --- | --- | --- | --- |
-| `VITE_API_URL` | The base URL every API request goes to (tickets, projects, users). A full URL points at another server, such as the backend at `http://localhost:8080/api/v1`. A path (`/api/v1`) means "on this same site", which is where the mock API answers. | `http://localhost:8080/api/v1` | `/api/v1` |
+| `VITE_API_URL` | The base URL every API request goes to (tickets, projects, users). A full URL points at another server, such as the backend at `http://localhost:8080/api/v1`. A path (`/api/v1`) means "on this same site", which is where the mock API answers. | `http://localhost:8080/api/v1` | `npm run dev`: `/api/v1`. `npm run build`: **refuses to build** (also when it isn't an `http(s)://` URL or a `/` path), because the value is written into the bundle and a missing one would make every request go to the page's own server |
 | `VITE_USE_MOCK_API` | `true` starts the MSW mock API in development, so the app runs with no backend. Anything else, or leaving it out, uses the real backend at `VITE_API_URL`. When you turn it on, also set `VITE_API_URL=/api/v1`, because that's where the mock answers. It's a string, not a boolean: every environment variable reaches the app as text. | `false` | off (real backend) |
 
 Their types are declared in `src/vite-env.d.ts`. `VITE_API_URL` is read in `src/store/api.ts`, and `VITE_USE_MOCK_API` in `src/utils/mockApi.ts`. **Restart `npm run dev` after changing `.env`,** because Vite reads it only when it starts.
@@ -140,7 +140,7 @@ The tests ignore both: `vite.config.ts` pins `VITE_API_URL` to `/api/v1` for eve
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Starts the dev server at http://localhost:5173, talking to the backend, or to the mock API when `VITE_USE_MOCK_API=true`. |
-| `npm run build` | Checks the TypeScript types, then builds the production version into `dist/`. |
+| `npm run build` | Checks the TypeScript types, then builds the production version into `dist/`. Needs `VITE_API_URL` (from the environment or `.env`), and refuses to build without it. |
 | `npm run preview` | Serves the production build from `dist/` at http://localhost:4173. A production build never includes the mock API. Note that the backend's CORS setting allows only http://localhost:5173, so the browser blocks the preview's requests unless the backend also allows port 4173. |
 | `npm test` | Runs every test once. |
 | `npm run test:watch` | Runs the tests again whenever a file changes. |
