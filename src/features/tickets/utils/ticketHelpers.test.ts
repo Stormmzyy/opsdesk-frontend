@@ -1,6 +1,16 @@
 import type { Ticket } from '../types.ts'
 import { filterTickets, parseTicketId } from './ticketHelpers.ts'
 
+// The output-only fields, the same on every ticket: these tests are about
+// search and status, not about who has the ticket.
+const PEOPLE = {
+  assigneeId: null,
+  assigneeName: null,
+  createdById: 1,
+  createdByName: 'Priya Sharma',
+  version: 0,
+}
+
 // Three small tickets, each built to test one thing.
 const tickets: Ticket[] = [
   {
@@ -10,6 +20,7 @@ const tickets: Ticket[] = [
     priority: 'URGENT',
     status: 'OPEN',
     team: 'Engineering',
+    ...PEOPLE,
   },
   {
     id: 2,
@@ -18,6 +29,7 @@ const tickets: Ticket[] = [
     priority: 'MEDIUM',
     status: 'IN_PROGRESS',
     team: 'Operations',
+    ...PEOPLE,
   },
   {
     id: 3,
@@ -26,6 +38,7 @@ const tickets: Ticket[] = [
     priority: 'HIGH',
     status: 'RESOLVED',
     team: 'Operations',
+    ...PEOPLE,
   },
 ]
 

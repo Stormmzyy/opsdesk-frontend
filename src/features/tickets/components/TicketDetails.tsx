@@ -7,7 +7,7 @@ interface TicketDetailsProps {
   ticket: Ticket
 }
 
-// A ticket's description, priority, status and team.
+// A ticket's description, priority, status, team and people.
 function TicketDetails({ ticket }: TicketDetailsProps) {
   return (
     <div className="ticket-detail">
@@ -29,6 +29,17 @@ function TicketDetails({ ticket }: TicketDetailsProps) {
         <div>
           <dt>Team</dt>
           <dd>{ticket.team}</dd>
+        </div>
+        {/* Shown to everyone who can see the ticket. Backend decision 50
+            records this exposure: names only, of the people on tickets the
+            caller can already see, never email or role. */}
+        <div>
+          <dt>Assigned to</dt>
+          <dd>{ticket.assigneeName ?? 'Nobody yet'}</dd>
+        </div>
+        <div>
+          <dt>Raised by</dt>
+          <dd>{ticket.createdByName}</dd>
         </div>
       </dl>
     </div>

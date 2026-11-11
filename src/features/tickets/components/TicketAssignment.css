@@ -1,0 +1,71 @@
+/* The Assignment section on the ticket page. The same width and card as the
+   Delete section below it, with the normal border: it's routine work, not a
+   danger zone. */
+.ticket-assignment {
+  max-width: 720px;
+  margin-top: 40px;
+  padding: 20px 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.ticket-assignment h2 {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+}
+
+.ticket-assignment > p {
+  margin: 0 0 16px;
+}
+
+.ticket-assignment__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+}
+
+.ticket-assignment__field {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticket-assignment__field label {
+  color: var(--text-heading);
+  font-weight: 600;
+}
+
+.ticket-assignment__field select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-heading);
+  font: inherit;
+}
+
+.ticket-assignment__field select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.ticket-assignment__field [aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.ticket-assignment__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.875rem;
+}
+
+.ticket-assignment__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}

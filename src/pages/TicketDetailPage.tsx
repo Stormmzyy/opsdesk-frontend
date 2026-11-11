@@ -7,10 +7,14 @@ import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import PageHeader from '../components/PageHeader.tsx'
 import SkeletonGroup from '../components/SkeletonGroup.tsx'
 import StatusMessage from '../components/StatusMessage.tsx'
+import TicketAssignment from '../features/tickets/components/TicketAssignment.tsx'
 import TicketDetails from '../features/tickets/components/TicketDetails.tsx'
 import TicketDetailsSkeleton from '../features/tickets/components/TicketDetailsSkeleton.tsx'
 import TicketNotFound from '../features/tickets/components/TicketNotFound.tsx'
-import { useAppDispatch } from '../store/hooks.ts'
+import { canAssignTickets, canDeleteTickets } from '../features/auth/permissions.ts'
+import { selectCurrentUser } from '../store/authSlice.ts'
+import { useAppDispatch, useAppSelector } from '../store/hooks.ts'
+import { describeTicketChangeFailure } from '../store/apiError.ts'
 import { isNotFoundError } from '../store/api.ts'
 import {
   useDeleteTicketMutation,
@@ -41,6 +45,11 @@ function TicketDetailPage() {
   const [deleteTicket, { isLoading: isDeleting }] = useDeleteTicketMutation()
   // Whether the "Delete this ticket?" dialog is showing.
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  // Whether to offer Delete at all (see the comment at the section below).
+  const currentUser = useAppSelector(selectCurrentUser)
+  const canDelete = canDeleteTickets(currentUser)
+  // Whether to offer the assign controls: ADMIN and MANAGER (permissions.ts).
+  const canAssign = canAssignTickets(currentUser)
 
   // Not a number, or the server said 404: there's no such ticket.
   if (ticketId === undefined || isNotFoundError(error)) {
@@ -93,10 +102,10 @@ function TicketDetailPage() {
       )
       // There's nothing left to show here, so go back to the list.
       navigate('/tickets')
-    } catch {
+    } catch (error) {
       dispatch(
         addNotification({
-          message: `Ticket #${shownTicket.id} couldn't be deleted.`,
+          message: describeTicketChangeFailure(error, `Ticket #${shownTicket.id} wasn't deleted`),
           type: 'error',
         }),
       )
@@ -113,39 +122,54 @@ function TicketDetailPage() {
       </PageHeader>
       <TicketDetails ticket={ticket} />
 
+      {/* Everyone sees who has the ticket (in TicketDetails above); only
+          ADMIN and MANAGER get the controls to change it. The key restarts
+          the control from the ticket as it now is after every change. */}
+      {canAssign && <TicketAssignment key={`${ticket.id}-${ticket.version}`} ticket={ticket} />}
+
       {/* Deleting lives in its own section at the bottom of the page, far
           from the Edit link at the top, with a red border and its own
           heading, so it's hard to press by accident. And even then, it only
-          opens the confirmation dialog. */}
-      <section className="ticket-danger-zone" aria-labelledby="delete-ticket-heading">
-        <h2 id="delete-ticket-heading">Delete this ticket</h2>
-        <p>Deleting removes the ticket for everyone. This can't be undone.</p>
-        <button
-          type="button"
-          className="button button--danger-outline"
-          // While a delete is on its way, the button ignores presses so it
-          // can't be sent twice. aria-disabled (rather than disabled) keeps
-          // the button focusable, so the dialog can still return focus to it
-          // when it closes. Screen readers still announce it as unavailable.
-          aria-disabled={isDeleting}
-          onClick={() => {
-            if (!isDeleting) {
-              setIsConfirmOpen(true)
-            }
-          }}
-        >
-          Delete ticket
-        </button>
-      </section>
+          opens the confirmation dialog.
 
-      <ConfirmDialog
-        open={isConfirmOpen}
-        title={`Delete ticket #${ticket.id}?`}
-        description={`"${ticket.title}" will be permanently deleted. This can't be undone.`}
-        confirmLabel="Delete ticket"
-        onConfirm={handleConfirmDelete}
-        onClose={() => setIsConfirmOpen(false)}
-      />
+          Only an ADMIN sees it (permissions.ts). That's convenience, not
+          security: anyone else would only get a 403, and the server refuses
+          the DELETE whether or not this section is on screen. */}
+      {canDelete && (
+        <section className="ticket-danger-zone" aria-labelledby="delete-ticket-heading">
+          <h2 id="delete-ticket-heading">Delete this ticket</h2>
+          <p>Deleting removes the ticket for everyone. This can't be undone.</p>
+          <button
+            type="button"
+            className="button button--danger-outline"
+            // While a delete is on its way, the button ignores presses so it
+            // can't be sent twice. aria-disabled (rather than disabled) keeps
+            // the button focusable, so the dialog can still return focus to it
+            // when it closes. Screen readers still announce it as unavailable.
+            aria-disabled={isDeleting}
+            onClick={() => {
+              if (!isDeleting) {
+                setIsConfirmOpen(true)
+              }
+            }}
+          >
+            Delete ticket
+          </button>
+        </section>
+      )}
+
+      {/* The dialog too: closed, it's invisible, but its own "Delete ticket"
+          button would still be in the page for every role. */}
+      {canDelete && (
+        <ConfirmDialog
+          open={isConfirmOpen}
+          title={`Delete ticket #${ticket.id}?`}
+          description={`"${ticket.title}" will be permanently deleted. This can't be undone.`}
+          confirmLabel="Delete ticket"
+          onConfirm={handleConfirmDelete}
+          onClose={() => setIsConfirmOpen(false)}
+        />
+      )}
     </>
   )
 }

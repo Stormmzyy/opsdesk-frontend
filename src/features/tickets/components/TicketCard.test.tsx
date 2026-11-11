@@ -11,6 +11,11 @@ const sampleTicket: Ticket = {
   priority: 'HIGH',
   status: 'OPEN',
   team: 'Operations',
+  assigneeId: null,
+  assigneeName: null,
+  createdById: 1,
+  createdByName: 'Priya Sharma',
+  version: 0,
 }
 
 describe('TicketCard', () => {

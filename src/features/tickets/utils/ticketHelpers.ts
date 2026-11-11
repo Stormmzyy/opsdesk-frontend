@@ -1,5 +1,11 @@
 import { parseId } from '../../../utils/parseId.ts'
-import type { Priority, StatusFilter, Ticket } from '../types.ts'
+import type {
+  EditableTicketField,
+  Priority,
+  StatusFilter,
+  Ticket,
+  TicketFormValues,
+} from '../types.ts'
 import { isOpenTicket, parsePriority, parseStatus } from './ticketStatus.ts'
 
 // Turns the :id part of a ticket URL (e.g. "3" in /tickets/3) into a ticket
@@ -25,6 +31,11 @@ export function getPriorityTickets(tickets: Ticket[]): Ticket[] {
 // Keeps tickets whose title or description contains searchText (ignoring
 // upper and lower case) and whose status matches the filter.
 // An empty search matches everything, and 'ALL' matches every status.
+//
+// Only the MOCK API uses this now, for GET /tickets?search=... (handlers.ts):
+// the app itself asks the server to search. It's the contract's search rule
+// (contains, ignoring case and surrounding spaces, in title or description),
+// so the mock answers as the server does.
 export function filterTickets(
   tickets: Ticket[],
   searchText: string,
@@ -39,6 +50,26 @@ export function filterTickets(
     const matchesStatus = statusFilter === 'ALL' || ticket.status === statusFilter
     return matchesSearch && matchesStatus
   })
+}
+
+// The editable fields that differ between two versions of the form: what
+// the Edit page sends in its PATCH (backend decision 71). Values the
+// person didn't change are left out, so they can't overwrite anything.
+// Empty when nothing changed.
+//
+// `before` is the snapshot taken when the form loaded, never the ticket as
+// it is in the cache now (see EditTicketPage for why).
+export function changedTicketFields(
+  before: TicketFormValues,
+  after: TicketFormValues,
+): Partial<Pick<Ticket, EditableTicketField>> {
+  const changes: Partial<Pick<Ticket, EditableTicketField>> = {}
+  if (after.title !== before.title) changes.title = after.title
+  if (after.description !== before.description) changes.description = after.description
+  if (after.priority !== before.priority) changes.priority = after.priority
+  if (after.team !== before.team) changes.team = after.team
+  if (after.status !== undefined && after.status !== before.status) changes.status = after.status
+  return changes
 }
 
 // True when value is a plain object we can read properties from, like
@@ -62,7 +93,15 @@ export function isTicket(value: unknown): value is Ticket {
     typeof value.priority === 'string' &&
     parsePriority(value.priority) !== undefined &&
     typeof value.status === 'string' &&
-    parseStatus(value.status) !== undefined
+    parseStatus(value.status) !== undefined &&
+    // The output-only fields. Tickets saved by an older version of the app
+    // don't have them, so they fail here and the mock starts again from the
+    // sample tickets, rather than serving tickets with missing fields.
+    (value.assigneeId === null || typeof value.assigneeId === 'number') &&
+    (value.assigneeName === null || typeof value.assigneeName === 'string') &&
+    typeof value.createdById === 'number' &&
+    typeof value.createdByName === 'string' &&
+    typeof value.version === 'number'
   )
 }
 
