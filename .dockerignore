@@ -1,0 +1,44 @@
+# What `docker build` must NOT send to the build engine.
+#
+# `docker build .` packs up this whole folder (the "build context") before it
+# reads a single line of the Dockerfile, and `COPY . .` copies from that. Git's
+# .gitignore plays no part: only this file filters the context. Without it the
+# context was 168.7 MB, and included .env.
+
+# Real or local settings. A file copied into a build is stored in an image
+# layer that anyone who pulls the image can read. Leaving every .env file out
+# also makes the build argument the ONLY source of VITE_API_URL: a .env or
+# .env.production in this folder can't quietly supply a value instead.
+.env
+.env.*
+
+# Installed on THIS machine, for Windows: native packages (Rolldown, Oxlint,
+# Lightning CSS) are Windows binaries here. The image runs `npm ci` for Linux,
+# and `COPY . .` comes after it, so without this line it would overwrite the
+# Linux install with Windows binaries. Also 180 MB.
+node_modules/
+
+# A previous local build. The image builds its own from source.
+dist/
+
+# The repository's history: every past version of every file. Nothing in the
+# build reads it.
+.git/
+
+# Editor, IDE and local tool settings: personal, and nothing the build reads.
+.idea/
+.vscode/
+.claude/
+.remember/
+*.log
+coverage/
+
+# Documentation and screenshots: not imported by the app.
+*.md
+docs/
+
+# The Docker files themselves. The build never reads them from the context,
+# and leaving them out means editing one doesn't invalidate the cached
+# `COPY . .` layer. nginx.conf is NOT here: the nginx stage copies it.
+Dockerfile
+.dockerignore
