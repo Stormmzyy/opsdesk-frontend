@@ -14,10 +14,17 @@ export interface User {
   name: string
   username: string
   email: string
+  // What this user may do (API_CONTRACT.md, the permission table). Read from
+  // GET /auth/me for the signed-in user; see store/authSlice.ts for why it is
+  // never read out of the token.
+  role: Role
   phone: string
   address: UserAddress
   company: UserCompany
 }
+
+// The contract's four roles, as the server writes them.
+export type Role = 'ADMIN' | 'MANAGER' | 'AGENT' | 'USER'
 
 export interface UserAddress {
   street: string
