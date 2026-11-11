@@ -48,4 +48,16 @@ jobs:
       - run: npm test
 
       # Type-checks (tsc -b), then builds the production bundle.
-      - run: npm run build
+      #
+      # The build refuses to run without VITE_API_URL (vite.config.ts), and a
+      # runner has no .env, which is never committed. The first CI run failed
+      # here with exactly that message. The bundle is only checked, never
+      # deployed, so the value is deliberately not a real address: .invalid is
+      # a top-level domain reserved never to resolve (RFC 2606), so anyone who
+      # finds this URL in a bundle knows it came from CI, and it can't reach
+      # any server. It's set on this step only: the tests keep the /api/v1
+      # that vite.config.ts pins for them.
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: https://built-by-ci.invalid/api/v1
