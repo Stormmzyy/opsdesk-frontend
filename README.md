@@ -126,6 +126,8 @@ If you switch back to the real backend and something still looks mocked, an old 
 
 Only variables whose names start with `VITE_` are available to the app, and Vite **copies their values into the JavaScript the browser downloads**. Never put secrets in them (see [Security](#security)).
 
+**Any `VITE_` variable is baked into the bundle at build time and is readable by anyone who loads the page, so it is public by definition and must never hold a secret; that is also why `.env.production` doesn't need to be ignored by Git.**
+
 | Variable | What it does | In `.env.example` | If missing |
 | --- | --- | --- | --- |
 | `VITE_API_URL` | The base URL every API request goes to (tickets, projects, users). A full URL points at another server, such as the backend at `http://localhost:8080/api/v1`. A path (`/api/v1`) means "on this same site", which is where the mock API answers. | `http://localhost:8080/api/v1` | `npm run dev`: `/api/v1`. `npm run build`: **refuses to build** (also when it isn't an `http(s)://` URL or a `/` path), because the value is written into the bundle and a missing one would make every request go to the page's own server |
