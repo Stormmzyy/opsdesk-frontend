@@ -33,7 +33,9 @@ Every path in this document is relative to the base URL:
 /api/v1
 ```
 
-So `GET /tickets` means `GET /api/v1/tickets`. The frontend reads the base URL from the `VITE_API_URL` environment variable (default `/api/v1`). The backend only accepts browser requests from `http://localhost:5173` (CORS), so serving the frontend from another origin needs a change to the backend's CORS configuration too.
+So `GET /tickets` means `GET /api/v1/tickets`. The frontend reads the base URL from the `VITE_API_URL` environment variable. The dev server falls back to `/api/v1` when it isn't set; a production build refuses to run without it, because the value is written into the bundle when the build runs (in Docker, it's a build argument). The backend accepts browser requests from one origin, its `ALLOWED_ORIGIN` setting (CORS): `http://localhost:5173` under its `dev` profile, and `http://localhost:3000` under docker compose. Serving the frontend from any other origin means setting `ALLOWED_ORIGIN` to match.
+
+**Swagger describes the same API from the running code**, at `/swagger-ui.html` on a backend started with the `dev` profile (it isn't served in production). It's exact for the paths, parameters, request fields and response shapes. The rules it can't show (status codes, errors, permissions, the order of the checks) are in this document, which wins where the two differ (backend NOTES.md, decision 73).
 
 `v1` is the version of this contract. Changes that don't break existing clients (a new endpoint, a new field in a response) can be added to v1. A change that would break a client (renaming or removing a field, changing a type, changing a status code that a working request gets) needs a new version, `/api/v2`, served alongside v1 until clients have moved.
 
@@ -508,7 +510,7 @@ One ticket.
 
 | Path parameter | Type | Rules |
 | --- | --- | --- |
-| `id` | integer | The ticket's id. |
+| `id` | string | The ticket's id: a positive whole number, as text. Leading zeros are accepted (`02` is ticket 2); any other text is a 404 that quotes it, not a 400 ([Requests and responses](#requests-and-responses)). |
 
 - Request body: none.
 
@@ -632,7 +634,7 @@ Change some of a ticket's fields. Only the fields sent are changed; everything e
 
 | Path parameter | Type | Rules |
 | --- | --- | --- |
-| `id` | integer | The ticket's id. |
+| `id` | string | The ticket's id: a positive whole number, as text. Leading zeros are accepted (`02` is ticket 2); any other text is a 404 that quotes it, not a 400 ([Requests and responses](#requests-and-responses)). |
 
 Request body: **any** of these fields, each following the same rules as on the Ticket object.
 
@@ -759,7 +761,7 @@ Delete a ticket for good. Its id is never reused.
 
 | Path parameter | Type | Rules |
 | --- | --- | --- |
-| `id` | integer | The ticket's id. |
+| `id` | string | The ticket's id: a positive whole number, as text. Leading zeros are accepted (`02` is ticket 2); any other text is a 404 that quotes it, not a 400 ([Requests and responses](#requests-and-responses)). |
 
 - Request body: none.
 

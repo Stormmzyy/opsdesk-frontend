@@ -26,17 +26,13 @@ Each item has one of three labels:
 
 The cache lives in the Redux store (under `state.api`), but no hand-written reducer touches it.
 
-## Server state: useFetch (Users page)
-
-| State | Where | Why it's here |
-| --- | --- | --- |
-| `data`, `status`, `retryCount` | `useFetch`, called through `useUsers` | Users come from the real JSONPlaceholder API. The hand-written hook stays on purpose, as a comparison with RTK Query, until the Week 6 backend serves `/api/v1/users` (see docs/ARCHITECTURE.md). |
+The Users page is RTK Query too (`usersApi.ts`), since the backend started serving `GET /api/v1/users` in Week 6. Until then it used a hand-written `useFetch` hook against JSONPlaceholder, which has been removed.
 
 ## Local state: in the component that owns it
 
 | State | Where | Why it's local |
 | --- | --- | --- |
-| `searchText`, `statusFilter`, `page` | `TicketBrowser` | Only the Tickets page shows them. Resetting when you leave the page is fine. |
+| `searchText`, `statusFilter`, `priorityFilter`, `sort`, `page` | `TicketBrowser` | Only the Tickets page shows them. They're sent to the server as the list's query parameters, but the choices themselves are this page's. Resetting when you leave the page is fine. |
 | `values`, `errors` | `TicketForm` | A draft being typed. It only becomes shared when it's submitted. |
 | `searchText`, `selectedDepartment`, `selectedEmployeeId` | `EmployeeDirectory` | Only the directory on the Teams page uses them. |
 | `isConfirmOpen` | `TicketDetailPage` | Whether the "Delete this ticket?" dialog is showing. Only this page opens it. |
