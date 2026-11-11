@@ -61,3 +61,33 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: https://built-by-ci.invalid/api/v1
+
+  # Builds the Docker image, so a broken Dockerfile, .dockerignore or
+  # nginx.conf turns CI red instead of waiting for someone to run compose by
+  # hand. A separate job runs in parallel with "check", so a slow image
+  # build never holds up the test result; it's its own status check, "image".
+  #
+  # NOT COVERED, and only checked by hand (opsdesk-system PR #1 records how):
+  # nothing here runs docker compose, so the three services starting
+  # together, the healthchecks, the browser reaching the backend and the
+  # data surviving in the volume are not tested by CI.
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # The same .invalid address as the "check" job's build, as a build
+      # argument this time. Without it the Dockerfile's build step stops on
+      # vite.config.ts's check, by design.
+      - name: Build the Docker image
+        run: >-
+          docker build
+          --build-arg VITE_API_URL=https://built-by-ci.invalid/api/v1
+          -t opsdesk-frontend:ci .
+
+      # docker build only COPIES nginx.conf: nginx reads it when it starts,
+      # so a config with a syntax error builds green (measured: a missing
+      # semicolon built with exit 0). nginx -t is nginx's own config test,
+      # run inside the image just built.
+      - name: Test the nginx config inside the image
+        run: docker run --rm opsdesk-frontend:ci nginx -t
