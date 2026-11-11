@@ -23,14 +23,46 @@ function EditTicketPage() {
   const { id } = useParams()
   // A number, or undefined if the URL holds something like "abc".
   const ticketId = parseTicketId(id)
+  // When this page opened. The form's snapshot must come from an answer
+  // the server gave AFTER this moment (see below).
+  const [openedAt] = useState(() => Date.now())
   // skipToken: don't ask the server about an id that isn't a number.
+  //
+  // refetchOnMountOrArgChange: ask the server again every time the edit page
+  // opens, even if the ticket is in RTK Query's cache. Coming from the
+  // ticket's own page, the cached copy is as old as that page's load, maybe
+  // minutes, and the form's snapshot (EditTicketForm) would be taken from
+  // it: the person would decide what to change by looking at values that
+  // may already have been changed by someone else.
   const {
     data: ticket,
-    isLoading,
     isError,
     error,
     refetch,
-  } = useGetTicketQuery(ticketId ?? skipToken)
+    isFetching,
+    fulfilledTimeStamp,
+  } = useGetTicketQuery(ticketId ?? skipToken, { refetchOnMountOrArgChange: true })
+
+  // The trap: on the first render after opening, the hook still hands back
+  // the CACHED ticket with isFetching false, because the refetch is only
+  // dispatched from an effect after that render. (isLoading is no help
+  // either: it's only true for the first fetch ever.) A gate of "data and
+  // not fetching" would mount the form on the stale copy. So the form waits
+  // for a ticket that ARRIVED after the page opened.
+  //
+  // Once it has mounted, it stays: a later refetch (after a refused save, or
+  // any other invalidation) must not unmount the form and throw away what
+  // the person typed. That's the second state, set during render (React's
+  // pattern for adjusting state from what was just received).
+  const [formReady, setFormReady] = useState(false)
+  const fresh =
+    ticket !== undefined &&
+    !isFetching &&
+    fulfilledTimeStamp !== undefined &&
+    fulfilledTimeStamp >= openedAt
+  if (fresh && !formReady) {
+    setFormReady(true)
+  }
 
   if (ticketId === undefined || isNotFoundError(error)) {
     return <TicketNotFound id={id} />
@@ -38,7 +70,12 @@ function EditTicketPage() {
 
   const detailPath = `/tickets/${ticketId}`
 
-  if (isLoading) {
+  if (formReady && ticket) {
+    // key: a different ticket is a different form, with its own snapshot.
+    return <EditTicketForm key={ticket.id} ticket={ticket} />
+  }
+
+  if (!isError) {
     return (
       <>
         <BackLink to={detailPath}>Back to ticket</BackLink>
@@ -50,20 +87,17 @@ function EditTicketPage() {
     )
   }
 
-  if (isError || !ticket) {
-    return (
-      <>
-        <BackLink to={detailPath}>Back to ticket</BackLink>
-        <PageHeader title="Edit ticket" description={`Ticket #${ticketId}`} />
-        <StatusMessage type="error" onRetry={refetch}>
-          Sorry, we couldn&apos;t load this ticket.
-        </StatusMessage>
-      </>
-    )
-  }
-
-  // key: a different ticket is a different form, with its own snapshot.
-  return <EditTicketForm key={ticket.id} ticket={ticket} />
+  // The fresh fetch failed. Even with an older copy in the cache, the form
+  // isn't opened on it: that's the stale snapshot this page exists to avoid.
+  return (
+    <>
+      <BackLink to={detailPath}>Back to ticket</BackLink>
+      <PageHeader title="Edit ticket" description={`Ticket #${ticketId}`} />
+      <StatusMessage type="error" onRetry={refetch}>
+        Sorry, we couldn&apos;t load this ticket.
+      </StatusMessage>
+    </>
+  )
 }
 
 // The five editable fields, as the form shows them.

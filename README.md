@@ -153,7 +153,7 @@ The tests ignore both: `vite.config.ts` pins `VITE_API_URL` to `/api/v1` for eve
 npm test
 ```
 
-**96 tests in 14 files**, using [Vitest](https://vitest.dev/) and [Testing Library](https://testing-library.com/) in a pretend browser (jsdom). Tests find elements by role and accessible name, the way a screen reader does (`getByRole('button', { name: /create ticket/i })`). They always talk to the **mock API handlers**, running in Node, never to the real backend: `vite.config.ts` pins the API URL for tests (see [Environment variables](#environment-variables)). Every test was checked by breaking the feature on purpose and confirming the test fails.
+**97 tests in 14 files**, using [Vitest](https://vitest.dev/) and [Testing Library](https://testing-library.com/) in a pretend browser (jsdom). Tests find elements by role and accessible name, the way a screen reader does (`getByRole('button', { name: /create ticket/i })`). They always talk to the **mock API handlers**, running in Node, never to the real backend: `vite.config.ts` pins the API URL for tests (see [Environment variables](#environment-variables)). Every test was checked by breaking the feature on purpose and confirming the test fails.
 
 > **On Windows, run the tests from a path whose drive letter is a capital `C:`.**
 > If the terminal's folder starts with a lowercase `c:\` (VS Code's built-in terminal can open
@@ -162,12 +162,12 @@ npm test
 > but Node treats them as two different paths, so Vitest gets loaded twice. The test-only
 > matchers attach to one copy, and the tests run on the other. Check with `pwd` (Git Bash) or
 > `Get-Location` (PowerShell). If it starts with `c:`, run `cd C:\path\to\opsdesk-frontend`
-> (PowerShell) and `npm test` again: all 96 pass. macOS and Linux aren't affected.
+> (PowerShell) and `npm test` again: all 97 pass. macOS and Linux aren't affected.
 
 | Test file | What it covers |
 | --- | --- |
 | `src/features/auth/session.test.tsx` | How a session ends. A stored token that `/auth/me` rejects sends the person to sign in, and **no ticket request is sent on the way** (it checks the requests sent, not just the final screen). A **wrong password** stays on the form with the server's message and isn't treated as an expired session. A **401** in the middle of a session goes to sign in with "Your session expired". **Log out** clears the token, `localStorage` and RTK Query's cache, and nothing refetches. |
-| `src/pages/EditTicketPage.test.tsx` | The Edit page **sends only what changed**: editing the title sends exactly `{ "title": … }`; saving with no changes sends **no request**; and if someone else moves the ticket while the form is open and the page refetches it, the save still sends only the title, never the stale status. The tests check the request body, because a stale field overwriting someone's change looks fine on screen. |
+| `src/pages/EditTicketPage.test.tsx` | The form opens on a **fresh answer from the server**, never on the cached ticket: if someone else changed the ticket while it sat in the cache, the form shows their change. The Edit page **sends only what changed**: editing the title sends exactly `{ "title": … }`; saving with no changes sends **no request**; and if someone else moves the ticket while the form is open and the page refetches it, the save still sends only the title, never the stale status. The tests check the request body, because a stale field overwriting someone's change looks fine on screen. |
 | `src/pages/TicketPermissions.test.tsx` | **Delete** is offered to an ADMIN and not to an AGENT, not even the closed dialog's button. A **403** on save is explained ("you don't have permission… if the ticket changed since you opened it…"), the form keeps what was typed, and the ticket is fetched again. **Assigning**: an AGENT sees who has a ticket but gets no controls, and `GET /users` is never requested. A MANAGER's picker offers everyone but the USER, sends exactly `{"assigneeId": …}`, and can unassign. The server's **400** appears under the picker, linked to it, and a **403** is explained and followed by a refetch. The mock doesn't serve the assign endpoints yet, so these tests stage the server's answers. |
 | `src/pages/TicketFlows.test.tsx` | Whole journeys through the real app. **Creating** a ticket lands on its page with a success toast, and a search finds it. **Deleting** opens the confirmation dialog: Cancel sends no request and returns focus, and confirming deletes the ticket and shows a toast. |
 | `src/pages/TicketsPage.test.tsx` | Moving a ticket on the board refreshes the list by itself. A **500** from the API shows an error with **Retry**. An **empty** list shows a helpful message with "Create a ticket". |

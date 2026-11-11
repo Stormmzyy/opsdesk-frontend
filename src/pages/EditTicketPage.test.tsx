@@ -42,6 +42,27 @@ function renderEditPage() {
 }
 
 describe('EditTicketPage', () => {
+  it('opens the form on a fresh answer from the server, not on the cached ticket', async () => {
+    // The person reads ticket 1 first, so it's in RTK Query's cache.
+    const { user } = renderWithProviders(<AppRoutes />, { route: '/tickets/1', signedInAs: ADMIN })
+    expect(await screen.findByRole('heading', { level: 1, name: TITLE })).toBeInTheDocument()
+
+    // Meanwhile someone else moves it on. Nothing tells this page.
+    saveAllTickets(
+      getAllTickets().map((ticket) =>
+        ticket.id === 1 ? { ...ticket, status: 'IN_PROGRESS' } : ticket,
+      ),
+    )
+
+    await user.click(screen.getByRole('link', { name: 'Edit' }))
+
+    // The form shows the server's current status. Mounted on the cached
+    // copy, it would show Open, and its snapshot would be that stale copy.
+    expect(await screen.findByRole('combobox', { name: 'Status' })).toHaveValue('IN_PROGRESS')
+    // The ticket page's GET, then the edit page's own.
+    expect(requests.filter((line) => line === 'GET /api/v1/tickets/1')).toHaveLength(2)
+  })
+
   it('sends only the field that changed', async () => {
     const { user } = renderEditPage()
     const title = await screen.findByRole('textbox', { name: /title/i })

@@ -1,5 +1,7 @@
 # Architecture decisions
 
+> **Dated: this describes the app as it was in Weeks 2 to 4 (last changed 14 October 2026),** before the real backend, sign-in, roles and the server-side ticket list. Week 8 rewrites it on Thursday; until then, the [README](../README.md) is the current description.
+
 Short notes on design choices that aren't obvious from the code alone. Weeks 2 and 3 come first, then this week's (Week 4) decisions.
 
 ## The ticket form includes a Team field
